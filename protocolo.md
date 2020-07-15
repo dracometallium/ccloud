@@ -151,7 +151,7 @@ Respuestas:
     -   status: "200 OK"
     -   result:
         -   sync_id: <sync_id>
-        -   triage: <res_triage>
+        -   triage: <valor 1 a 4>
     -   https_status: 200
 
 -   Si no reconoce el token o no esta en la lista de conectados:
