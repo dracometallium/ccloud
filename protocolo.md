@@ -18,7 +18,7 @@ Enviar un inser_id por tabla.
             "method":   <nombre_metodo>,
             "params":   <dict_parametros>,
             "id":       <uuid_para_respuesta_async>
-            "token":    <token_id|null(en caso de que no tenga)>
+            "token":    <token_id|null(para `hello`)>
         }
 
 -   Respuesta:
@@ -37,7 +37,11 @@ sino que es el estatus que debe retornar la petición _HTTP_.
 
 Parámetros:
 
--   sector: <sector, isla, hospital>
+-   usuario
+-   password
+-   hospital
+-   isla
+-   sector
 
 Respuestas:
 
@@ -45,18 +49,10 @@ Respuestas:
     
     -   status: "200 OK"
     -   result:
-        -   token: <token_viejo>
+        -   token: <token>
     -   https_status: 200
 
--   Si el cliente no esta en la lista de conectados:
-
-    -   status: "205 Reset Content"
-    -   result:
-        -   token: <nuevo_token(uuid)>
-        -   db: <toda la base de datos, o como descargarla>
-    -   http_status: "205 Reset Content"
-
--   Si el sector es incorrecto:
+-   Si el login es incorrecto:
 
     -   status: "403 Forbidden"
     -   result: {}
@@ -76,6 +72,8 @@ Respuestas:
 
 # hello_cloud
 
+**NOTA**: sin implementar.
+
 Parámetros:
 
 -   sector: <sector, isla, hospital>
@@ -86,25 +84,14 @@ Respuestas:
     
     -   status: "200 OK"
     -   result:
-        -   token: <token_viejo>
+        -   token: <token>
     -   https_status: 200
-
--   Si el cliente no esta en la lista de conectados:
-
-    -   status: "205 Reset Content"
-    -   result:
-        -   token: <nuevo_token(uuid)>
-        -   
-    -   http_status: "205 Reset Content"
-    -   *El cliente debe reconectar enviando la DB*
 
 -   Otros:
 
     -   status: "400 Bad Request"
     -   result: {}
     -   http_status: "400 Bad Request"
-
-TODO: Como actualizar la DB de la nube.
 
 # Ping
 
@@ -135,10 +122,12 @@ Respuestas:
     -   result: {}
     -   http_status: "400 Bad Request"
 
-# new_<data>
+# new_data
 
-**Nota:** <data> puede ser cada una de las tablas: "control_enfermeria,
-laboratorio, rx_torax, alerta, episodio, hcpasiente"
+**Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
+`laboratorio`, `rx_torax`, `alerta` o `episodio` en cuyo caso retornan un
+triage, o `camas`, `hcpasientes`, `islas`, `sectores`, `usuarios_hospital`,
+`usuarios_sector` u `hospital` en cuyo caso no retornan el triage.
 
 Parámetros:
 
@@ -151,7 +140,7 @@ Respuestas:
     -   status: "200 OK"
     -   result:
         -   sync_id: <sync_id>
-        -   triage: <valor 1 a 4>
+        -   triage: <valor 1 a 4> #solo algunas tablas.
     -   https_status: 200
 
 -   Si no reconoce el token o no esta en la lista de conectados:
@@ -161,10 +150,11 @@ Respuestas:
     -   http_status: "401 Unauthorized"
 
 
-# get_<data>
+# get_data
 
-**Nota:** <data> puede ser cada una de las tablas: "controles_enfermeria,
-laboratorios, rx_toraxs, alertas, episodios, hcpasientes"
+**Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
+`laboratorio`, `rx_torax`, `alerta`, `episodio`,`camas`, `hcpasientes`,
+`islas`, `sectores`, `usuarios_hospital`, `usuarios_sector`.
 
 Parámetros:
 
@@ -194,11 +184,7 @@ Respuestas:
 -   Otros posibles casos:
     -   Que no reconozca el usuario.
 
-# get_update
-
-Parámetros:
-
--   sync_id: <max_sync_id>
+# get_hospital
 
 Respuestas:
 
@@ -206,18 +192,55 @@ Respuestas:
 
     -   status: "200 OK"
     -   result:
+        -   data: <hospital>
     -   https_status: 200
 
 -   Si no reconoce el token o no esta en la lista de conectados:
 
     -   status: "401 Unauthorized"
+    -   result: {}
+    -   http_status: "401 Unauthorized"
+
+-   Otros:
+
+    -   status: "400 Bad Request"
+    -   result: {}
+    -   http_status: "400 Bad Request"
+
+-   Otros posibles casos:
+    -   Que no reconozca el usuario.
+
+# get_update
+
+Parámetros:
+
+-   sync_id_isla: <max_sync_id_isla>
+-   sync_id_hospital: <max_sync_id_hospital>
+
+Respuestas:
+
+-   Si el servidor reconoce el token y esta en la lista de conectados:
+
+    -   status: "200 OK"
     -   result:
         -   controles_enfermeria: [lista de `control_de_enfermeria`]
         -   laboratorios: [lista de `laboratorio`]
         -   rx_toraxs: [lista de `rx_torax`]
         -   alertas: [lista de `alerta`]
         -   episodios: [lista de `episodio`]
+        -   camas: [lista de `cama`]
         -   hcpasientes: [lista de `hcpasiente`]
+        -   islas: [lista de `isla`]
+        -   sectores: [lista de `sector`]
+        -   usuarios_hospital: [lista de `usuario_hospital`]
+        -   usuarios_sector: [lista de `usuario_sector`]
+        -   hospital: <hospital|null>
+    -   https_status: 200
+
+-   Si no reconoce el token o no esta en la lista de conectados:
+
+    -   status: "401 Unauthorized"
+    -   result: {}
     -   http_status: "401 Unauthorized"
 
 -   Otros:

@@ -1,117 +1,262 @@
 defmodule Isla.Router do
-
-def init(req, state) do
-
-  {:ok, req_body, req0} = :cowboy_req.read_body(req)
-
-  try do
-
-    req_json = Poison.decode!(req_body, keys: :atoms!)
-    %{
-      :version => version,
-      :method => method,
-      :params => params,
-      :id => id,
-      :token => _token,
-    } = req_json
-
-    resp = run_method(version, method, params, id)
-    headers = %{"content-type" => "application/json"}
-    body = Poison.encode!(resp) <> "\n"
-
-    req1 = :cowboy_req.reply(200, headers, body, req0)
-
-    {:ok, req1, state}
-  rescue
-    reason ->
-      IO.inspect reason
-      send_badreq(req0, state)
+  def init(req, state) do
+    case :cowboy_req.headers(req)["upgrade"] do
+      "websocket" -> {:cowboy_websocket, req, state}
+      nil -> http_handle(req, state)
+      _ -> {:stop, req, state}
+    end
   end
 
-end
+  defp http_handle(req, state) do
+    {:ok, req_body, req0} = :cowboy_req.read_body(req)
 
-defp run_method("0.0", "test", params, id) do
-  %{resp: "OK_test", result: %{params: params}, id: id}
-end
+    try do
+      req_json = Poison.decode!(req_body, keys: :atoms!)
 
-defp run_method("0.0", "new_control_enfermeria", params, id) do
-  {sync_id, triage} = Isla.new_control_enfermeria("test_h", "0", params.data)
-  %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}, id: id}
-end
+      %{
+        :version => version,
+        :method => method,
+        :params => params,
+        :id => id,
+        :token => token
+      } = req_json
 
-defp run_method("0.0", "get_controles_enfermerias", params, id) do
-  data = Isla.get_controles_enfermeria("test_h", "0", params.sync_id)
-  %{status: "200 OK", result: %{data: data}, id: id}
-end
+      resp = connect_and_run_method(version, method, params, id, token)
+      headers = %{"content-type" => "application/json"}
+      body = Poison.encode!(resp) <> "\n"
 
-defp run_method("0.0", "new_laboratorio", params, id) do
-  {sync_id, triage} = Isla.new_laboratorio("test_h", "0", params.data)
-  %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}, id: id}
-end
+      req1 = :cowboy_req.reply(200, headers, body, req0)
 
-defp run_method("0.0", "get_laboratorios", params, id) do
-  data = Isla.get_laboratorios("test_h", "0", params.sync_id)
-  %{status: "200 OK", result: %{data: data}, id: id}
-end
+      {:ok, req1, state}
+    rescue
+      reason ->
+        IO.puts("\nERROR:")
+        IO.inspect(reason)
+        resp = send_badreq()
+        body = Poison.encode!(resp) <> "\n"
+        headers = %{"content-type" => "application/json"}
+        req1 = :cowboy_req.reply(400, headers, body, req0)
+        {:ok, req1, state}
+    end
+  end
 
-defp run_method("0.0", "new_rx_torax", params, id) do
-  {sync_id, triage} = Isla.new_rx_torax("test_h", "0", params.data)
-  %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}, id: id}
-end
+  def websocket_handle({:text, body}, state) do
+    try do
+      req_json = Poison.decode!(body, keys: :atoms!)
 
-defp run_method("0.0", "get_rx_toraxs", params, id) do
-  data = Isla.get_rx_toraxs("test_h", "0", params.sync_id)
-  %{status: "200 OK", result: %{data: data}, id: id}
-end
+      %{
+        :version => version,
+        :method => method,
+        :params => params,
+        :id => id,
+        :token => token
+      } = req_json
 
-defp run_method("0.0", "new_alerta", params, id) do
-  {sync_id, triage} = Isla.new_alerta("test_h", "0", params.data)
-  %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}, id: id}
-end
+      resp = connect_and_run_method(version, method, params, id, token)
+      body = Poison.encode!(resp) <> "\n"
 
-defp run_method("0.0", "get_alertas", params, id) do
-  data = Isla.get_alertas("test_h", "0", params.sync_id)
-  %{status: "200 OK", result: %{data: data}, id: id}
-end
+      {[{:text, body}], state}
+    rescue
+      reason ->
+        IO.inspect(reason)
+        body = send_badreq()
+        {[{:text, body}], state}
+    end
+  end
 
-defp run_method("0.0", "new_episodio", params, id) do
-  {sync_id, triage} = Isla.new_episodio("test_h", "0", params.data)
-  %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}, id: id}
-end
+  defp connect_and_run_method(version, method, params, id, token) do
+    resp =
+      case method do
+        "hello" ->
+          run_method(version, method, params, nil)
 
-defp run_method("0.0", "get_episodios", params, id) do
-  data = Isla.get_episodios("test_h", "0", params.sync_id)
-  %{status: "200 OK", result: %{data: data}, id: id}
-end
+        _ ->
+          connection = SysUsers.get_connection(token)
 
-defp run_method("0.0", "new_hcpasiente", params, id) do
-  {sync_id, triage} = Isla.new_hcpasiente("test_h", "0", params.data)
-  %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}, id: id}
-end
+          if connection != nil do
+            run_method(version, method, params, connection)
+          else
+            %{resp: "403 Forbidden", result: %{}}
+          end
+      end
 
-defp run_method("0.0", "get_hcpasientes", params, id) do
-  data = Isla.get_hcpasientes("test_h", "0", params.sync_id)
-  %{status: "200 OK", result: %{data: data}, id: id}
-end
+    Map.put(resp, :id, id)
+  end
 
-defp run_method("0.0", "get_update", params, id) do
-  data = Isla.get_update("test_h", "0", params.sync_id)
-  %{status: "200 OK", result: data, id: id}
-end
+  defp run_method("0.0", "hello", params, _connection) do
+    token =
+      SysUsers.hello(
+        params[:user],
+        params[:password],
+        params[:hospital],
+        params[:isla],
+        params[:sector]
+      )
 
-defp run_method("0.0", "ping", params, id) do
-  %{status: "200 OK", result: %{pong: params.ping}, id: id}
-end
+    if token != nil do
+      %{resp: "200 OK", result: %{token: token}}
+    else
+      %{resp: "403 Forbidden", result: %{}}
+    end
+  end
 
-defp send_badreq(req, state) do
-  headers = %{"content-type" => "application/json"}
-  body = '{"status":"400 Bad Request","result":{}}\n'
-  req0 = :cowboy_req.reply(400, headers, body, req)
-  {:ok, req0, state}
-end
+  defp run_method("0.0", "new_control_enfermeria", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    {sync_id, triage} = Isla.new_control_enfermeria(connection.hospital, connection.isla, data)
+    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+  end
 
-def terminate(_reason, _req, _state) do
-  :ok
-end
+  defp run_method("0.0", "get_controles_enfermerias", params, connection) do
+    data = Isla.get_controles_enfermeria(connection.hospital, connection.isla, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
 
+  defp run_method("0.0", "new_laboratorio", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    {sync_id, triage} = Isla.new_laboratorio(connection.hospital, connection.isla, data)
+    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+  end
+
+  defp run_method("0.0", "get_laboratorios", params, connection) do
+    data = Isla.get_laboratorios(connection.hospital, connection.isla, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_rx_torax", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    {sync_id, triage} = Isla.new_rx_torax(connection.hospital, connection.isla, data)
+    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+  end
+
+  defp run_method("0.0", "get_rx_toraxs", params, connection) do
+    data = Isla.get_rx_toraxs(connection.hospital, connection.isla, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_alerta", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    {sync_id, triage} = Isla.new_alerta(connection.hospital, connection.isla, data)
+    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+  end
+
+  defp run_method("0.0", "get_alertas", params, connection) do
+    data = Isla.get_alertas(connection.hospital, connection.isla, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_episodio", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    {sync_id, triage} = Isla.new_episodio(connection.hospital, connection.isla, data)
+    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+  end
+
+  defp run_method("0.0", "get_episodios", params, connection) do
+    data = Isla.get_episodios(connection.hospital, connection.isla, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_cama", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    sync_id = Hospital.new_cama(connection.hospital, data)
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_camas", params, connection) do
+    data = Hospital.get_camas(connection.hospital, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_hcpasiente", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    sync_id = Hospital.new_hcpasiente(connection.hospital, data)
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_hcpasientes", params, connection) do
+    data = Hospital.get_hcpasientes(connection.hospital, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_isla", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    sync_id = Hospital.new_isla(connection.hospital, data)
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_islas", params, connection) do
+    data = Hospital.get_islas(connection.hospital, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_sector", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    sync_id = Hospital.new_sector(connection.hospital, data)
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_sectores", params, connection) do
+    data = Hospital.get_sectores(connection.hospital, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_usuario_hospital", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    sync_id = Hospital.new_usuario_hospital(connection.hospital, data)
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_usuarios_hospital", params, connection) do
+    data = Hospital.get_usuarios_hospital(connection.hospital, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_usuario_sector", params, connection) do
+    data = Map.put(params.data, :id_hospital, connection.hospital)
+    sync_id = Hospital.new_usuario_sector(connection.hospital, data)
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_usuarios_sector", params, connection) do
+    data = Hospital.get_usuarios_sector(connection.hospital, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "get_hospital", _params, connection) do
+    data = Hospital.get_hospital(connection.hospital)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_hospital", params, _connection) do
+    sync_id = Hospitales.new_hospital(params.data)
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "new_usuario", params, _connection) do
+    usuario = Hospitales.new_usuario(params.data)
+    %{status: "200 OK", result: %{usuario: usuario}}
+  end
+
+  defp run_method("0.0", "get_usuarios", _params, _connection) do
+    sync_id = Hospitales.get_usuarios()
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_update", params, connection) do
+    data_isla = Isla.get_update(connection.hospital, connection.isla, params.sync_id_isla)
+    data_hospital = Hospital.get_update(connection.hospital, params.sync_id_hospital)
+    data = Map.merge(data_isla, data_hospital)
+    %{status: "200 OK", result: data}
+  end
+
+  defp run_method("0.0", "ping", params, _connection) do
+    %{status: "200 OK", result: %{pong: params.ping}}
+  end
+
+  defp send_badreq() do
+    %{status: "400 Bad Request", result: %{}}
+  end
+
+  def terminate(_reason, _req, _state) do
+    :ok
+  end
 end
