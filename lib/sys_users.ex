@@ -85,7 +85,11 @@ defmodule SysUsers do
 
   def handle_call({:clean_connected}, _from, state) do
     connected =
-      clean_connected(Map.keys(state.connected), state.connected, :os.system_time(:seconds))
+      clean_connected(
+        Map.keys(state.connected),
+        state.connected,
+        :os.system_time(:seconds)
+      )
 
     state = Map.put(state, :connected, connected)
     {:reply, nil, state}
@@ -124,7 +128,9 @@ defmodule SysUsers do
 
     state =
       if connection != nil do
-        connection = Map.put(connection, :timeout, :os.system_time(:seconds) + @timeout)
+        connection =
+          Map.put(connection, :timeout, :os.system_time(:seconds) + @timeout)
+
         connected = Map.put(state.connected, token, connection)
         Map.put(state, :connected, connected)
       end

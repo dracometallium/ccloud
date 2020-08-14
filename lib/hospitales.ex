@@ -38,7 +38,10 @@ defmodule Hospitales do
 
   def handle_call({:new_hospital, hospital}, _from, state) do
     Hospitales.Supervisor.new_hospital(hospital.id_hospital)
-    state = Map.put(state, :hospitales, [hospital.id_hospital | state.hospitales])
+
+    state =
+      Map.put(state, :hospitales, [hospital.id_hospital | state.hospitales])
+
     sync_id = Hospital.set_hospital(hospital.id_hospital, hospital)
     {:reply, sync_id, state}
   end

@@ -12,11 +12,17 @@ defmodule Isla do
             rx_toraxs: {0, []}
 
   def new_control_enfermeria(hospital, isla, control_enfermeria) do
-    GenServer.call(get_name_id(hospital, isla), {:new, :controles_enfermeria, control_enfermeria})
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:new, :controles_enfermeria, control_enfermeria}
+    )
   end
 
   def new_laboratorio(hospital, isla, laboratorio) do
-    GenServer.call(get_name_id(hospital, isla), {:new, :laboratorios, laboratorio})
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:new, :laboratorios, laboratorio}
+    )
   end
 
   def new_rx_torax(hospital, isla, rx_torax) do
@@ -32,11 +38,17 @@ defmodule Isla do
   end
 
   def get_controles_enfermeria(hospital, isla, sync_id) do
-    GenServer.call(get_name_id(hospital, isla), {:get, :controles_enfermeria, sync_id})
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :controles_enfermeria, sync_id}
+    )
   end
 
   def get_laboratorios(hospital, isla, sync_id) do
-    GenServer.call(get_name_id(hospital, isla), {:get, :laboratorios, sync_id})
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :laboratorios, sync_id}
+    )
   end
 
   def get_rx_toraxs(hospital, isla, sync_id) do

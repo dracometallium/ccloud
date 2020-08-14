@@ -14,8 +14,8 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:new, :camas, cama})
   end
 
-  def new_hcpasiente(hospital, hcpasiente) do
-    GenServer.call(get_name_id(hospital), {:new, :hcpasientes, hcpasiente})
+  def new_hcpaciente(hospital, hcpaciente) do
+    GenServer.call(get_name_id(hospital), {:new, :hcpacientes, hcpaciente})
   end
 
   def new_isla(hospital, isla) do
@@ -23,15 +23,21 @@ defmodule Hospital do
   end
 
   def new_sector(hospital, sector) do
-    GenServer.call(get_name_id(hospital), {:new, :sectors, sector})
+    GenServer.call(get_name_id(hospital), {:new, :sectores, sector})
   end
 
   def new_usuario_hospital(hospital, usuario_hospital) do
-    GenServer.call(get_name_id(hospital), {:new, :usuarios_hospital, usuario_hospital})
+    GenServer.call(
+      get_name_id(hospital),
+      {:new, :usuarios_hospital, usuario_hospital}
+    )
   end
 
   def new_usuario_sector(hospital, usuario_sector) do
-    GenServer.call(get_name_id(hospital), {:new, :usuarios_sector, usuario_sector})
+    GenServer.call(
+      get_name_id(hospital),
+      {:new, :usuarios_sector, usuario_sector}
+    )
   end
 
   def get_state(id_hospital) do
@@ -58,8 +64,8 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:get, :camas, sync_id})
   end
 
-  def get_hcpasientes(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get, :hcpasientes, sync_id})
+  def get_hcpacientes(hospital, sync_id) do
+    GenServer.call(get_name_id(hospital), {:get, :hcpacientes, sync_id})
   end
 
   def get_islas(hospital, sync_id) do
@@ -85,7 +91,7 @@ defmodule Hospital do
         id_hospital: opts[:id_hospital]
       },
       camas: {0, []},
-      hcpasientes: {0, []},
+      hcpacientes: {0, []},
       islas: {0, []},
       sectores: {0, []},
       usuarios_hospital: {0, []},
@@ -112,6 +118,14 @@ defmodule Hospital do
         state.sync_id + 1
       else
         registro.sync_id
+      end
+
+    {sync_id, registro} =
+      if table == :usuarios_hospital do
+        registro = Map.merge(registro, %{sync_id_usuario: sync_id + 1})
+        {sync_id + 1, registro}
+      else
+        {sync_id, registro}
       end
 
     registro = struct(table2module(table), registro)
@@ -185,7 +199,7 @@ defmodule Hospital do
   def handle_call({:get_update, sync_id}, from, state) do
     list = [
       :camas,
-      :hcpasientes,
+      :hcpacientes,
       :islas,
       :sectores,
       :usuarios_hospital,
@@ -230,12 +244,12 @@ defmodule Hospital do
 
   defp table2module(table) do
     case table do
-      :usuarioshospital -> Hospital.UsuarioHospital
+      :usuarios_hospital -> Hospital.UsuarioHospital
       :islas -> Hospital.Isla
       :sectores -> Hospital.Sector
-      :usuariossector -> Hospital.UsuarioSector
+      :usuarios_sector -> Hospital.UsuarioSector
       :camas -> Hospital.Cama
-      :hcpasientes -> Hospital.HCpasiente
+      :hcpacientes -> Hospital.HCpaciente
     end
   end
 end
@@ -318,7 +332,7 @@ defmodule Hospital.Cama do
   ]
 end
 
-defmodule Hospital.HCpasiente do
+defmodule Hospital.HCpaciente do
   defstruct [
     :sync_id,
     :id_hospital,
