@@ -152,7 +152,7 @@ defmodule Isla do
 
   defp run_triage(state) do
     # TODO
-    {0, state}
+    {Enum.random(0..3), state}
   end
 
   defp table2module(table) do
