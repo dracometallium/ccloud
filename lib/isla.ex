@@ -3,18 +3,18 @@ defmodule Isla do
   import Utils
 
   defstruct sync_id: 0,
-            id_hospital: nil,
-            id_isla: nil,
+            idHospital: nil,
+            idIsla: nil,
             alertas: {0, []},
-            controles_enfermeria: {0, []},
+            signosVitales: {0, []},
             episodios: {0, []},
             laboratorios: {0, []},
             rx_toraxs: {0, []}
 
-  def new_control_enfermeria(hospital, isla, control_enfermeria) do
+  def new_signo_vital(hospital, isla, signo_vital) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:new, :controles_enfermeria, control_enfermeria}
+      {:new, :signosVitales, signo_vital}
     )
   end
 
@@ -37,10 +37,10 @@ defmodule Isla do
     GenServer.call(get_name_id(hospital, isla), {:new, :episodios, episodio})
   end
 
-  def get_controles_enfermeria(hospital, isla, sync_id) do
+  def get_signos_vitales(hospital, isla, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :controles_enfermeria, sync_id}
+      {:get, :signosVitales, sync_id}
     )
   end
 
@@ -64,22 +64,23 @@ defmodule Isla do
   end
 
   def get_update(hospital, isla, sync_id) do
+    IO.puts("\nTEST!!!")
     GenServer.call(get_name_id(hospital, isla), {:get_update, sync_id})
   end
 
-  def inc_sync_id(id_hospital, isla) do
-    GenServer.call(get_name_id(id_hospital, isla), {:inc_sync_id})
+  def inc_sync_id(idHospital, isla) do
+    GenServer.call(get_name_id(idHospital, isla), {:inc_sync_id})
   end
 
   def init(opts) do
-    hospital = opts[:id_hospital]
-    isla = opts[:id_isla]
-    {:ok, %Isla{id_hospital: hospital, id_isla: isla}}
+    hospital = opts[:idHospital]
+    isla = opts[:idIsla]
+    {:ok, %Isla{idHospital: hospital, idIsla: isla}}
   end
 
   def start_link(opts) do
-    hospital = opts[:id_hospital]
-    isla = opts[:id_isla]
+    hospital = opts[:idHospital]
+    isla = opts[:idIsla]
     GenServer.start_link(__MODULE__, opts, name: get_name_id(hospital, isla))
   end
 
@@ -120,7 +121,7 @@ defmodule Isla do
 
   def handle_call({:get_update, sync_id}, _from, state) do
     list = [
-      :controles_enfermeria,
+      :signosVitales,
       :laboratorios,
       :rx_toraxs,
       :alertas,
@@ -157,7 +158,7 @@ defmodule Isla do
 
   defp table2module(table) do
     case table do
-      :controles_enfermeria -> Isla.ControlEnfermeria
+      :signosVitales -> Isla.SignoVital
       :laboratorios -> Isla.Laboratorio
       :rx_toraxs -> Isla.RXTorax
       :alertas -> Isla.Alerta
@@ -166,69 +167,76 @@ defmodule Isla do
   end
 end
 
-defmodule Isla.ControlEnfermeria do
+defmodule Isla.SignoVital do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :nhc,
-    :fecha,
+    :idHospital,
+    :numeroHCSignosVitales,
+    :fechaSignosVitales,
     :auditoria,
-    :frecuencia_respiratoria,
-    :saturacion_de_oxigeno,
-    :oxigeno_suplementario,
-    :presion_sistolica,
-    :frecuencia_cardiaca,
-    :temperatura,
+    :frec_resp,
+    :sat_oxi,
     :disnea,
-    :nivel_de_conciencia
+    :oxigenoSuplementario,
+    :fraccionInsOxigeno,
+    :presSist,
+    :frec_card,
+    :temp,
+    :nivelConciencia
   ]
 end
 
 defmodule Isla.Laboratorio do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :nhc,
+    :idHospitalLab,
+    :numeroHCLab,
     :fecha,
-    :auditoria,
-    :dimero_d,
-    :linfocitos,
+    :cuil,
+    :dimeroD,
+    :linfopenia,
     :plaquetas,
     :ldh,
     :ferritina,
-    :proteina_c_reactiva
+    :proteinaC
   ]
 end
 
 defmodule Isla.RXTorax do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :nhc,
-    :fecha,
-    :auditoria,
-    :resultado
+    :idHospitalRad,
+    :numeroHCRad,
+    :fechaRad,
+    :cuil,
+    :reultadoRad
   ]
 end
 
 defmodule Isla.Alerta do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :nhc,
-    :fecha,
-    :gravedad
+    :idHospital,
+    :numeroHC,
+    :fechaAlerta,
+    :gravedadAlerta,
+    :gravedadAnterior,
+    :calificacionEnfermero,
+    :auditoriaEndermero,
+    :anotacionMedico,
+    :auditoriaMedico,
+    :ocultarAlerta
   ]
 end
 
 defmodule Isla.Episodio do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :nhc,
-    :fecha_ingreso,
-    :fecha_egreso,
-    :razon_egreso,
-    :auditoria_egreso
+    :idHospital,
+    :numeroHC,
+    :fechaIngreso,
+    :fechaEgreso,
+    :razonEgreso,
+    :cuil
   ]
 end

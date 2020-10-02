@@ -37,12 +37,12 @@ defmodule Hospitales do
   end
 
   def handle_call({:new_hospital, hospital}, _from, state) do
-    Hospitales.Supervisor.new_hospital(hospital.id_hospital)
+    Hospitales.Supervisor.new_hospital(hospital.idHospital)
 
     state =
-      Map.put(state, :hospitales, [hospital.id_hospital | state.hospitales])
+      Map.put(state, :hospitales, [hospital.idHospital | state.hospitales])
 
-    sync_id = Hospital.set_hospital(hospital.id_hospital, hospital)
+    sync_id = Hospital.set_hospital(hospital.idHospital, hospital)
     {:reply, sync_id, state}
   end
 
@@ -64,11 +64,11 @@ defmodule Hospitales.Supervisor do
     DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def new_hospital(id_hospital) do
+  def new_hospital(idHospital) do
     children =
       Supervisor.child_spec(
-        {Hospital, [id_hospital: id_hospital]},
-        id: {Hospital, Utils.get_name_id(id_hospital)}
+        {Hospital, [idHospital: idHospital]},
+        id: {Hospital, Utils.get_name_id(idHospital)}
       )
 
     DynamicSupervisor.start_child(__MODULE__, children)

@@ -3,7 +3,7 @@ defmodule Hospital do
   use GenServer
 
   defstruct sync_id: 0,
-            id_hospital: nil,
+            idHosp: nil,
             nombre: nil,
             calle: nil,
             numero: nil,
@@ -40,12 +40,12 @@ defmodule Hospital do
     )
   end
 
-  def get_state(id_hospital) do
-    GenServer.call(get_name_id(id_hospital), {:get_state})
+  def get_state(idHosp) do
+    GenServer.call(get_name_id(idHosp), {:get_state})
   end
 
-  def get_hospital(id_hospital) do
-    GenServer.call(get_name_id(id_hospital), {:get, :hospital})
+  def get_hospital(idHosp) do
+    GenServer.call(get_name_id(idHosp), {:get, :hospital})
   end
 
   def get_usuarios(hospital, sync_id) do
@@ -80,15 +80,15 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:get_update, sync_id})
   end
 
-  def set_hospital(id_hospital, hospital) do
-    GenServer.call(get_name_id(id_hospital), {:set, :hospital, hospital})
+  def set_hospital(idHosp, hospital) do
+    GenServer.call(get_name_id(idHosp), {:set, :hospital, hospital})
   end
 
   def init(opts) do
     state = %{
       sync_id: 0,
       hospital: %Hospital{
-        id_hospital: opts[:id_hospital]
+        idHosp: opts[:idHospital]
       },
       camas: {0, []},
       hcpacientes: {0, []},
@@ -102,13 +102,13 @@ defmodule Hospital do
   end
 
   def start_link(opts) do
-    hospital = opts[:id_hospital]
+    hospital = opts[:idHospital]
     GenServer.start_link(__MODULE__, opts, name: get_name_id(hospital))
   end
 
   def handle_call({:new, table, registro}, _from, state) do
     if table == :islas do
-      Hospital.Supervisor.new_isla(registro.id_hospital, registro.id_isla)
+      Hospital.Supervisor.new_isla(registro.idHospital, registro.idIsla)
     end
 
     {_maxSync, registros} = Map.get(state, table)
@@ -268,51 +268,53 @@ defmodule Hospital.Supervisor do
   def new_isla(hospital, isla) do
     children =
       Supervisor.child_spec(
-        {Isla, [id_isla: isla, id_hospital: hospital]},
+        {Isla, [idIsla: isla, idHospital: hospital]},
         id: {Isla, Utils.get_name_id(hospital, isla)}
       )
 
-    DynamicSupervisor.start_child(__MODULE__, children)
+    IO.inspect({Isla, Utils.get_name_id(hospital, isla)})
+
+    IO.inspect(DynamicSupervisor.start_child(__MODULE__, children))
   end
 end
 
 defmodule Hospital.UsuarioHospital do
-  defstruct [
+  defstruct([
     :sync_id,
     :sync_id_usuario,
-    :id_hospital,
+    :idHospital,
     :cuil,
-    :id_rol,
-    :estado_laboral
-  ]
+    :idRol,
+    :estadoLaboral
+  ])
 end
 
 defmodule Hospital.Isla do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :id_isla,
-    :id_lider
+    :idHospital,
+    :idIsla,
+    :idLider
   ]
 end
 
 defmodule Hospital.Sector do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :id_isla,
-    :id_sector,
-    :nombre_sector,
-    :camas
+    :idHospital,
+    :idIsla,
+    :idSector,
+    :camaDesde,
+    :camaHasta
   ]
 end
 
 defmodule Hospital.UsuarioSector do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :id_isla,
-    :id_sector,
+    :idHospital,
+    :idIsla,
+    :idSector,
     :cuil,
     :estado
   ]
@@ -321,44 +323,47 @@ end
 defmodule Hospital.Cama do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :id_isla,
-    :id_sector,
-    :id_cama,
-    :nhc,
-    :ubicacion_x,
-    :ubicacion_y,
-    :orientacion_grados
+    :idHospital,
+    :idIsla,
+    :idSector,
+    :idCama,
+    :numeroHCPac,
+    :ubicacionX,
+    :ubicacionY,
+    :orientacion,
+    :estado
   ]
 end
 
 defmodule Hospital.HCpaciente do
   defstruct [
     :sync_id,
-    :id_hospital,
-    :nhc,
-    :tipo_documento,
-    :pais_de_expedicion,
-    :ndocumento,
-    :nombres,
-    :apellidos,
+    :idHospital,
+    :numeroHC,
+    :tipoDocumento,
+    :paisExp,
+    :dni,
+    :nombre,
+    :apellido,
     :nacionalidad,
-    :sexo_biologico,
+    # :sexo_biologico,
+    :genero,
     :calle,
     :numero,
-    :piso_y_depto,
-    :cp,
+    :piso,
+    :CP,
     :telefono,
-    :telefono_familiar_1,
-    :telefono_familiar_2,
-    :fecha_nacimiento,
+    :telefonoFamiliar1,
+    :telefonoFamiliar2,
+    :fechaNac,
     :gravedad,
-    :nivel_de_confianza,
-    :auditoria_comorbilidades,
-    :icc_grado_2_o_mas,
+    :nivelConfianza,
+    :auditoriaComorbilidades,
+    :iccGrado2,
     :epoc,
-    :diabetes_con_danno_de_organo_blanco,
+    :diabetesDanioOrgano,
     :hipertension,
-    :enfermedad_renal_cronica
+    :obesidad,
+    :enfermedadRenalCronica
   ]
 end

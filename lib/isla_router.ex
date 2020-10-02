@@ -17,7 +17,10 @@ defmodule Isla.Router do
         {:ok, req_body, req0} = :cowboy_req.read_body(req)
 
         try do
-          req_json = Poison.decode!(req_body, keys: :atoms!)
+          # Conviene usar ":atoms!" para que no se creen átomos nuevos
+          req_json = Poison.decode!(req_body, keys: :atoms)
+          IO.puts("\nJSON:")
+          IO.inspect(req_json)
 
           %{
             :version => version,
@@ -26,9 +29,6 @@ defmodule Isla.Router do
             :id => id,
             :token => token
           } = req_json
-
-          IO.puts("\nNew:")
-          IO.inspect(req_json)
 
           resp = connect_and_run_method(version, method, params, id, token)
 
@@ -43,7 +43,7 @@ defmodule Isla.Router do
           reason ->
             IO.puts("\nERROR:")
             IO.inspect(reason)
-            resp = send_badreq()
+            resp = send_badreq() |> Map.put(:result, %{error: reason.message})
             body = Poison.encode!(resp) <> "\n"
 
             headers = headers()
@@ -121,24 +121,40 @@ defmodule Isla.Router do
       )
 
     if token != nil do
-      %{resp: "200 OK", result: %{token: token}}
+      if params[:hospital] != nil && params[:isla] != nil &&
+           params[:sync_id_hospital] && params[:sync_id_isla] do
+        data_isla =
+          Isla.get_update(
+            params.hospital,
+            params.isla,
+            params.sync_id_isla
+          )
+
+        data_hospital =
+          Hospital.get_update(params.hospital, params.sync_id_hospital)
+
+        data = Map.merge(data_isla, data_hospital)
+        %{resp: "200 OK", result: %{token: token, data: data}}
+      else
+        %{resp: "200 OK", result: %{token: token}}
+      end
     else
       %{resp: "403 Forbidden", result: %{}}
     end
   end
 
-  defp run_method("0.0", "new_control_enfermeria", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+  defp run_method("0.0", "new_signo_vital", params, connection) do
+    data = Map.put(params.data, :idHospital, connection.hospital)
 
     {sync_id, triage} =
-      Isla.new_control_enfermeria(connection.hospital, connection.isla, data)
+      Isla.new_signo_vital(connection.hospital, connection.isla, data)
 
     %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
   end
 
-  defp run_method("0.0", "get_controles_enfermeria", params, connection) do
+  defp run_method("0.0", "get_signos_vitales", params, connection) do
     data =
-      Isla.get_controles_enfermeria(
+      Isla.get_signos_vitales(
         connection.hospital,
         connection.isla,
         params.sync_id
@@ -148,7 +164,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_laboratorio", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
 
     {sync_id, triage} =
       Isla.new_laboratorio(connection.hospital, connection.isla, data)
@@ -168,7 +184,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_rx_torax", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
 
     {sync_id, triage} =
       Isla.new_rx_torax(connection.hospital, connection.isla, data)
@@ -184,7 +200,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_alerta", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
 
     {sync_id, triage} =
       Isla.new_alerta(connection.hospital, connection.isla, data)
@@ -200,7 +216,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_episodio", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
 
     {sync_id, triage} =
       Isla.new_episodio(connection.hospital, connection.isla, data)
@@ -216,7 +232,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_cama", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_cama(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -227,7 +243,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_hcpaciente", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_hcpaciente(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -238,7 +254,8 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_isla", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
+    IO.inspect(data)
     sync_id = Hospital.new_isla(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -249,7 +266,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_sector", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_sector(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -260,7 +277,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_usuario_hospital", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_usuario_hospital(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -271,7 +288,7 @@ defmodule Isla.Router do
   end
 
   defp run_method("0.0", "new_usuario_sector", params, connection) do
-    data = Map.put(params.data, :id_hospital, connection.hospital)
+    data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_usuario_sector(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
