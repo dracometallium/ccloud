@@ -1,14 +1,19 @@
 defmodule Hospital do
-  import Utils
   use GenServer
+  use Ecto.Schema
+  import Utils
+  import Ecto.Query
 
-  defstruct sync_id: 0,
-            idHosp: nil,
-            nombre: nil,
-            calle: nil,
-            numero: nil,
-            cp: nil,
-            plano_camas: nil
+  @primary_key false
+  schema "Hospital" do
+    field(:sync_id, :integer)
+    field(:idHosp, :string, primary_key: true)
+    field(:nombre, :string)
+    field(:calle, :string)
+    field(:numero, :string)
+    field(:cp, :string)
+    field(:plano_camas, :string)
+  end
 
   def new_cama(hospital, cama) do
     GenServer.call(get_name_id(hospital), {:new, :camas, cama})
@@ -80,24 +85,8 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:get_update, sync_id})
   end
 
-  def set_hospital(idHosp, hospital) do
-    GenServer.call(get_name_id(idHosp), {:set, :hospital, hospital})
-  end
-
   def init(opts) do
-    state = %{
-      sync_id: 0,
-      hospital: %Hospital{
-        idHosp: opts[:idHospital]
-      },
-      camas: {0, []},
-      hcpacientes: {0, []},
-      islas: {0, []},
-      sectores: {0, []},
-      usuarios_hospital: {0, []},
-      usuarios_sector: {0, []}
-    }
-
+    state = %{sync_id: opts[:sync_id], idHosp: opts[:idHospital]}
     {:ok, state}
   end
 
@@ -107,12 +96,6 @@ defmodule Hospital do
   end
 
   def handle_call({:new, table, registro}, _from, state) do
-    if table == :islas do
-      Hospital.Supervisor.new_isla(registro.idHospital, registro.idIsla)
-    end
-
-    {_maxSync, registros} = Map.get(state, table)
-
     sync_id =
       if registro[:sync_id] == nil do
         state.sync_id + 1
@@ -129,11 +112,43 @@ defmodule Hospital do
       end
 
     registro = struct(table2module(table), registro)
-    registros = [Map.put(registro, :sync_id, sync_id) | registros]
 
-    nstate =
-      Map.put(state, table, {sync_id, registros})
-      |> Map.put(:sync_id, sync_id)
+    if table == :islas do
+      Ecto.Multi.new()
+      |> Ecto.Multi.insert(:registro, registro)
+      |> Ecto.Multi.insert(:sync_id_isla, %CCloud.Repo.SyncIDIsla{
+        idHosp: state.idHosp,
+        idIsla: registro.idIsla,
+        sync_id: 0
+      })
+      |> Ecto.Multi.update(
+        :max_sync_id,
+        Ecto.Changeset.change(
+          %CCloud.Repo.SyncIDHosp{
+            idHosp: state.idHosp
+          },
+          sync_id: sync_id
+        )
+      )
+      |> CCloud.Repo.transaction()
+
+      Hospital.Supervisor.new_isla(state.idHosp, registro.idIsla, 0)
+    else
+      Ecto.Multi.new()
+      |> Ecto.Multi.insert(:registro, registro)
+      |> Ecto.Multi.update(
+        :max_sync_id,
+        Ecto.Changeset.change(
+          %CCloud.Repo.SyncIDHosp{
+            idHosp: state.idHosp
+          },
+          sync_id: sync_id
+        )
+      )
+      |> CCloud.Repo.transaction()
+    end
+
+    nstate = Map.put(state, :sync_id, sync_id)
 
     {:reply, sync_id, nstate}
   end
@@ -142,12 +157,9 @@ defmodule Hospital do
     {:reply, state, state}
   end
 
-  def handle_call({:get, :hospital}, _from, state) do
-    {:reply, state.hospital, state}
-  end
-
-  def handle_call({:get, :usuarios, sync_id}, _from, state) do
-    {_, usuarios_hospital} = state.usuarios_hospital
+  def handle_call({:get, :usuarios, sync_id}, from, state) do
+    {_, usuarios_hospital, _} =
+      handle_call({:get, :usuarios_hospital, sync_id}, from, state)
 
     usuarios_id =
       Enum.filter(
@@ -170,30 +182,70 @@ defmodule Hospital do
   end
 
   def handle_call({:get, table, sync_id}, _from, state) do
-    {l_sync, registros} = Map.get(state, table)
-
     result =
-      if l_sync < sync_id do
-        []
-      else
-        filter_syncid(registros, sync_id)
+      case idH(table) do
+        :idHospital ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospital == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHosp ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHosp == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHospitalCama ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospitalCama == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHospitalLab ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospitalLab == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHospitalRad ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospitalRad == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :id_hospital ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.id_hospital == ^state.idHosp,
+              select: r
+            )
+          )
       end
 
     {:reply, result, state}
-  end
-
-  def handle_call({:set, :hospital, hospital}, _from, state) do
-    sync_id = state.sync_id + 1
-
-    hospital =
-      Map.merge(state.hospital, hospital)
-      |> Map.put(:sync_id, sync_id)
-
-    state =
-      Map.put(state, :hospital, hospital)
-      |> Map.put(:sync_id, sync_id)
-
-    {:reply, state.hospital, state}
   end
 
   def handle_call({:get_update, sync_id}, from, state) do
@@ -203,7 +255,8 @@ defmodule Hospital do
       :islas,
       :sectores,
       :usuarios_hospital,
-      :usuarios_sector
+      :usuarios_sector,
+      :hospitales
     ]
 
     hospital =
@@ -250,6 +303,7 @@ defmodule Hospital do
       :usuarios_sector -> Hospital.UsuarioSector
       :camas -> Hospital.Cama
       :hcpacientes -> Hospital.HCpaciente
+      :hospitales -> Hospital
     end
   end
 end
@@ -261,109 +315,146 @@ defmodule Hospital.Supervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
+  def load(idHosp) do
+    import Ecto.Query
+
+    islas =
+      CCloud.Repo.all(
+        from(r in CCloud.Repo.SyncIDIsla,
+          select: r,
+          where: r.idHosp == ^idHosp
+        )
+      )
+
+    Enum.all?(
+      islas,
+      fn i ->
+        Hospital.Supervisor.new_isla(i.idHosp, i.idIsla, i.sync_id)
+        true
+      end
+    )
+  end
+
   def start_link(opts) do
     DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def new_isla(hospital, isla) do
+  def new_isla(hospital, isla, sync_id) do
     children =
       Supervisor.child_spec(
-        {Isla, [idIsla: isla, idHospital: hospital]},
+        {Isla, [idIsla: isla, idHospital: hospital, sync_id: sync_id]},
         id: {Isla, Utils.get_name_id(hospital, isla)}
       )
 
     IO.inspect({Isla, Utils.get_name_id(hospital, isla)})
 
-    IO.inspect(DynamicSupervisor.start_child(__MODULE__, children))
+    DynamicSupervisor.start_child(__MODULE__, children)
   end
 end
 
 defmodule Hospital.UsuarioHospital do
-  defstruct([
-    :sync_id,
-    :sync_id_usuario,
-    :idHospital,
-    :cuil,
-    :idRol,
-    :estadoLaboral
-  ])
+  use Ecto.Schema
+
+  @primary_key false
+  schema "UsuarioHospital" do
+    field(:sync_id, :integer)
+    field(:sync_id_usuario, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:cuil, :string, primary_key: true)
+    field(:idRol, :string, primary_key: true)
+    field(:estadoLaboral, :integer)
+  end
 end
 
 defmodule Hospital.Isla do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :idIsla,
-    :idLider
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Isla" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:idIsla, :string, primary_key: true)
+    field(:idLider, :integer)
+  end
 end
 
 defmodule Hospital.Sector do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :idIsla,
-    :idSector,
-    :camaDesde,
-    :camaHasta
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Sector" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:idIsla, :string, primary_key: true)
+    field(:idSector, :integer, primary_key: true)
+    field(:camaDesde, :string)
+    field(:camaHasta, :string)
+  end
 end
 
 defmodule Hospital.UsuarioSector do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :idIsla,
-    :idSector,
-    :cuil,
-    :estado
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "UsuarioSector" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:idIsla, :string, primary_key: true)
+    field(:idSector, :integer, primary_key: true)
+    field(:cuil, :string)
+    field(:estado, :integer)
+  end
 end
 
 defmodule Hospital.Cama do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :idIsla,
-    :idSector,
-    :idCama,
-    :numeroHCPac,
-    :ubicacionX,
-    :ubicacionY,
-    :orientacion,
-    :estado
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Cama" do
+    field(:sync_id, :integer)
+    field(:idHospitalCama, :string, primary_key: true)
+    field(:idIsla, :string, primary_key: true)
+    field(:idSector, :integer, primary_key: true)
+    field(:idCama, :string, primary_key: true)
+    field(:numeroHCPac, :string)
+    field(:ubicacionX, :integer)
+    field(:ubicacionY, :integer)
+    field(:orientacion, :string)
+    field(:estado, :string)
+  end
 end
 
 defmodule Hospital.HCpaciente do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :numeroHC,
-    :tipoDocumento,
-    :paisExp,
-    :dni,
-    :nombre,
-    :apellido,
-    :nacionalidad,
-    # :sexo_biologico,
-    :genero,
-    :calle,
-    :numero,
-    :piso,
-    :CP,
-    :telefono,
-    :telefonoFamiliar1,
-    :telefonoFamiliar2,
-    :fechaNac,
-    :gravedad,
-    :nivelConfianza,
-    :auditoriaComorbilidades,
-    :iccGrado2,
-    :epoc,
-    :diabetesDanioOrgano,
-    :hipertension,
-    :obesidad,
-    :enfermedadRenalCronica
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "HCpaciente" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:numeroHC, :string, primary_key: true)
+    field(:tipoDocumento, :string)
+    field(:paisExp, :string)
+    field(:dni, :integer)
+    field(:nombre, :string)
+    field(:apellido, :string)
+    field(:nacionalidad, :string)
+    field(:genero, :string)
+    field(:calle, :string)
+    field(:numero, :string)
+    field(:piso, :string)
+    field(:CP, :string)
+    field(:telefono, :string)
+    field(:telefonoFamiliar, :string)
+    field(:telefonoFamiliar2, :string)
+    field(:fechaNac, :integer)
+    field(:gravedad, :integer)
+    field(:nivelConfianza, :integer)
+    field(:auditoriaComorbilidades, :string)
+    field(:iccGrado2, :integer)
+    field(:epoc, :integer)
+    field(:diabetesDanioOrgano, :integer)
+    field(:hipertension, :integer)
+    field(:obesidad, :integer)
+    field(:enfermedadRenalCronica, :integer)
+  end
 end

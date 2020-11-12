@@ -22,4 +22,21 @@ defmodule Utils do
       filter_syncid(tail, sync_id, [head | result])
     end
   end
+
+  def idH(table) do
+    case table do
+      :alertas -> :idHospital
+      :camas -> :idHospitalCama
+      :episodios -> :idHospital
+      :hcpacientes -> :idHospital
+      :hospitales -> :idHosp
+      :islas -> :idHosp
+      :laboratorios -> :idHospitalLab
+      :rx_toraxs -> :idHospitalRad
+      :sectores -> :idHospital
+      :signosVitales -> :id_hospital
+      :usuarios_hospital -> :idHospital
+      :usuarios_sector -> :idHospital
+    end
+  end
 end

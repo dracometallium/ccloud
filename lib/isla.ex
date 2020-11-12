@@ -1,15 +1,8 @@
 defmodule Isla do
   use GenServer
+  use Ecto.Schema
+  import Ecto.Query
   import Utils
-
-  defstruct sync_id: 0,
-            idHospital: nil,
-            idIsla: nil,
-            alertas: {0, []},
-            signosVitales: {0, []},
-            episodios: {0, []},
-            laboratorios: {0, []},
-            rx_toraxs: {0, []}
 
   def new_signo_vital(hospital, isla, signo_vital) do
     GenServer.call(
@@ -64,7 +57,6 @@ defmodule Isla do
   end
 
   def get_update(hospital, isla, sync_id) do
-    IO.puts("\nTEST!!!")
     GenServer.call(get_name_id(hospital, isla), {:get_update, sync_id})
   end
 
@@ -73,9 +65,13 @@ defmodule Isla do
   end
 
   def init(opts) do
-    hospital = opts[:idHospital]
-    isla = opts[:idIsla]
-    {:ok, %Isla{idHospital: hospital, idIsla: isla}}
+    state = %{
+      sync_id: opts[:sync_id],
+      idIsla: opts[:idIsla],
+      idHosp: opts[:idHospital]
+    }
+
+    {:ok, state}
   end
 
   def start_link(opts) do
@@ -85,8 +81,6 @@ defmodule Isla do
   end
 
   def handle_call({:new, table, registro}, _from, state) do
-    {_maxSync, registros} = Map.get(state, table)
-
     sync_id =
       if registro[:sync_id] == nil do
         state.sync_id + 1
@@ -94,12 +88,25 @@ defmodule Isla do
         registro.sync_id
       end
 
+    Map.put(registro, :sync_id, sync_id)
     registro = struct(table2module(table), registro)
-    registros = [Map.put(registro, :sync_id, sync_id) | registros]
+    CCloud.Repo.insert(registro)
 
-    nstate =
-      Map.put(state, table, {sync_id, registros})
-      |> Map.put(:sync_id, sync_id)
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(:registro, registro)
+    |> Ecto.Multi.update(
+      :max_sync_id,
+      Ecto.Changeset.change(
+        %CCloud.Repo.SyncIDIsla{
+          idHosp: registro.idHospital,
+          idIsla: registro.idIsla
+        },
+        sync_id: sync_id
+      )
+    )
+    |> CCloud.Repo.transaction()
+
+    nstate = Map.put(state, :sync_id, sync_id)
 
     {triage, nstate} = run_triage(nstate)
 
@@ -107,13 +114,67 @@ defmodule Isla do
   end
 
   def handle_call({:get, table, sync_id}, _from, state) do
-    {l_sync, registros} = Map.get(state, table)
-
     result =
-      if l_sync < sync_id do
-        []
-      else
-        filter_syncid(registros, sync_id)
+      case idH(table) do
+        :idHospital ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospital == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHosp ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHosp == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHospitalCama ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospitalCama == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHospitalLab ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospitalLab == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :idHospitalRad ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.idHospitalRad == ^state.idHosp,
+              select: r
+            )
+          )
+
+        :id_hospital ->
+          CCloud.Repo.all(
+            from(r in table2module(table),
+              where:
+                r.sync_id >= ^sync_id and
+                  r.id_hospital == ^state.idHosp,
+              select: r
+            )
+          )
       end
 
     {:reply, result, state}
@@ -125,7 +186,8 @@ defmodule Isla do
       :laboratorios,
       :rx_toraxs,
       :alertas,
-      :episodios
+      :episodios,
+      :isla
     ]
 
     result = get_fromlist(list, sync_id, state)
@@ -153,7 +215,7 @@ defmodule Isla do
 
   defp run_triage(state) do
     # TODO
-    {Enum.random(0..3), state}
+    {0, state}
   end
 
   defp table2module(table) do
@@ -168,75 +230,92 @@ defmodule Isla do
 end
 
 defmodule Isla.SignoVital do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :numeroHCSignosVitales,
-    :fechaSignosVitales,
-    :auditoria,
-    :frec_resp,
-    :sat_oxi,
-    :disnea,
-    :oxigenoSuplementario,
-    :fraccionInsOxigeno,
-    :presSist,
-    :frec_card,
-    :temp,
-    :nivelConciencia
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "SignoVital" do
+    field(:sync_id, :integer)
+    field(:id_hospital, :string, primary_key: true)
+    field(:numeroHCSignosVitales, :integer, primary_key: true)
+    field(:fechaSignosVitales, :integer, primary_key: true)
+    field(:auditoria, :string)
+    field(:frec_resp, :integer)
+    field(:sat_oxi, :integer)
+    field(:disnea, :string)
+    field(:oxigenoSuplementario, :string)
+    field(:fraccionInsOxigeno, :integer)
+    field(:presSist, :integer)
+    field(:frec_card, :integer)
+    field(:temp, :float)
+    field(:nivelConciencia, :string)
+  end
 end
 
 defmodule Isla.Laboratorio do
-  defstruct [
-    :sync_id,
-    :idHospitalLab,
-    :numeroHCLab,
-    :fecha,
-    :cuil,
-    :dimeroD,
-    :linfopenia,
-    :plaquetas,
-    :ldh,
-    :ferritina,
-    :proteinaC
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Laboratorio" do
+    field(:sync_id, :integer)
+    field(:idHospitalLab, :string, primary_key: true)
+    field(:numeroHCLab, :integer, primary_key: true)
+    field(:fecha, :integer, primary_key: true)
+    field(:cuil, :string)
+    field(:dimeroD, :integer)
+    field(:linfopenia, :integer)
+    field(:plaquetas, :integer)
+    field(:ldh, :integer)
+    field(:ferritina, :integer)
+    field(:proteinaC, :float)
+  end
 end
 
 defmodule Isla.RXTorax do
-  defstruct [
-    :sync_id,
-    :idHospitalRad,
-    :numeroHCRad,
-    :fechaRad,
-    :cuil,
-    :reultadoRad
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "RXTorax" do
+    field(:sync_id, :integer)
+    field(:idHospitalRad, :string, primary_key: true)
+    field(:numeroHCRad, :integer, primary_key: true)
+    field(:fechaRad, :integer, primary_key: true)
+    field(:cuil, :string)
+    field(:resultadoRad, :string)
+  end
 end
 
 defmodule Isla.Alerta do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :numeroHC,
-    :fechaAlerta,
-    :gravedadAlerta,
-    :gravedadAnterior,
-    :calificacionEnfermero,
-    :auditoriaEndermero,
-    :anotacionMedico,
-    :auditoriaMedico,
-    :ocultarAlerta
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Alerta" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:numeroHC, :integer, primary_key: true)
+    field(:fechaAlerta, :integer, primary_key: true)
+    field(:gravedadAlerta, :integer)
+    field(:gravedadAnterior, :integer)
+    field(:get_laboratorios, :string)
+    field(:anotacionEnfermero, :string)
+    field(:auditoriaEnfermero, :string)
+    field(:calificacionMedico, :string)
+    field(:anotacionMedico, :string)
+    field(:auditoriaMedico, :string)
+    field(:ocultarAlerta, :integer)
+  end
 end
 
 defmodule Isla.Episodio do
-  defstruct [
-    :sync_id,
-    :idHospital,
-    :numeroHC,
-    :fechaIngreso,
-    :fechaEgreso,
-    :razonEgreso,
-    :cuil
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Episodio" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:numeroHC, :integer, primary_key: true)
+    field(:fechaIngreso, :integer, primary_key: true)
+    field(:fechaEgreso, :integer)
+    field(:razonEgreso, :string)
+    field(:cuil, :string)
+  end
 end

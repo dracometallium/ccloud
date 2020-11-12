@@ -1,8 +1,6 @@
 defmodule Hospitales do
   use GenServer
-
-  defstruct hospitales: [],
-            usuarios: []
+  import Ecto.Query
 
   def new_hospital(hospital) do
     GenServer.call(__MODULE__, {:new_hospital, hospital})
@@ -21,7 +19,7 @@ defmodule Hospitales do
   end
 
   def init(_opts) do
-    {:ok, %Hospitales{}}
+    {:ok, %{}}
   end
 
   def start_link(opts) do
@@ -33,22 +31,27 @@ defmodule Hospitales do
   end
 
   def handle_call({:get_usuarios}, _from, state) do
-    {:reply, state.usuarios, state}
+    usuarios = CCloud.Repo.all(from(r in Hospitales.Usuario, select: r))
+
+    {:reply, usuarios, state}
   end
 
   def handle_call({:new_hospital, hospital}, _from, state) do
-    Hospitales.Supervisor.new_hospital(hospital.idHospital)
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(:registro, struct(Hospital, hospital))
+    |> Ecto.Multi.insert(:sync_id_isla, %CCloud.Repo.SyncIDHosp{
+      idHosp: hospital.idHosp,
+      sync_id: 0
+    })
+    |> CCloud.Repo.transaction()
 
-    state =
-      Map.put(state, :hospitales, [hospital.idHospital | state.hospitales])
+    Hospitales.Supervisor.new_hospital(hospital.idHosp, 0)
 
-    sync_id = Hospital.set_hospital(hospital.idHospital, hospital)
-    {:reply, sync_id, state}
+    {:reply, 0, state}
   end
 
   def handle_call({:new_usuario, usuario}, _from, state) do
-    usuario = struct(Hospitales.Usuario, usuario)
-    state = Map.put(state, :usuarios, [usuario | state.usuarios])
+    CCloud.Repo.insert(struct(Hospitales.Usuario, usuario))
     {:reply, usuario, state}
   end
 end
@@ -64,10 +67,30 @@ defmodule Hospitales.Supervisor do
     DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def new_hospital(idHospital) do
+  def load() do
+    import Ecto.Query
+
+    hospitales =
+      CCloud.Repo.all(
+        from(r in CCloud.Repo.SyncIDHosp,
+          select: r
+        )
+      )
+
+    Enum.all?(
+      hospitales,
+      fn h ->
+        new_hospital(h.idHosp, h.sync_id)
+        Hospital.Supervisor.load(h.idHosp)
+        true
+      end
+    )
+  end
+
+  def new_hospital(idHospital, sync_id) do
     children =
       Supervisor.child_spec(
-        {Hospital, [idHospital: idHospital]},
+        {Hospital, [idHospital: idHospital, sync_id: sync_id]},
         id: {Hospital, Utils.get_name_id(idHospital)}
       )
 
@@ -76,12 +99,15 @@ defmodule Hospitales.Supervisor do
 end
 
 defmodule Hospitales.Usuario do
-  defstruct [
-    :cuil,
-    :clave,
-    :nombre,
-    :apellido,
-    :email,
-    :telefono
-  ]
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Usuario" do
+    field(:cuil, :string, primary_key: true)
+    field(:clave, :string)
+    field(:nombre, :string)
+    field(:apellido, :string)
+    field(:email, :string)
+    field(:telefono, :string)
+  end
 end

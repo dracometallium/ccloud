@@ -140,9 +140,14 @@ defmodule SysUsers do
 end
 
 defmodule SysUsers.Connection do
-  defstruct user: nil,
-            hospital: nil,
-            isla: nil,
-            sector: nil,
-            timeout: nil
+  use Ecto.Schema
+
+  @primary_key false
+  schema "Usuario" do
+    field(:user, :string, primary_key: true)
+    field(:hospital, :string)
+    field(:isla, :string)
+    field(:sector, :string)
+    field(:timeout, :string)
+  end
 end

@@ -10,7 +10,7 @@ defmodule CCloud.Application do
       # keyfile: "priv/keys/localhost.key",
       # certfile: "priv/keys/localhost.crt",
       # otp_app: :simple_server,
-      port: 8080
+      port: 8081
     ]
 
     routes = [
@@ -25,6 +25,10 @@ defmodule CCloud.Application do
 
     children = [
       # Starts a worker by calling: SimpleServer.Worker.start_link(arg)
+      Supervisor.child_spec(
+        {CCloud.Repo, []},
+        id: {CCloud.Repo, CCloud.Repo}
+      ),
       Supervisor.child_spec(
         {Hospitales, []},
         id: {Hospitales, Hosplitales}
@@ -45,6 +49,8 @@ defmodule CCloud.Application do
 
     opts = [strategy: :one_for_one, name: Application.Supervisor]
 
-    Supervisor.start_link(children, opts)
+    result = Supervisor.start_link(children, opts)
+    Hospitales.Supervisor.load()
+    result
   end
 end
