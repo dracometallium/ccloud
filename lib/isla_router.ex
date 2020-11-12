@@ -1,5 +1,7 @@
 defmodule Isla.Router do
   def init(req, state) do
+    IO.puts("\nconnection")
+
     case :cowboy_req.headers(req)["upgrade"] do
       "websocket" -> {:cowboy_websocket, req, state}
       nil -> http_handle(req, state)
@@ -41,6 +43,8 @@ defmodule Isla.Router do
           {:ok, req1, state}
         rescue
           reason ->
+            IO.puts("\nERROR\nreq:")
+            IO.inspect(req)
             IO.puts("\nERROR:")
             IO.inspect(reason)
             resp = send_badreq() |> Map.put(:result, %{error: reason.message})
@@ -78,13 +82,18 @@ defmodule Isla.Router do
         :token => token
       } = req_json
 
+      IO.puts("\nWS JSON:")
+      IO.inspect(req_json)
+
       resp = connect_and_run_method(version, method, params, id, token)
       body = Poison.encode!(resp) <> "\n"
 
       {[{:text, body}], state}
     rescue
       reason ->
-        IO.puts("\nERROR:")
+        IO.puts("\nERROR\nbody:")
+        IO.inspect(body)
+        IO.puts("\nreason:")
         IO.inspect(reason)
         body = send_badreq()
         {[{:text, body}], state}
