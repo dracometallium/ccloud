@@ -30,7 +30,7 @@ defmodule Utils do
       :episodios -> :idHospital
       :hcpacientes -> :idHospital
       :hospitales -> :idHosp
-      :islas -> :idHosp
+      :islas -> :idHospital
       :laboratorios -> :idHospitalLab
       :rx_toraxs -> :idHospitalRad
       :sectores -> :idHospital

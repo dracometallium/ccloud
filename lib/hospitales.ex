@@ -82,6 +82,8 @@ defmodule Hospitales.Supervisor do
       fn h ->
         new_hospital(h.idHosp, h.sync_id)
         Hospital.Supervisor.load(h.idHosp)
+        IO.puts "new hospital"
+        IO.puts h.idHosp
         true
       end
     )

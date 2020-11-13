@@ -88,7 +88,7 @@ defmodule Isla do
         registro.sync_id
       end
 
-    Map.put(registro, :sync_id, sync_id)
+    registro = Map.put(registro, :sync_id, sync_id)
     registro = struct(table2module(table), registro)
     CCloud.Repo.insert(registro)
 
@@ -177,6 +177,7 @@ defmodule Isla do
           )
       end
 
+    result = Enum.map(result, fn x -> Map.delete(x, :__meta__) end)
     {:reply, result, state}
   end
 
@@ -315,7 +316,7 @@ defmodule Isla.Episodio do
     field(:numeroHC, :integer, primary_key: true)
     field(:fechaIngreso, :integer, primary_key: true)
     field(:fechaEgreso, :integer)
-    field(:razonEgreso, :string)
+    field(:razon, :string)
     field(:cuil, :string)
   end
 end

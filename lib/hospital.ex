@@ -110,7 +110,8 @@ defmodule Hospital do
       else
         {sync_id, registro}
       end
-
+    
+    registro = Map.put(registro, :sync_id, sync_id)
     registro = struct(table2module(table), registro)
 
     if table == :islas do
@@ -244,7 +245,7 @@ defmodule Hospital do
             )
           )
       end
-
+    result = Enum.map(result, fn x -> Map.delete(x, :__meta__) end)
     {:reply, result, state}
   end
 
@@ -330,6 +331,9 @@ defmodule Hospital.Supervisor do
       islas,
       fn i ->
         Hospital.Supervisor.new_isla(i.idHosp, i.idIsla, i.sync_id)
+        IO.puts "new isla"
+        IO.puts i.idHosp
+        IO.puts i.idIsla
         true
       end
     )
@@ -434,7 +438,7 @@ defmodule Hospital.HCpaciente do
     field(:numeroHC, :string, primary_key: true)
     field(:tipoDocumento, :string)
     field(:paisExp, :string)
-    field(:dni, :integer)
+    field(:dni, :string)
     field(:nombre, :string)
     field(:apellido, :string)
     field(:nacionalidad, :string)
