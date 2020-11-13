@@ -67,7 +67,7 @@ CREATE TABLE `Cama` (
   `idCama` varchar(150),
   `numeroHCPac` varchar(15),
   `ubicacionX` int(11),
-  `ubicacioneY` int(11),
+  `ubicacionY` int(11),
   `orientacion` varchar(150),
   `estado` varchar(150)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
