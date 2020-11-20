@@ -98,8 +98,8 @@ defmodule Isla do
       :max_sync_id,
       Ecto.Changeset.change(
         %CCloud.Repo.SyncIDIsla{
-          idHosp: registro.idHospital,
-          idIsla: registro.idIsla
+          idHosp: state.idHosp,
+          idIsla: state.idIsla
         },
         sync_id: sync_id
       )
@@ -237,7 +237,7 @@ defmodule Isla.SignoVital do
   schema "SignoVital" do
     field(:sync_id, :integer)
     field(:id_hospital, :string, primary_key: true)
-    field(:numeroHCSignosVitales, :integer, primary_key: true)
+    field(:numeroHCSignosVitales, :string, primary_key: true)
     field(:fechaSignosVitales, :integer, primary_key: true)
     field(:auditoria, :string)
     field(:frec_resp, :integer)
@@ -259,7 +259,7 @@ defmodule Isla.Laboratorio do
   schema "Laboratorio" do
     field(:sync_id, :integer)
     field(:idHospitalLab, :string, primary_key: true)
-    field(:numeroHCLab, :integer, primary_key: true)
+    field(:numeroHCLab, :string, primary_key: true)
     field(:fecha, :integer, primary_key: true)
     field(:cuil, :string)
     field(:dimeroD, :integer)
@@ -278,7 +278,7 @@ defmodule Isla.RXTorax do
   schema "RXTorax" do
     field(:sync_id, :integer)
     field(:idHospitalRad, :string, primary_key: true)
-    field(:numeroHCRad, :integer, primary_key: true)
+    field(:numeroHCRad, :string, primary_key: true)
     field(:fechaRad, :integer, primary_key: true)
     field(:cuil, :string)
     field(:resultadoRad, :string)
@@ -292,7 +292,7 @@ defmodule Isla.Alerta do
   schema "Alerta" do
     field(:sync_id, :integer)
     field(:idHospital, :string, primary_key: true)
-    field(:numeroHC, :integer, primary_key: true)
+    field(:numeroHC, :string, primary_key: true)
     field(:fechaAlerta, :integer, primary_key: true)
     field(:gravedadAlerta, :integer)
     field(:gravedadAnterior, :integer)
@@ -313,7 +313,7 @@ defmodule Isla.Episodio do
   schema "Episodio" do
     field(:sync_id, :integer)
     field(:idHospital, :string, primary_key: true)
-    field(:numeroHC, :integer, primary_key: true)
+    field(:numeroHC, :string, primary_key: true)
     field(:fechaIngreso, :integer, primary_key: true)
     field(:fechaEgreso, :integer)
     field(:razon, :string)
