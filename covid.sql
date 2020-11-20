@@ -63,7 +63,7 @@ CREATE TABLE `Cama` (
   `sync_id` int(11),
   `idHospitalCama` varchar(15),
   `idIsla` varchar(150),
-  `idSector` int(11),
+  `idSector` varchar(15),
   `idCama` varchar(150),
   `numeroHCPac` varchar(15),
   `ubicacionX` int(11),
@@ -122,7 +122,6 @@ CREATE TABLE `Isla` (
   `sync_id` int(11),
   `idHospital` varchar(15),
   `idIsla` varchar(15),
-  `idSector` int(11),
   `idLider` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -217,9 +216,7 @@ CREATE TABLE `Sector` (
   `sync_id` int(11),
   `idHospital` varchar(15),
   `idIsla` varchar(150),
-  `idSector` int(11),
-  `camaDesde` varchar(150),
-  `camaHasta` varchar(150)
+  `idSector` varchar(15),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -285,7 +282,7 @@ CREATE TABLE `UsuarioSector` (
   `sync_id` int(11),
   `idHospital` varchar(15),
   `idIsla` varchar(150),
-  `idSector` int(11),
+  `idSector` varchar(15),
   `cuil` varchar(15),
   `estado` varchar(15)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

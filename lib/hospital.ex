@@ -390,9 +390,7 @@ defmodule Hospital.Sector do
     field(:sync_id, :integer)
     field(:idHospital, :string, primary_key: true)
     field(:idIsla, :string, primary_key: true)
-    field(:idSector, :integer, primary_key: true)
-    field(:camaDesde, :string)
-    field(:camaHasta, :string)
+    field(:idSector, :string, primary_key: true)
   end
 end
 
@@ -404,7 +402,7 @@ defmodule Hospital.UsuarioSector do
     field(:sync_id, :integer)
     field(:idHospital, :string, primary_key: true)
     field(:idIsla, :string, primary_key: true)
-    field(:idSector, :integer, primary_key: true)
+    field(:idSector, :string, primary_key: true)
     field(:cuil, :string)
     field(:estado, :integer)
   end
@@ -418,7 +416,7 @@ defmodule Hospital.Cama do
     field(:sync_id, :integer)
     field(:idHospitalCama, :string, primary_key: true)
     field(:idIsla, :string, primary_key: true)
-    field(:idSector, :integer, primary_key: true)
+    field(:idSector, :string, primary_key: true)
     field(:idCama, :string, primary_key: true)
     field(:numeroHCPac, :string)
     field(:ubicacionX, :integer)
