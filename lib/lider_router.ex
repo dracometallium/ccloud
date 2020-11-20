@@ -32,7 +32,7 @@ defmodule Lider.Router do
             :token => token
           } = req_json
 
-          resp = connect_and_run_method(version, method, params, id, token)
+          resp = connect_and_run_method(version, method, req_json, id, token)
 
           headers = headers()
 
@@ -85,7 +85,7 @@ defmodule Lider.Router do
       IO.puts("\nWS JSON:")
       IO.inspect(req_json)
 
-      resp = connect_and_run_method(version, method, params, id, token)
+      resp = connect_and_run_method(version, method, req_json, id, token)
       body = Poison.encode!(resp) <> "\n"
 
       {[{:text, body}], state}
@@ -96,21 +96,24 @@ defmodule Lider.Router do
         IO.puts("\nreason:")
         IO.inspect(reason)
         body = send_badreq()
+        body = Poison.encode!(resp) <> "\n"
         {[{:text, body}], state}
     end
   end
 
-  defp connect_and_run_method(version, method, params, id, token) do
+  defp connect_and_run_method(version, method, req, id, token) do
+    params = req.params
+
     resp =
       case method do
         "hello" ->
-          run_method(version, method, params, nil)
+          run_method(version, method, req, nil)
 
         _ ->
           connection = SysUsers.get_connection(token)
 
           if connection != nil do
-            run_method(version, method, params, connection)
+            run_method(version, method, req, connection)
           else
             %{resp: "403 Forbidden", result: %{}}
           end
@@ -119,14 +122,17 @@ defmodule Lider.Router do
     Map.put(resp, :id, id)
   end
 
-  defp run_method("0.0", "hello", params, _connection) do
+  defp run_method("0.0", "hello", req, _connection) do
+    params = req.params
+
     token =
       SysUsers.hello(
         params[:user],
         params[:password],
         params[:hospital],
         params[:isla],
-        params[:sector]
+        params[:sector],
+        self()
       )
 
     if token != nil do
@@ -152,202 +158,562 @@ defmodule Lider.Router do
     end
   end
 
-  defp run_method("0.0", "new_signo_vital", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
+  defp run_method("0.0", "new_signo_vital", req, connection) do
+    params = req.params
 
-    {sync_id, triage} =
-      Isla.new_signo_vital(connection.hospital, connection.isla, data)
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
-    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Isla.new_signo_vital(connection.hospital, connection.isla, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_signos_vitales", params, connection) do
-    data =
-      Isla.get_signos_vitales(
-        connection.hospital,
-        connection.isla,
-        params.sync_id
-      )
+  defp run_method("0.0", "get_signos_vitales", req, connection) do
+    params = req.params
 
-    %{status: "200 OK", result: %{data: data}}
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_laboratorio", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
+  defp run_method("0.0", "new_laboratorio", req, connection) do
+    params = req.params
 
-    {sync_id, triage} =
-      Isla.new_laboratorio(connection.hospital, connection.isla, data)
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
-    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Isla.new_laboratorio(connection.hospital, connection.isla, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_laboratorios", params, connection) do
-    data =
-      Isla.get_laboratorios(
-        connection.hospital,
-        connection.isla,
-        params.sync_id
-      )
+  defp run_method("0.0", "get_laboratorios", req, connection) do
+    params = req.params
 
-    %{status: "200 OK", result: %{data: data}}
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_rx_torax", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
+  defp run_method("0.0", "new_rx_torax", req, connection) do
+    params = req.params
 
-    {sync_id, triage} =
-      Isla.new_rx_torax(connection.hospital, connection.isla, data)
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
 
-    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Isla.new_rx_torax(connection.hospital, connection.isla, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_rx_toraxs", params, connection) do
-    data =
-      Isla.get_rx_toraxs(connection.hospital, connection.isla, params.sync_id)
+  defp run_method("0.0", "get_rx_toraxs", req, connection) do
+    params = req.params
 
-    %{status: "200 OK", result: %{data: data}}
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_alerta", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
+  defp run_method("0.0", "new_alerta", req, connection) do
+    params = req.params
 
-    {sync_id, triage} =
-      Isla.new_alerta(connection.hospital, connection.isla, data)
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
 
-    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Isla.new_alerta(connection.hospital, connection.isla, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_alertas", params, connection) do
-    data =
-      Isla.get_alertas(connection.hospital, connection.isla, params.sync_id)
+  defp run_method("0.0", "get_alertas", req, connection) do
+    params = req.params
 
-    %{status: "200 OK", result: %{data: data}}
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_episodio", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
+  defp run_method("0.0", "new_episodio", req, connection) do
+    params = req.params
 
-    {sync_id, triage} =
-      Isla.new_episodio(connection.hospital, connection.isla, data)
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
 
-    %{status: "200 OK", result: %{sync_id: sync_id, triage: triage}}
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Isla.new_episodio(connection.hospital, connection.isla, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_episodios", params, connection) do
-    data =
-      Isla.get_episodios(connection.hospital, connection.isla, params.sync_id)
+  defp run_method("0.0", "get_episodios", req, connection) do
+    params = req.params
 
-    %{status: "200 OK", result: %{data: data}}
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+
+            Isla.get_episodios(
+              connection.hospital,
+              connection.isla,
+              params.sync_id
+            )
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_cama", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
-    sync_id = Hospital.new_cama(connection.hospital, data)
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+  defp run_method("0.0", "new_cama", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Hospital.new_cama(connection.hospital, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_camas", params, connection) do
-    data = Hospital.get_camas(connection.hospital, params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+  defp run_method("0.0", "get_camas", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_hcpaciente", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
-    sync_id = Hospital.new_hcpaciente(connection.hospital, data)
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+  defp run_method("0.0", "new_hcpaciente", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Hospital.new_hcpaciente(connection.hospital, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_hcpacientes", params, connection) do
-    data = Hospital.get_hcpacientes(connection.hospital, params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+  defp run_method("0.0", "get_hcpacientes", req, connection) do
+    params = req.params
+    º
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_isla", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
-    IO.inspect(data)
-    sync_id = Hospital.new_isla(connection.hospital, data)
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+  defp run_method("0.0", "new_isla", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Hospital.new_isla(connection.hospital, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_islas", params, connection) do
-    data = Hospital.get_islas(connection.hospital, params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+  defp run_method("0.0", "get_islas", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_sector", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
-    sync_id = Hospital.new_sector(connection.hospital, data)
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+  defp run_method("0.0", "new_sector", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Hospital.new_sector(connection.hospital, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_sectores", params, connection) do
-    data = Hospital.get_sectores(connection.hospital, params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+  defp run_method("0.0", "get_sectores", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_usuario_hospital", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
-    sync_id = Hospital.new_usuario_hospital(connection.hospital, data)
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+  defp run_method("0.0", "new_usuario_hospital", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Hospital.new_usuario_hospital(connection.hospital, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_usuarios_hospital", params, connection) do
-    data = Hospital.get_usuarios_hospital(connection.hospital, params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+  defp run_method("0.0", "get_usuarios_hospital", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "new_usuario_sector", params, connection) do
-    data = Map.put(params.data, :idHospital, connection.hospital)
-    sync_id = Hospital.new_usuario_sector(connection.hospital, data)
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+  defp run_method("0.0", "new_usuario_sector", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Hospital.new_usuario_sector(connection.hospital, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_usuarios_sector", params, connection) do
-    data = Hospital.get_usuarios_sector(connection.hospital, params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+  defp run_method("0.0", "get_usuarios_sector", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_hospital", _params, connection) do
+  defp run_method("0.0", "get_hospital", _req, connection) do
     data = Hospital.get_hospital(connection.hospital)
+    # TODO?
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_hospital", params, _connection) do
+  defp run_method("0.0", "new_hospital", req, _connection) do
+    params = req.params
     sync_id = Hospitales.new_hospital(params.data)
+    # TODO?
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "new_usuario", params, _connection) do
-    usuario = Hospitales.new_usuario(params.data)
-    %{status: "200 OK", result: %{usuario: usuario}}
+  defp run_method("0.0", "new_usuario", req, connection) do
+    params = req.params
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Hospitales.new_usuario(params.data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_usuarios", _params, _connection) do
-    sync_id = Hospitales.get_usuarios()
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+  defp run_method("0.0", "get_usuarios", req, connection) do
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      receive do
+        {:from_leader, resp, req.id} ->
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "get_update", params, connection) do
-    data_isla =
-      Isla.get_update(
-        connection.hospital,
-        connection.isla,
-        params.sync_id_isla
-      )
+  defp run_method("0.0", "get_update", req, connection) do
+    params = req.params
 
-    data_hospital =
-      Hospital.get_update(connection.hospital, params.sync_id_hospital)
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
 
-    data = Map.merge(data_isla, data_hospital)
-    %{status: "200 OK", result: data}
+      receive do
+        {:from_leader, resp, req.id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Isla.new_laboratorio(connection.hospital, connection.isla, data)
+          end
+
+          resp
+      after
+        5000 ->
+          send_noleader(%{id: req.id})
+      end
+    else
+      send_badreq(%{id: req.id})
+    end
   end
 
-  defp run_method("0.0", "ping", params, _connection) do
+  defp run_method("0.0", "ping", req, _connection) do
+    params = req.params
     %{status: "200 OK", result: %{pong: params.ping}}
   end
 
-  defp send_badreq() do
+  defp send_badreq(add \\ %{}) do
     %{status: "400 Bad Request", result: %{}}
+  end
+
+  defp send_noleader(add \\ %{}) do
+    %{status: "503 Service Unavailable", result: %{}}
   end
 
   def terminate(_reason, _req, _state) do

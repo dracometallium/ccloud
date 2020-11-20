@@ -76,7 +76,11 @@ Respuestas:
 
 Parámetros:
 
--   sector: <sector, isla, hospital>
+-   usuario
+-   password
+-   hospital
+-   isla
+-   sector
 
 Respuestas:
 

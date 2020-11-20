@@ -7,7 +7,7 @@ defmodule SysUsers do
   # cantidad de segundos para el timeout del tick.
   @tick_timeout 300
 
-  defstruct connected: %{}
+  defstruct connected: %{}, lideres: %{}
 
   defp autenticate(:system, _user, _password) do
     # TODO: realmente chequear
@@ -19,28 +19,53 @@ defmodule SysUsers do
     true
   end
 
-  def hello(user, password, hospital, isla, sector) do
+  def hello(user, password, hospital, isla, sector, token, pid) do
     if autenticate(hospital, user, password) do
-      GenServer.call(__MODULE__, {:hello_user, user, hospital, isla, sector})
+      GenServer.call(
+        __MODULE__,
+        {:hello_user, user, hospital, isla, sector, token, pid}
+      )
     else
       nil
     end
   end
 
-  def hello(user, password, hospital) do
+  def hello(user, password, hospital, isla, sector, pid) do
     if autenticate(hospital, user, password) do
-      GenServer.call(__MODULE__, {:hello_user, user, hospital, nil, nil})
+      GenServer.call(
+        __MODULE__,
+        {:hello_user, user, hospital, isla, sector, nil, pid}
+      )
     else
       nil
     end
   end
 
-  def hello(user, password) do
+  def hello(user, password, hospital, pid) do
+    if autenticate(hospital, user, password) do
+      GenServer.call(
+        __MODULE__,
+        {:hello_user, user, hospital, nil, nil, nil, pid}
+      )
+    else
+      nil
+    end
+  end
+
+  def hello(user, password, pid) do
     if autenticate(:system, user, password) do
-      GenServer.call(__MODULE__, {:hello_user, user, nil, nil, nil})
+      GenServer.call(__MODULE__, {:hello_user, user, nil, nil, nil, nil, pid})
     else
       nil
     end
+  end
+
+  def add_lider(token) do
+    GenServer.call(__MODULE__, {:add_lider, token})
+  end
+
+  def get_lider(hospital, isla, sector) do
+    GenServer.call(__MODULE__, {:get_lider, hospital, isla, sector})
   end
 
   def get_connection(token) do
@@ -95,8 +120,17 @@ defmodule SysUsers do
     {:reply, nil, state}
   end
 
-  def handle_call({:hello_user, user, hospital, isla, sector}, _from, state) do
-    token = uuidgen()
+  def handle_call(
+        {:hello_user, user, hospital, isla, sector, token, pid},
+        _from,
+        state
+      ) do
+    token =
+      if token == nil do
+        uuidgen()
+      else
+        token
+      end
 
     connection = %{
       user: user,
@@ -137,17 +171,46 @@ defmodule SysUsers do
 
     {:noreply, state}
   end
+
+  def handle_call({:add_lider, token}, from, state) do
+    hospital = state.connected[token].hopital
+    isla = state.connected[token].isla
+    sector = state.connected[token].sector
+
+    {_, pid, _} =
+      handle_call({:get_lider, hospital, isla, sector}, from, state)
+
+    cond do
+      pid != nil ->
+        {:reply, :cant, state}
+
+      hospital == nil or isla == nil or sector == nil ->
+        {:reply, :error, state}
+
+      true ->
+        lideres = Map.put(state.lideres, {hospital, isla, sector}, token)
+        state = Map.put(state, :lideres, lideres)
+        {:reply, :ok, state}
+    end
+  end
+
+  def handle_call({:get_lider, hospital, isla, sector}, _from, state) do
+    token = state.lideres[{hospital, isla, sector}]
+    pid = state.connected[token][:pid]
+
+    cond do
+      pid == nil -> {:reply, nil, state}
+      Process.alive?(pid) -> {:reply, pid, state}
+      true -> {:reply, nil, state}
+    end
+  end
 end
 
 defmodule SysUsers.Connection do
-  use Ecto.Schema
-
-  @primary_key false
-  schema "Usuario" do
-    field(:user, :string, primary_key: true)
-    field(:hospital, :string)
-    field(:isla, :string)
-    field(:sector, :string)
-    field(:timeout, :string)
-  end
+  defstruct user: nil,
+            hospital: nil,
+            isla: nil,
+            sector: nil,
+            timeout: nil,
+            pid: nil
 end

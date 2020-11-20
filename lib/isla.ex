@@ -60,8 +60,8 @@ defmodule Isla do
     GenServer.call(get_name_id(hospital, isla), {:get_update, sync_id})
   end
 
-  def inc_sync_id(idHospital, isla) do
-    GenServer.call(get_name_id(idHospital, isla), {:inc_sync_id})
+  def get_sync_id(hospital, isla) do
+    GenServer.call(get_name_id(hospital, isla), {:get_sync_id})
   end
 
   def init(opts) do
@@ -195,8 +195,7 @@ defmodule Isla do
     {:reply, result, state}
   end
 
-  def handle_call({:inc_sync_id}, _from, state) do
-    state = Map.put(state, :sync_id, state.sync_id)
+  def handle_call({:get_sync_id}, _from, state) do
     {:reply, state.sync_id, state}
   end
 

@@ -85,6 +85,10 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:get_update, sync_id})
   end
 
+  def get_sync_id(hospital) do
+    GenServer.call(get_name_id(hospital), {:get_sync_id})
+  end
+
   def init(opts) do
     state = %{sync_id: opts[:sync_id], idHosp: opts[:idHospital]}
     {:ok, state}
@@ -110,7 +114,7 @@ defmodule Hospital do
       else
         {sync_id, registro}
       end
-    
+
     registro = Map.put(registro, :sync_id, sync_id)
     registro = struct(table2module(table), registro)
 
@@ -245,6 +249,7 @@ defmodule Hospital do
             )
           )
       end
+
     result = Enum.map(result, fn x -> Map.delete(x, :__meta__) end)
     {:reply, result, state}
   end
@@ -277,8 +282,7 @@ defmodule Hospital do
     {:reply, result, state}
   end
 
-  def handle_call({:inc_sync_id}, _from, state) do
-    state = Map.put(state, :sync_id, state.sync_id)
+  def handle_call({:get_sync_id}, _from, state) do
     {:reply, state.sync_id, state}
   end
 
@@ -331,9 +335,9 @@ defmodule Hospital.Supervisor do
       islas,
       fn i ->
         Hospital.Supervisor.new_isla(i.idHosp, i.idIsla, i.sync_id)
-        IO.puts "new isla"
-        IO.puts i.idHosp
-        IO.puts i.idIsla
+        IO.puts("new isla")
+        IO.puts(i.idHosp)
+        IO.puts(i.idIsla)
         true
       end
     )
