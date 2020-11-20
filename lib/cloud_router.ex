@@ -30,7 +30,7 @@ defmodule Cloud.Router do
             are supported"}})
     body = Poison.encode!(resp) <> "\n"
 
-    req1 = :cowboy_req.reply(400, headers, body, req0)
+    req1 = :cowboy_req.reply(400, headers, body, req)
     {:ok, req1, state}
   end
 
@@ -53,9 +53,9 @@ defmodule Cloud.Router do
 
           state.pending[req_json[:id]] != nil ->
             # Esta respondiendo a una llamada
-            pending(state, req)
+            pending(state, req_json)
 
-          _ ->
+          true ->
             {state, send_badreq()}
         end
 
@@ -102,8 +102,8 @@ defmodule Cloud.Router do
       hospital: params.hospital,
       isla: params.isla,
       sector: params.sector,
-      sync_id_hosp: Hospital.get_sync_id(hospital),
-      sync_id_isla: Isla.get_sync_id(hospital, isla)
+      sync_id_hosp: Hospital.get_sync_id(params.hospital),
+      sync_id_isla: Isla.get_sync_id(params.hospital, params.isla)
     }
 
     resp = %{
@@ -165,7 +165,7 @@ defmodule Cloud.Router do
     {state, resp}
   end
 
-  defp handle_pending({:to_leader, from, token}, msg, state) do
+  defp handle_pending({:to_leader, pid, token}, msg, state) do
     msg = Map.put(msg, :token, token)
 
     if(Process.alive?(pid)) do

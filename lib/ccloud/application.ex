@@ -10,7 +10,7 @@ defmodule CCloud.Application do
       # keyfile: "priv/keys/localhost.key",
       # certfile: "priv/keys/localhost.crt",
       # otp_app: :simple_server,
-      port: 8081
+      port: 8082
     ]
 
     routes = [

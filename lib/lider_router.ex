@@ -27,7 +27,7 @@ defmodule Lider.Router do
           %{
             :version => version,
             :method => method,
-            :params => params,
+            :params => _params,
             :id => id,
             :token => token
           } = req_json
@@ -77,7 +77,7 @@ defmodule Lider.Router do
       %{
         :version => version,
         :method => method,
-        :params => params,
+        :params => _params,
         :id => id,
         :token => token
       } = req_json
@@ -96,14 +96,12 @@ defmodule Lider.Router do
         IO.puts("\nreason:")
         IO.inspect(reason)
         body = send_badreq()
-        body = Poison.encode!(resp) <> "\n"
+        body = Poison.encode!(body) <> "\n"
         {[{:text, body}], state}
     end
   end
 
   defp connect_and_run_method(version, method, req, id, token) do
-    params = req.params
-
     resp =
       case method do
         "hello" ->
@@ -165,9 +163,10 @@ defmodule Lider.Router do
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
+      id = req.id
 
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Isla.new_signo_vital(connection.hospital, connection.isla, data)
@@ -184,15 +183,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_signos_vitales", req, connection) do
-    params = req.params
-
     pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
+      id = req.id
 
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -211,8 +209,10 @@ defmodule Lider.Router do
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Isla.new_laboratorio(connection.hospital, connection.isla, data)
@@ -229,15 +229,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_laboratorios", req, connection) do
-    params = req.params
 
     pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -251,11 +252,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_rx_torax", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Isla.new_rx_torax(connection.hospital, connection.isla, data)
@@ -272,13 +277,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_rx_toraxs", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -292,11 +300,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_alerta", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Isla.new_alerta(connection.hospital, connection.isla, data)
@@ -313,13 +325,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_alertas", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -333,11 +348,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_episodio", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Isla.new_episodio(connection.hospital, connection.isla, data)
@@ -354,22 +373,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_episodios", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
-      receive do
-        {:from_leader, resp, req.id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
+      id = req.id
 
-            Isla.get_episodios(
-              connection.hospital,
-              connection.isla,
-              params.sync_id
-            )
-          end
+      receive do
+        {:from_leader, resp, ^id} ->
 
           resp
       after
@@ -384,11 +397,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_cama", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Hospital.new_cama(connection.hospital, data)
@@ -405,13 +422,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_camas", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -425,11 +445,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_hcpaciente", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Hospital.new_hcpaciente(connection.hospital, data)
@@ -446,14 +470,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_hcpacientes", req, connection) do
-    params = req.params
-    º
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -467,11 +493,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_isla", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Hospital.new_isla(connection.hospital, data)
@@ -488,13 +518,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_islas", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -508,11 +541,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_sector", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Hospital.new_sector(connection.hospital, data)
@@ -529,13 +566,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_sectores", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -549,11 +589,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_usuario_hospital", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Hospital.new_usuario_hospital(connection.hospital, data)
@@ -570,13 +614,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_usuarios_hospital", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -590,11 +637,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_usuario_sector", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Hospital.new_usuario_sector(connection.hospital, data)
@@ -611,13 +662,16 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_usuarios_sector", req, connection) do
-    params = req.params
+
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -644,14 +698,18 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_usuario", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
-            Hospitales.new_usuario(params.data)
+            Hospitales.new_usuario(data)
           end
 
           resp
@@ -665,11 +723,15 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_usuarios", req, connection) do
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           resp
       after
         5000 ->
@@ -683,11 +745,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_update", req, connection) do
     params = req.params
 
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
     if pid != nil do
       send(pid, {:to_leader, req, self()})
 
+      id = req.id
+
       receive do
-        {:from_leader, resp, req.id} ->
+        {:from_leader, resp, ^id} ->
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
             Isla.new_laboratorio(connection.hospital, connection.isla, data)
@@ -709,11 +775,11 @@ defmodule Lider.Router do
   end
 
   defp send_badreq(add \\ %{}) do
-    %{status: "400 Bad Request", result: %{}}
+    Map.merge(%{status: "400 Bad Request", result: %{}}, add)
   end
 
-  defp send_noleader(add \\ %{}) do
-    %{status: "503 Service Unavailable", result: %{}}
+  defp send_noleader(add) do
+    Map.merge(%{status: "503 Service Unavailable", result: %{}}, add)
   end
 
   def terminate(_reason, _req, _state) do

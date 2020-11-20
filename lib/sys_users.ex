@@ -64,8 +64,8 @@ defmodule SysUsers do
     GenServer.call(__MODULE__, {:add_lider, token})
   end
 
-  def get_lider(hospital, isla, sector) do
-    GenServer.call(__MODULE__, {:get_lider, hospital, isla, sector})
+  def get_lider(hospital, isla) do
+    GenServer.call(__MODULE__, {:get_lider, hospital, isla})
   end
 
   def get_connection(token) do
@@ -137,6 +137,7 @@ defmodule SysUsers do
       hospital: hospital,
       isla: isla,
       sector: sector,
+      pid: pid,
       timeout: :os.system_time(:seconds) + @timeout
     }
 
@@ -157,6 +158,37 @@ defmodule SysUsers do
     end
   end
 
+  def handle_call({:add_lider, token}, from, state) do
+    hospital = state.connected[token].hopital
+    isla = state.connected[token].isla
+
+    {_, pid, _} = handle_call({:get_lider, hospital, isla}, from, state)
+
+    cond do
+      pid != nil ->
+        {:reply, :cant, state}
+
+      hospital == nil or isla == nil ->
+        {:reply, :error, state}
+
+      true ->
+        lideres = Map.put(state.lideres, {hospital, isla}, token)
+        state = Map.put(state, :lideres, lideres)
+        {:reply, :ok, state}
+    end
+  end
+
+  def handle_call({:get_lider, hospital, isla}, _from, state) do
+    token = state.lideres[{hospital, isla}]
+    pid = state.connected[token][:pid]
+
+    cond do
+      pid == nil -> {:reply, nil, state}
+      Process.alive?(pid) -> {:reply, pid, state}
+      true -> {:reply, nil, state}
+    end
+  end
+
   def handle_cast({:update_connection, token}, state) do
     connection = state.connected[token]
 
@@ -170,39 +202,6 @@ defmodule SysUsers do
       end
 
     {:noreply, state}
-  end
-
-  def handle_call({:add_lider, token}, from, state) do
-    hospital = state.connected[token].hopital
-    isla = state.connected[token].isla
-    sector = state.connected[token].sector
-
-    {_, pid, _} =
-      handle_call({:get_lider, hospital, isla, sector}, from, state)
-
-    cond do
-      pid != nil ->
-        {:reply, :cant, state}
-
-      hospital == nil or isla == nil or sector == nil ->
-        {:reply, :error, state}
-
-      true ->
-        lideres = Map.put(state.lideres, {hospital, isla, sector}, token)
-        state = Map.put(state, :lideres, lideres)
-        {:reply, :ok, state}
-    end
-  end
-
-  def handle_call({:get_lider, hospital, isla, sector}, _from, state) do
-    token = state.lideres[{hospital, isla, sector}]
-    pid = state.connected[token][:pid]
-
-    cond do
-      pid == nil -> {:reply, nil, state}
-      Process.alive?(pid) -> {:reply, pid, state}
-      true -> {:reply, nil, state}
-    end
   end
 end
 
