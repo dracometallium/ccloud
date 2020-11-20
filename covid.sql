@@ -216,7 +216,7 @@ CREATE TABLE `Sector` (
   `sync_id` int(11),
   `idHospital` varchar(15),
   `idIsla` varchar(150),
-  `idSector` varchar(15),
+  `idSector` varchar(15)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------

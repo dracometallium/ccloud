@@ -389,69 +389,81 @@ defmodule Lider.Router do
     end
   end
 
-  defp run_method("0.0", "new_cama", params, connection) do
+  defp run_method("0.0", "new_cama", req, connection) do
+    params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_cama(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "get_camas", params, connection) do
+  defp run_method("0.0", "get_camas", req, connection) do
+    params = req.params
     data = Hospital.get_camas(connection.hospital, params.sync_id)
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_hcpaciente", params, connection) do
+  defp run_method("0.0", "new_hcpaciente", req, connection) do
+    params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_hcpaciente(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "get_hcpacientes", params, connection) do
+  defp run_method("0.0", "get_hcpacientes", req, connection) do
+    params = req.params
     data = Hospital.get_hcpacientes(connection.hospital, params.sync_id)
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_isla", params, connection) do
+  defp run_method("0.0", "new_isla", req, connection) do
+    params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     IO.inspect(data)
     sync_id = Hospital.new_isla(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "get_islas", params, connection) do
+  defp run_method("0.0", "get_islas", req, connection) do
+    params = req.params
     data = Hospital.get_islas(connection.hospital, params.sync_id)
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_sector", params, connection) do
+  defp run_method("0.0", "new_sector", req, connection) do
+    params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_sector(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "get_sectores", params, connection) do
+  defp run_method("0.0", "get_sectores", req, connection) do
+    params = req.params
     data = Hospital.get_sectores(connection.hospital, params.sync_id)
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_usuario_hospital", params, connection) do
+  defp run_method("0.0", "new_usuario_hospital", req, connection) do
+    params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_usuario_hospital(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "get_usuarios_hospital", params, connection) do
+  defp run_method("0.0", "get_usuarios_hospital", req, connection) do
+    params = req.params
     data = Hospital.get_usuarios_hospital(connection.hospital, params.sync_id)
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_usuario_sector", params, connection) do
+  defp run_method("0.0", "new_usuario_sector", req, connection) do
+    params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_usuario_sector(connection.hospital, data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "get_usuarios_sector", params, connection) do
+  defp run_method("0.0", "get_usuarios_sector", req, connection) do
+    params = req.params
     data = Hospital.get_usuarios_sector(connection.hospital, params.sync_id)
     %{status: "200 OK", result: %{data: data}}
   end
@@ -461,12 +473,14 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_hospital", params, _connection) do
+  defp run_method("0.0", "new_hospital", req, _connection) do
+    params = req.params
     sync_id = Hospitales.new_hospital(params.data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
-  defp run_method("0.0", "new_usuario", params, _connection) do
+  defp run_method("0.0", "new_usuario", req, _connection) do
+    params = req.params
     usuario = Hospitales.new_usuario(params.data)
     %{status: "200 OK", result: %{usuario: usuario}}
   end

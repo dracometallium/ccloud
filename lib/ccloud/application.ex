@@ -15,6 +15,7 @@ defmodule CCloud.Application do
 
     routes = [
       {"/lider", Lider.Router, []},
+      {"/cloud", Cloud.Router, []},
       {:_, NotFound.Router, []}
     ]
 
