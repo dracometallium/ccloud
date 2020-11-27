@@ -365,7 +365,7 @@ defmodule Hospital.UsuarioHospital do
     field(:sync_id_usuario, :integer)
     field(:idHospital, :string, primary_key: true)
     field(:cuil, :string, primary_key: true)
-    field(:idRol, :string, primary_key: true)
+    field(:idRol, :integer, primary_key: true)
     field(:estadoLaboral, :integer)
   end
 end
@@ -391,6 +391,7 @@ defmodule Hospital.Sector do
     field(:idHospital, :string, primary_key: true)
     field(:idIsla, :string, primary_key: true)
     field(:idSector, :string, primary_key: true)
+    field(:descripcion, :string)
   end
 end
 

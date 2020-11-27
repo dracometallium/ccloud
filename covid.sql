@@ -217,6 +217,7 @@ CREATE TABLE `Sector` (
   `idHospital` varchar(15),
   `idIsla` varchar(150),
   `idSector` varchar(15),
+  `descripcion` varchar(15)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -268,7 +269,7 @@ CREATE TABLE `UsuarioHospital` (
   `sync_id_usuario` int(11),
   `idHospital` varchar(15),
   `cuil` varchar(15),
-  `idRol` varchar(15),
+  `idRol` int(11),
   `estadoLaboral` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
