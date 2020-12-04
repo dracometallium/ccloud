@@ -405,7 +405,7 @@ defmodule Hospital.UsuarioSector do
     field(:idIsla, :string, primary_key: true)
     field(:idSector, :string, primary_key: true)
     field(:cuil, :string)
-    field(:estado, :integer)
+    field(:estado, :string)
   end
 end
 

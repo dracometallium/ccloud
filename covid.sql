@@ -285,7 +285,7 @@ CREATE TABLE `UsuarioSector` (
   `idIsla` varchar(150),
   `idSector` varchar(15),
   `cuil` varchar(15),
-  `estado` varchar(15)
+  `estado` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
