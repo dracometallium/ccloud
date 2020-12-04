@@ -389,6 +389,9 @@ defmodule Lider.Router do
     end
   end
 
+
+# Dependen del hospital
+
   defp run_method("0.0", "new_cama", req, connection) do
     params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
