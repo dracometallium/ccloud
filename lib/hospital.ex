@@ -61,6 +61,10 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:get, :usuarios_hospital, sync_id})
   end
 
+  def get_datos_usuario(hospital, cuil) do
+    GenServer.call(get_name_id(hospital), {:get_datos_usuario, cuil})
+  end
+
   def get_usuarios_sector(hospital, sync_id) do
     GenServer.call(get_name_id(hospital), {:get, :usuarios_sector, sync_id})
   end
@@ -184,6 +188,34 @@ defmodule Hospital do
       |> Enum.map(fn x -> Map.put(x, :sync_id, usuarios_id[x.cuil]) end)
 
     {:reply, usuarios, state}
+  end
+
+  def handle_call({:get_datos_usuario, cuil}, _from, state) do
+    roles =
+      CCloud.Repo.all(
+        from(r in Hospital.UsuarioHospital,
+          where:
+            r.cuil == ^cuil and
+              r.idHospital == ^state.idHosp,
+          select: r
+        )
+      )
+      |> Enum.map(fn x -> x.idRol end)
+
+    sectores =
+      CCloud.Repo.all(
+        from(r in Hospital.UsuarioSector,
+          where:
+            r.cuil == ^cuil and
+              r.idHospital == ^state.idHosp,
+          select: r
+        )
+      )
+      |> Enum.map(fn x -> x.idSector end)
+
+    respuesta = %{sectores: sectores, roles: roles}
+
+    {:reply, respuesta, state}
   end
 
   def handle_call({:get, table, sync_id}, _from, state) do
@@ -409,7 +441,7 @@ defmodule Hospital.UsuarioSector do
     field(:idIsla, :string, primary_key: true)
     field(:idSector, :string, primary_key: true)
     field(:cuil, :string)
-    field(:estado, :string)
+    field(:estado, :integer)
   end
 end
 
