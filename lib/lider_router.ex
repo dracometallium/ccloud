@@ -106,6 +106,9 @@ defmodule Lider.Router do
         "hello" ->
           run_method(version, method, params, nil)
 
+        "get_datos_usuario" ->
+          run_method(version, method, params, nil)
+
         _ ->
           connection = SysUsers.get_connection(token)
 
@@ -293,6 +296,11 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_usuarios_hospital", params, connection) do
     data = Hospital.get_usuarios_hospital(connection.hospital, params.sync_id)
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "get_datos_usuario", params, connection) do
+    data = Hospital.get_datos_usuario(params.hospital, params.cuil)
     %{status: "200 OK", result: %{data: data}}
   end
 

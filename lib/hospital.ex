@@ -61,6 +61,10 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:get, :usuarios_hospital, sync_id})
   end
 
+  def get_datos_usuario(hospital, cuil) do
+    GenServer.call(get_name_id(hospital), {:get_datos_usuario, cuil})
+  end
+
   def get_usuarios_sector(hospital, sync_id) do
     GenServer.call(get_name_id(hospital), {:get, :usuarios_sector, sync_id})
   end
@@ -110,7 +114,7 @@ defmodule Hospital do
       else
         {sync_id, registro}
       end
-    
+
     registro = Map.put(registro, :sync_id, sync_id)
     registro = struct(table2module(table), registro)
 
@@ -182,6 +186,35 @@ defmodule Hospital do
     {:reply, usuarios, state}
   end
 
+  def handle_call({:get_datos_usuario, cuil}, _from, state) do
+
+    roles =
+      CCloud.Repo.all(
+        from(r in Hospital.UsuarioHospital,
+          where:
+            r.cuil == ^cuil and
+              r.idHospital == ^state.idHosp,
+          select: r
+        )
+      )
+      |> Enum.map(fn x -> x.idRol end)
+
+    sectores =
+      CCloud.Repo.all(
+        from(r in Hospital.UsuarioSector,
+          where:
+            r.cuil == ^cuil and
+              r.idHospital == ^state.idHosp,
+          select: r
+        )
+      )
+      |> Enum.map(fn x -> x.idSector end)
+
+    respuesta = %{sectores: sectores, roles: roles}
+
+    {:reply, respuesta, state}
+  end
+
   def handle_call({:get, table, sync_id}, _from, state) do
     result =
       case idH(table) do
@@ -245,6 +278,7 @@ defmodule Hospital do
             )
           )
       end
+
     result = Enum.map(result, fn x -> Map.delete(x, :__meta__) end)
     {:reply, result, state}
   end
@@ -331,9 +365,9 @@ defmodule Hospital.Supervisor do
       islas,
       fn i ->
         Hospital.Supervisor.new_isla(i.idHosp, i.idIsla, i.sync_id)
-        IO.puts "new isla"
-        IO.puts i.idHosp
-        IO.puts i.idIsla
+        IO.puts("new isla")
+        IO.puts(i.idHosp)
+        IO.puts(i.idIsla)
         true
       end
     )
@@ -405,7 +439,7 @@ defmodule Hospital.UsuarioSector do
     field(:idIsla, :string, primary_key: true)
     field(:idSector, :string, primary_key: true)
     field(:cuil, :string)
-    field(:estado, :string)
+    field(:estado, :integer)
   end
 end
 
