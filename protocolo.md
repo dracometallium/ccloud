@@ -72,8 +72,6 @@ Respuestas:
 
 # hello_cloud
 
-**NOTA**: sin implementar.
-
 Parámetros:
 
 -   usuario
@@ -213,6 +211,29 @@ Respuestas:
 
 -   Otros posibles casos:
     -   Que no reconozca el usuario.
+
+# get_datos_usuario
+
+Parámetros:
+
+-   hospital
+-   cuil
+
+Respuestas:
+
+-   Si no se produce un error:
+
+    -   status: "200 OK"
+    -   result:
+        -   sectores: [lista de sectores]
+        -   roles: [lista de roles]
+    -   https_status: 200
+
+-   Otros:
+
+    -   status: "400 Bad Request"
+    -   result: {}
+    -   http_status: "400 Bad Request"
 
 # get_update
 
