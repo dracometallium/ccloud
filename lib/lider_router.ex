@@ -108,7 +108,7 @@ defmodule Lider.Router do
           run_method(version, method, req, nil)
 
         "get_datos_usuario" ->
-          run_method(version, method, params, nil)
+          run_method(version, method, req, nil)
 
         _ ->
           connection = SysUsers.get_connection(token)
@@ -447,7 +447,8 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "get_datos_usuario", params, connection) do
+  defp run_method("0.0", "get_datos_usuario", req, _connection) do
+    params = req.params
     data = Hospital.get_datos_usuario(params.hospital, params.cuil)
     %{status: "200 OK", result: %{data: data}}
   end
