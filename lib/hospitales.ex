@@ -1,6 +1,7 @@
 defmodule Hospitales do
   use GenServer
   import Ecto.Query
+  import UUIDgen
 
   def new_hospital(hospital) do
     GenServer.call(__MODULE__, {:new_hospital, hospital})
@@ -51,6 +52,10 @@ defmodule Hospitales do
   end
 
   def handle_call({:new_usuario, usuario}, _from, state) do
+    sal = uuidgen()
+    salted = :crypto.hash(:sha512, usuario.clave <> sal) |> Base.encode16(case: :lower)
+    usuario = Map.put(usuario, :sal, sal)
+    usuario = Map.put(usuario, :clave, salted)
     CCloud.Repo.insert(struct(Hospitales.Usuario, usuario))
     {:reply, usuario, state}
   end
@@ -107,6 +112,7 @@ defmodule Hospitales.Usuario do
   schema "Usuario" do
     field(:cuil, :string, primary_key: true)
     field(:clave, :string)
+    field(:sal, :string)
     field(:nombre, :string)
     field(:apellido, :string)
     field(:email, :string)

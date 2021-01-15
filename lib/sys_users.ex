@@ -1,6 +1,7 @@
 defmodule SysUsers do
   use GenServer
   import UUIDgen
+  import Ecto.Query
 
   # cantidad de segundos para el timeout.
   @timeout 3600
@@ -9,18 +10,21 @@ defmodule SysUsers do
 
   defstruct connected: %{}
 
-  defp autenticate(:system, _user, _password) do
-    # TODO: realmente chequear
-    true
-  end
+  defp autenticate(user, password) do
+    r =
+      CCloud.Repo.one(
+        from(r in Hospitales.Usuario,
+          where: r.cuil == ^user,
+          select: r
+        )
+      )
 
-  defp autenticate(_hospital, _user, _password) do
-    # TODO: realmente chequear
-    true
+    salted = :crypto.hash(:sha512, password <> r.sal) |> Base.encode16(case: :lower)
+    r.clave == salted
   end
 
   def hello(user, password, hospital, isla, sector) do
-    if autenticate(hospital, user, password) do
+    if autenticate(user, password) do
       GenServer.call(__MODULE__, {:hello_user, user, hospital, isla, sector})
     else
       nil
@@ -28,7 +32,7 @@ defmodule SysUsers do
   end
 
   def hello(user, password, hospital) do
-    if autenticate(hospital, user, password) do
+    if autenticate(user, password) do
       GenServer.call(__MODULE__, {:hello_user, user, hospital, nil, nil})
     else
       nil
@@ -36,7 +40,7 @@ defmodule SysUsers do
   end
 
   def hello(user, password) do
-    if autenticate(:system, user, password) do
+    if autenticate(user, password) do
       GenServer.call(__MODULE__, {:hello_user, user, nil, nil, nil})
     else
       nil

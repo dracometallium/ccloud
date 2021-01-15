@@ -187,7 +187,6 @@ defmodule Hospital do
   end
 
   def handle_call({:get_datos_usuario, cuil}, _from, state) do
-
     roles =
       CCloud.Repo.all(
         from(r in Hospital.UsuarioHospital,
