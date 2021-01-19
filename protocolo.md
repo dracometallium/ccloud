@@ -40,6 +40,8 @@ handshake completo consta de dos pasos, `hello` y `connect`. El primero sirve
 para identificar el usuario correctamente, y el segundo para seleccionar el
 hospital, isla y sector.
 
+Este método genera el token, por lo cual el enviado en la petición se ignora.
+
 Parámetros:
 
 -   usuario
@@ -85,6 +87,8 @@ Identificación del usuario a la nube (por parte del lider). El handshake
 completo consta de dos pasos, `hello_cloud` y `connect`. El primero sirve para
 identificar el usuario correctamente, y el segundo para seleccionar el
 hospital, isla y sector.
+
+Este método genera el token, por lo cual el enviado en la petición se ignora.
 
 Parámetros:
 
