@@ -58,9 +58,8 @@ Respuestas:
         -   hospitales:
             -   [diccionario de <id_hospital>]:
                 -   roles: [lista de roles]
-                -   sectores: [lista de diccionarios]
-                    -   isla: <id_isla>
-                    -   sector: <id_sector>
+                -   sectores:
+                    -   <id_isla>: [lista de <id_sector>]
     -   https_status: 200
 
 -   Si el login es incorrecto:
