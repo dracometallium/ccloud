@@ -11,7 +11,6 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -252,6 +251,7 @@ CREATE TABLE `SignosVitales` (
 CREATE TABLE `Usuario` (
   `cuil` varchar(15),
   `clave` varchar(150),
+  `sal` varchar(15),
   `nombre` varchar(150),
   `apellido` varchar(150),
   `email` varchar(150),
@@ -375,6 +375,21 @@ ALTER TABLE `SyncIDHosp`
 
 ALTER TABLE `SyncIDIsla`
   ADD PRIMARY KEY (`idHosp`, `idIsla`);
+
+INSERT INTO Usuario VALUES ("20-10001-0", "c7ad44cbad762a5da0a452f9e854fdc1e0e7a52a38015f23f3eab1d80b931dd472634dfac71cd34ebc35d16ab7fb8a90c81f975113d6c7538dc69dd8de9077ec", "", "admin", "admin_ln" , "admin@hospital", "1212");
+
+INSERT INTO Hospital VALUES (1, "H0", "hospital 01", "siempre viva 1234", "(299)0000", "8300", "url_plano");
+
+INSERT INTO UsuarioHospital VALUES (3, 2, "H0", "20-0000-0", 0, 1);
+
+INSERT INTO Isla VALUES (3, "H0", "I0", 0);
+
+INSERT INTO Sector VALUES (4, "H0", "I0", "S0", "Sector Test!");
+
+INSERT INTO UsuarioSector VALUES (5, "H0", "I0", "S0", "20-0000-0", 1);
+
+INSERT INTO SyncIDHosp VALUES (5, "H0");
+
 COMMIT;
 
 
