@@ -382,7 +382,13 @@ INSERT INTO Hospital VALUES (1, "H0", "hospital 01", "siempre viva 1234", "(299)
 
 INSERT INTO UsuarioHospital VALUES (3, 2, "H0", "20-0000-0", 0, 1);
 
-INSERT INTO SyncIDHosp VALUES (3, "H0");
+INSERT INTO Isla VALUES (3, "H0", "I0", 0);
+
+INSERT INTO Sector VALUES (4, "H0", "I0", "S0", "Sector Test!");
+
+INSERT INTO UsuarioSector VALUES (5, "H0", "I0", "S0", "20-0000-0", 1);
+
+INSERT INTO SyncIDHosp VALUES (5, "H0");
 
 COMMIT;
 
