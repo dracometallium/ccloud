@@ -113,7 +113,11 @@ defmodule Lider.Router do
           connection = SysUsers.get_connection(token)
 
           if connection != nil do
-            run_method(version, method, params, connection)
+            if connection.ready do
+              run_method(version, method, params, connection)
+            else
+              %{resp: "403 Forbidden", result: %{}}
+            end
           else
             %{resp: "403 Forbidden", result: %{}}
           end
@@ -126,30 +130,37 @@ defmodule Lider.Router do
     token =
       SysUsers.hello(
         params[:user],
-        params[:password],
-        params[:hospital],
-        params[:isla],
-        params[:sector]
+        params[:password]
       )
 
     if token != nil do
-      if params[:hospital] != nil && params[:isla] != nil &&
-           params[:sync_id_hospital] && params[:sync_id_isla] do
-        data_isla =
-          Isla.get_update(
-            params.hospital,
-            params.isla,
-            params.sync_id_isla
-          )
+      datosUsuario = Hospitales.get_datos_usuario(params[:user])
+      %{resp: "200 OK", result: Map.merge(datosUsuario, %{token: token})}
+    else
+      %{resp: "403 Forbidden", result: %{}}
+    end
+  end
 
-        data_hospital =
-          Hospital.get_update(params.hospital, params.sync_id_hospital)
+  defp run_method("0.0", "connect", params, connection) do
+    resp =
+      SysUsers.connect(
+        params.hospital,
+        params.isla,
+        params.sector,
+        connection.token
+      )
 
-        data = Map.merge(data_isla, data_hospital)
-        %{resp: "200 OK", result: %{token: token, data: data}}
-      else
-        %{resp: "200 OK", result: %{token: token}}
-      end
+    if resp == :ok do
+      sync_id_hospital = Hospital.get_sync_id(params.hospital)
+      sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
+
+      %{
+        resp: "200 OK",
+        result: %{
+          sync_id_hospital: sync_id_hospital,
+          sync_id_isla: sync_id_isla
+        }
+      }
     else
       %{resp: "403 Forbidden", result: %{}}
     end
@@ -299,7 +310,7 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "get_datos_usuario", params, connection) do
+  defp run_method("0.0", "get_datos_usuario", params, _connection) do
     data = Hospital.get_datos_usuario(params.hospital, params.cuil)
     %{status: "200 OK", result: %{data: data}}
   end

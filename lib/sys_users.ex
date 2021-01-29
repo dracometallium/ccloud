@@ -19,7 +19,9 @@ defmodule SysUsers do
         )
       )
 
-    salted = :crypto.hash(:sha512, password <> r.sal) |> Base.encode16(case: :lower)
+    salted =
+      :crypto.hash(:sha512, password <> r.sal) |> Base.encode16(case: :lower)
+
     r.clave == salted
   end
 
@@ -45,6 +47,10 @@ defmodule SysUsers do
     else
       nil
     end
+  end
+
+  def connect(hospital, isla, sector, token) do
+    GenServer.call(__MODULE__, {:connect, hospital, isla, sector, token})
   end
 
   def get_connection(token) do
@@ -125,6 +131,32 @@ defmodule SysUsers do
     else
       {:reply, nil, state}
     end
+  end
+
+  def handle_call({:connect, hospital, isla, sector, token}, state) do
+    connection = state.connected[token]
+
+    {resp, state} =
+      if connection != nil do
+        connection =
+          Map.put(connection, :timeout, :os.system_time(:seconds) + @timeout)
+
+        connection =
+          Map.merge(connection, %{
+            hospital: hospital,
+            isla: isla,
+            sector: sector,
+            ready: true
+          })
+
+        connected = Map.put(state.connected, token, connection)
+        Map.put(state, :connected, connected)
+        {:ok, state}
+      else
+        {:fail, state}
+      end
+
+    {:reply, resp, state}
   end
 
   def handle_cast({:update_connection, token}, state) do

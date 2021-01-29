@@ -89,6 +89,10 @@ defmodule Hospital do
     GenServer.call(get_name_id(hospital), {:get_update, sync_id})
   end
 
+  def get_sync_id(hospital) do
+    GenServer.call(get_name_id(hospital), {:get_sync_id})
+  end
+
   def init(opts) do
     state = %{sync_id: opts[:sync_id], idHosp: opts[:idHospital]}
     {:ok, state}
@@ -184,34 +188,6 @@ defmodule Hospital do
       |> Enum.map(fn x -> Map.put(x, :sync_id, usuarios_id[x.cuil]) end)
 
     {:reply, usuarios, state}
-  end
-
-  def handle_call({:get_datos_usuario, cuil}, _from, state) do
-    roles =
-      CCloud.Repo.all(
-        from(r in Hospital.UsuarioHospital,
-          where:
-            r.cuil == ^cuil and
-              r.idHospital == ^state.idHosp,
-          select: r
-        )
-      )
-      |> Enum.map(fn x -> x.idRol end)
-
-    sectores =
-      CCloud.Repo.all(
-        from(r in Hospital.UsuarioSector,
-          where:
-            r.cuil == ^cuil and
-              r.idHospital == ^state.idHosp,
-          select: r
-        )
-      )
-      |> Enum.map(fn x -> x.idSector end)
-
-    respuesta = %{sectores: sectores, roles: roles}
-
-    {:reply, respuesta, state}
   end
 
   def handle_call({:get, table, sync_id}, _from, state) do
@@ -310,8 +286,7 @@ defmodule Hospital do
     {:reply, result, state}
   end
 
-  def handle_call({:inc_sync_id}, _from, state) do
-    state = Map.put(state, :sync_id, state.sync_id)
+  def handle_call({:get_sync_id}, _from, state) do
     {:reply, state.sync_id, state}
   end
 
