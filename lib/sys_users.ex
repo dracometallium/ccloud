@@ -1,6 +1,7 @@
 defmodule SysUsers do
   use GenServer
   import UUIDgen
+  import Ecto.Query
 
   # cantidad de segundos para el timeout.
   @timeout 3600
@@ -9,14 +10,34 @@ defmodule SysUsers do
 
   defstruct connected: %{}, lideres: %{}
 
-  defp autenticate(:system, _user, _password) do
-    # TODO: realmente chequear
-    true
+  defp autenticate(:system, user, password) do
+    r =
+      CCloud.Repo.one(
+        from(r in Hospitales.Usuario,
+          where: r.cuil == ^user,
+          select: r
+        )
+      )
+
+    salted =
+      :crypto.hash(:sha512, password <> r.sal) |> Base.encode16(case: :lower)
+
+    r.clave == salted
   end
 
-  defp autenticate(_hospital, _user, _password) do
-    # TODO: realmente chequear
-    true
+  defp autenticate(user, password) do
+    r =
+      CCloud.Repo.one(
+        from(r in Hospitales.Usuario,
+          where: r.cuil == ^user,
+          select: r
+        )
+      )
+
+    salted =
+      :crypto.hash(:sha512, password <> r.sal) |> Base.encode16(case: :lower)
+
+    r.clave == salted
   end
 
   def hello(user, password, hospital, isla, sector, token, pid) do
@@ -30,34 +51,19 @@ defmodule SysUsers do
     end
   end
 
-  def hello(user, password, hospital, isla, sector, pid) do
-    if autenticate(hospital, user, password) do
-      GenServer.call(
-        __MODULE__,
-        {:hello_user, user, hospital, isla, sector, nil, pid}
-      )
-    else
-      nil
-    end
-  end
-
-  def hello(user, password, hospital, pid) do
-    if autenticate(hospital, user, password) do
-      GenServer.call(
-        __MODULE__,
-        {:hello_user, user, hospital, nil, nil, nil, pid}
-      )
-    else
-      nil
-    end
-  end
-
   def hello(user, password, pid) do
-    if autenticate(:system, user, password) do
-      GenServer.call(__MODULE__, {:hello_user, user, nil, nil, nil, nil, pid})
+    if autenticate(user, password) do
+      GenServer.call(
+        __MODULE__,
+        {:hello_user, user, nil, pid}
+      )
     else
       nil
     end
+  end
+
+  def connect(hospital, isla, sector, token) do
+    GenServer.call(__MODULE__, {:connect, hospital, isla, sector, token})
   end
 
   def add_lider(token) do
@@ -121,7 +127,7 @@ defmodule SysUsers do
   end
 
   def handle_call(
-        {:hello_user, user, hospital, isla, sector, token, pid},
+        {:hello_user, user, token, pid},
         _from,
         state
       ) do
@@ -134,9 +140,7 @@ defmodule SysUsers do
 
     connection = %{
       user: user,
-      hospital: hospital,
-      isla: isla,
-      sector: sector,
+      ready: false,
       pid: pid,
       timeout: :os.system_time(:seconds) + @timeout
     }
@@ -187,6 +191,32 @@ defmodule SysUsers do
       Process.alive?(pid) -> {:reply, pid, state}
       true -> {:reply, nil, state}
     end
+  end
+
+  def handle_call({:connect, hospital, isla, sector, token}, state) do
+    connection = state.connected[token]
+
+    {resp, state} =
+      if connection != nil do
+        connection =
+          Map.put(connection, :timeout, :os.system_time(:seconds) + @timeout)
+
+        connection =
+          Map.merge(connection, %{
+            hospital: hospital,
+            isla: isla,
+            sector: sector,
+            ready: true
+          })
+
+        connected = Map.put(state.connected, token, connection)
+        Map.put(state, :connected, connected)
+        {:ok, state}
+      else
+        {:fail, state}
+      end
+
+    {:reply, resp, state}
   end
 
   def handle_cast({:update_connection, token}, state) do

@@ -2,8 +2,8 @@
 
 TODO:
 
--   En caso de que el líder se caiga, tiene el nuevo líder tiene que avisarle
-    al resto.
+-   En caso de que el líder se caiga, el nuevo líder tiene que avisarle al
+    resto.
 
 -   Como se autentifican.
 
@@ -35,21 +35,31 @@ sino que es el estatus que debe retornar la petición _HTTP_.
 
 # hello
 
+Identificación del usuario al líder (o la nube simulando ser un lider). El
+handshake completo consta de dos pasos, `hello` y `connect`. El primero sirve
+para identificar el usuario correctamente, y el segundo para seleccionar el
+hospital, isla y sector.
+
+Este método genera el token, por lo cual el enviado en la petición se ignora.
+
 Parámetros:
 
 -   usuario
 -   password
--   hospital
--   isla
--   sector
 
 Respuestas:
 
--   Si el cliente esta en la lista de conectados:
-    
+-   Si el cliente se identifico correctamente:
+
     -   status: "200 OK"
     -   result:
         -   token: <token>
+        -   usuario: <datos del usuario>
+        -   hospitales:
+            -   [diccionario de <id_hospital>]:
+                -   roles: [lista de roles]
+                -   sectores:
+                    -   <id_isla>: [lista de <id_sector>]
     -   https_status: 200
 
 -   Si el login es incorrecto:
@@ -59,7 +69,7 @@ Respuestas:
     -   http_status: "403 Forbidden"
 
 -   Si es la nube y no tiene conexión al líder:
-    
+
     -   status: "503 Service Unavailable"
     -   result: {}
     -   http_status: "503 Service Unavailable"
@@ -72,22 +82,75 @@ Respuestas:
 
 # hello_cloud
 
+Identificación del usuario a la nube (por parte del lider). El handshake
+completo consta de dos pasos, `hello_cloud` y `connect`. El primero sirve para
+identificar el usuario correctamente, y el segundo para seleccionar el
+hospital, isla y sector.
+
+Este método genera el token, por lo cual el enviado en la petición se ignora.
+
 Parámetros:
 
 -   usuario
 -   password
--   hospital
--   isla
--   sector
 
 Respuestas:
 
--   Si el cliente esta en la lista de conectados:
-    
+-   Si el cliente se identifico correctamente:
+
     -   status: "200 OK"
     -   result:
         -   token: <token>
+        -   usuario: <datos del usuario>
+        -   hospitales:
+            -   [diccionario de <id_hospital>]:
+                -   roles: [lista de roles]
+                -   sectores:
+                    -   <id_isla>: [lista de <id_sector>]
     -   https_status: 200
+
+-   Si el login es incorrecto:
+
+    -   status: "403 Forbidden"
+    -   result: {}
+    -   http_status: "403 Forbidden"
+
+-   Otros:
+
+    -   status: "400 Bad Request"
+    -   result: {}
+    -   http_status: "400 Bad Request"
+
+# Connect
+
+Segunda parte del handshake, selecciona el hospital, isla y sector.  Si se
+quiere mantener la conexión con un líder, deben estar especificados todos los
+parámetros. Si solo se desea acceder a los datos compartidos de un hospital,
+solo se necesitara especificar el id de este. Este último modo de operación no
+estará habilitado por el momento.
+
+Si no se realiza este paso, cualquier otro método debería falla.
+
+Parámetros:
+
+-   Hospital
+-   Isla
+-   Sector
+
+Respuestas:
+
+-   Si el cliente se identifico correctamente:
+
+    -   status: "200 OK"
+        -   sync_id_isla: <max_sync_id_isla>
+        -   sync_id_hospital: <max_sync_id_hospital>
+    -   https_status: 200
+
+-   Si el usuario esta asignado al hospital, isla y sector:
+
+    -   status: "403 Forbidden"
+    -   result: {}
+    -   http_status: "403 Forbidden"
 
 -   Otros:
 
@@ -211,29 +274,6 @@ Respuestas:
 
 -   Otros posibles casos:
     -   Que no reconozca el usuario.
-
-# get_datos_usuario
-
-Parámetros:
-
--   hospital
--   cuil
-
-Respuestas:
-
--   Si no se produce un error:
-
-    -   status: "200 OK"
-    -   result:
-        -   sectores: [lista de sectores]
-        -   roles: [lista de roles]
-    -   https_status: 200
-
--   Otros:
-
-    -   status: "400 Bad Request"
-    -   result: {}
-    -   http_status: "400 Bad Request"
 
 # get_update
 

@@ -47,6 +47,15 @@ defmodule Cloud.Router do
             # call hello_cloud!
             hello_cloud(state, req_json)
 
+          req_json[:method] == "connect" ->
+            connection = SysUsers.get_connection(req_json.token)
+
+            if connection != nil do
+              connect(state, req_json)
+            else
+              {state, %{resp: "403 Forbidden", result: %{}}}
+            end
+
           req_json[:method] == "copy_data" ->
             # do copy_data
             {state, send_badreq()}
@@ -88,9 +97,7 @@ defmodule Cloud.Router do
   defp hello_cloud(state, req) do
     params = req.params
 
-    call =
-      {:hello_cloud, params.hospital, params.isla, params.sector,
-       params.usuario, params.password}
+    call = {:hello_cloud, params.usuario, params.password}
 
     id = UUIDgen.uuidgen()
     pending = Map.put(state.pending, id, call)
@@ -98,12 +105,12 @@ defmodule Cloud.Router do
 
     params = %{
       usuario: "cloud",
-      password: nil,
-      hospital: params.hospital,
-      isla: params.isla,
-      sector: params.sector,
-      sync_id_hosp: Hospital.get_sync_id(params.hospital),
-      sync_id_isla: Isla.get_sync_id(params.hospital, params.isla)
+      password: nil
+      # hospital: params.hospital,
+      # isla: params.isla,
+      # sector: params.sector,
+      # sync_id_hosp: Hospital.get_sync_id(params.hospital),
+      # sync_id_isla: Isla.get_sync_id(params.hospital, params.isla)
     }
 
     resp = %{
@@ -112,6 +119,33 @@ defmodule Cloud.Router do
       params: params,
       id: id,
       token: UUIDgen.uuidgen()
+    }
+
+    {state, resp}
+  end
+
+  defp connect(state, req) do
+    params = req.params
+
+    call = {:connect, params.hospital, params.isla, params.sector, req.token}
+
+    id = UUIDgen.uuidgen()
+    pending = Map.put(state.pending, id, call)
+    state = Map.put(state, :pending, pending)
+
+    params = %{
+      usuario: "cloud",
+      hospital: params.hospital,
+      isla: params.isla,
+      sector: params.sector
+    }
+
+    resp = %{
+      version: "0.0",
+      method: "connect",
+      params: params,
+      id: id,
+      token: req.token
     }
 
     {state, resp}
@@ -126,20 +160,14 @@ defmodule Cloud.Router do
   end
 
   defp handle_pending(
-         {:hello_cloud, hospital, isla, sector, user, passwd},
+         {:hello_cloud, user, passwd},
          req,
          state
        ) do
-    token = req[:token]
-
     token =
       SysUsers.hello(
-        hospital,
-        isla,
-        sector,
         user,
         passwd,
-        token,
         self()
       )
 
@@ -160,6 +188,39 @@ defmodule Cloud.Router do
       else
         resp = %{resp: "403 Forbidden", result: %{}, id: req[:id]}
         {state, resp}
+      end
+
+    {state, resp}
+  end
+
+  defp handle_pending(
+         {:connect, _user, hospital, isla, sector, token},
+         req,
+         state
+       ) do
+    resp =
+      SysUsers.connect(
+        hospital,
+        isla,
+        sector,
+        token
+      )
+
+    resp =
+      if resp == :ok do
+        sync_id_hospital = Hospital.get_sync_id(hospital)
+        sync_id_isla = Isla.get_sync_id(hospital, isla)
+
+        %{
+          resp: "200 OK",
+          result: %{
+            sync_id_hospital: sync_id_hospital,
+            sync_id_isla: sync_id_isla
+          },
+          id: req[:id]
+        }
+      else
+        %{resp: "403 Forbidden", result: %{}, id: req[:id]}
       end
 
     {state, resp}

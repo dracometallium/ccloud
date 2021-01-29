@@ -1,6 +1,7 @@
 defmodule Hospitales do
   use GenServer
   import Ecto.Query
+  import UUIDgen
 
   def new_hospital(hospital) do
     GenServer.call(__MODULE__, {:new_hospital, hospital})
@@ -16,6 +17,10 @@ defmodule Hospitales do
 
   def get_usuarios() do
     GenServer.call(__MODULE__, {:get_usuarios})
+  end
+
+  def get_datos_usuario(cuil) do
+    GenServer.call(__MODULE__, {:get_datos_usuario, cuil})
   end
 
   def init(_opts) do
@@ -51,8 +56,84 @@ defmodule Hospitales do
   end
 
   def handle_call({:new_usuario, usuario}, _from, state) do
+    sal = uuidgen()
+
+    salted =
+      :crypto.hash(:sha512, usuario.clave <> sal)
+      |> Base.encode16(case: :lower)
+
+    usuario = Map.put(usuario, :sal, sal)
+    usuario = Map.put(usuario, :clave, salted)
     CCloud.Repo.insert(struct(Hospitales.Usuario, usuario))
     {:reply, usuario, state}
+  end
+
+  def handle_call({:get_datos_usuario, cuil}, _from, state) do
+    usuario =
+      CCloud.Repo.one(
+        from(r in Hospitales.Usuario,
+          where: r.cuil == ^cuil,
+          select: r
+        )
+      )
+      |> Map.delete(:sal)
+      |> Map.delete(:clave)
+
+    roles =
+      CCloud.Repo.all(
+        from(r in Hospital.UsuarioHospital,
+          where: r.cuil == ^cuil,
+          select: [:idHospital, :idRol]
+        )
+      )
+      |> Enum.reduce(%{}, fn {idHospital, idRol}, acc ->
+        if acc[idHospital] == nil do
+          Map.put(acc, idHospital, [idRol])
+        else
+          roles = acc[idHospital]
+          Map.put(acc, idHospital, [idRol | roles])
+        end
+      end)
+
+    sectores =
+      CCloud.Repo.all(
+        from(r in Hospital.UsuarioSector,
+          where: r.cuil == ^cuil,
+          select: [:idHospital, :idIsla, :idSector]
+        )
+      )
+      |> Enum.reduce(%{}, fn {idHospital, idIsla, idSector}, acc ->
+        cond do
+          acc[idHospital] == nil ->
+            sectores = [idSector]
+            hospital = Map.put(%{}, idIsla, sectores)
+            Map.put(acc, idHospital, hospital)
+
+          acc[idHospital][idIsla] == nil ->
+            sectores = [idSector]
+            hospital = Map.put(acc[idHospital], idIsla, sectores)
+            Map.put(acc, idHospital, hospital)
+
+          true ->
+            sectores = [idSector | acc[idHospital][idIsla]]
+            hospital = Map.put(acc[idHospital], idIsla, sectores)
+            Map.put(acc, idHospital, hospital)
+        end
+      end)
+
+    hospitales =
+      Map.keys(sectores)
+      |> Enum.concat(Map.keys(roles))
+      |> Enum.uniq()
+
+    hospitales =
+      Enum.map(hospitales, fn idHospital ->
+        %{sectores: sectores[idHospital], roles: roles[idHospital]}
+      end)
+
+    respuesta = %{usuario: usuario, hospitales: hospitales}
+
+    {:reply, respuesta, state}
   end
 end
 
@@ -107,6 +188,7 @@ defmodule Hospitales.Usuario do
   schema "Usuario" do
     field(:cuil, :string, primary_key: true)
     field(:clave, :string)
+    field(:sal, :string)
     field(:nombre, :string)
     field(:apellido, :string)
     field(:email, :string)

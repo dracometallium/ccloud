@@ -190,34 +190,6 @@ defmodule Hospital do
     {:reply, usuarios, state}
   end
 
-  def handle_call({:get_datos_usuario, cuil}, _from, state) do
-    roles =
-      CCloud.Repo.all(
-        from(r in Hospital.UsuarioHospital,
-          where:
-            r.cuil == ^cuil and
-              r.idHospital == ^state.idHosp,
-          select: r
-        )
-      )
-      |> Enum.map(fn x -> x.idRol end)
-
-    sectores =
-      CCloud.Repo.all(
-        from(r in Hospital.UsuarioSector,
-          where:
-            r.cuil == ^cuil and
-              r.idHospital == ^state.idHosp,
-          select: r
-        )
-      )
-      |> Enum.map(fn x -> x.idSector end)
-
-    respuesta = %{sectores: sectores, roles: roles}
-
-    {:reply, respuesta, state}
-  end
-
   def handle_call({:get, table, sync_id}, _from, state) do
     result =
       case idH(table) do
