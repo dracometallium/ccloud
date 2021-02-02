@@ -86,7 +86,7 @@ defmodule Hospitales do
           select: [:idHospital, :idRol]
         )
       )
-      |> Enum.reduce(%{}, fn {idHospital, idRol}, acc ->
+      |> Enum.reduce(%{}, fn %{idHospital: idHospital, idRol: idRol}, acc ->
         if acc[idHospital] == nil do
           Map.put(acc, idHospital, [idRol])
         else
@@ -102,7 +102,12 @@ defmodule Hospitales do
           select: [:idHospital, :idIsla, :idSector]
         )
       )
-      |> Enum.reduce(%{}, fn {idHospital, idIsla, idSector}, acc ->
+      |> Enum.reduce(%{}, fn %{
+                               idHospital: idHospital,
+                               idIsla: idIsla,
+                               idSector: idSector
+                             },
+                             acc ->
         cond do
           acc[idHospital] == nil ->
             sectores = [idSector]
