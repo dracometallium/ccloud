@@ -14,9 +14,9 @@ defmodule CCloud.Application do
     ]
 
     routes = [
-      {"/lider", Lider.Router, []},
-      {"/cloud", Cloud.Router, []},
-      {:_, NotFound.Router, []}
+      {"/lider", Lider.Router, %{}},
+      {"/cloud", Cloud.Router, %{}},
+      {:_, NotFound.Router, %{}}
     ]
 
     dispatch = :cowboy_router.compile([{:_, routes}])

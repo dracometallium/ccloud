@@ -144,6 +144,7 @@ Respuestas:
     -   status: "200 OK"
         -   sync_id_isla: <max_sync_id_isla>
         -   sync_id_hospital: <max_sync_id_hospital>
+        -   update: %{<datos_update>}
     -   https_status: 200
 
 -   Si el usuario esta asignado al hospital, isla y sector:

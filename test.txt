@@ -1,9 +1,14 @@
 Para conectarse hay que usar este comando. El parámetro token es ignorado. El
 hospital e isla tienen que ser los que se van a utilizar, por más que no estén
-creados todavía. Todo el sistema de control de usuarios no existe todavía. Se
-puede usar cualquier usuario y password.
+creados todavía.
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"user":"hello", "hospital":"H0", "isla":"I0", "sector":0, "password":"1234"},"method":"hello", "token":"0"}' 170.210.83.83:60169/lider
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"user":"20-0000-0", "password":"admin"},"method":"hello", "token":"0"}' 170.210.81.149:8082/lider
+
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"user":"20-0000-0", "password":"admin"},"method":"hello_cloud", "token":"0"}' 170.210.81.149:8082/cloud
+
+connect:
+
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"hospital":"H0", "isla":"I0", "sector":"S0"},"method":"connect", "token":"0"}' 170.210.81.149:8082/lider
 
  Para crear un hospital el ID tiene que ser el mismo que el que se paso en
 `hello`. Se pueden crear otros hospitales, pero no se van a poder acceder
@@ -33,3 +38,9 @@ hospital e isla se obtienen de la conexión.
 En lugar de utilizar CURL se puede usar `wscat 170.210.83.83:60169/lider` este
 programa es como telnet para webservices, se pueden mandar los json
 directamente.
+
+Pedir un alertas:
+    {"version":"0.0","id":"1234","params":{"sync_id":0},"method":"get_alertas", "token":"0138c240-a9ae-4c53-857f-62b88dee9d5b"}
+
+Respuesta:
+    {"status":"200 OK","result":{"data":[]},"id":"1234"}

@@ -78,6 +78,8 @@ defmodule Hospitales do
       )
       |> Map.delete(:sal)
       |> Map.delete(:clave)
+      |> Map.delete(:__meta__)
+      |> Map.delete(:__struct__)
 
     roles =
       CCloud.Repo.all(
@@ -86,7 +88,7 @@ defmodule Hospitales do
           select: [:idHospital, :idRol]
         )
       )
-      |> Enum.reduce(%{}, fn {idHospital, idRol}, acc ->
+      |> Enum.reduce(%{}, fn %{idHospital: idHospital, idRol: idRol}, acc ->
         if acc[idHospital] == nil do
           Map.put(acc, idHospital, [idRol])
         else
@@ -95,28 +97,55 @@ defmodule Hospitales do
         end
       end)
 
-    sectores =
-      CCloud.Repo.all(
-        from(r in Hospital.UsuarioSector,
-          where: r.cuil == ^cuil,
-          select: [:idHospital, :idIsla, :idSector]
-        )
+    q =
+      from(u in Hospital.UsuarioSector, as: :usuario,
+        where: u.cuil == ^cuil
       )
-      |> Enum.reduce(%{}, fn {idHospital, idIsla, idSector}, acc ->
+
+    q =
+      from([usuario: u] in q,
+        join: h in Hospital, as: :hospital,
+        on: h.idHosp == u.idHospital
+      )
+
+    q =
+      from([usuario: u, hospital: h] in q,
+        join: s in Hospital.Sector, as: :sector,
+        on: u.idIsla == s.idIsla and u.idSector == s.idSector,
+        select: [s.idHospital, h.nombre, s.idIsla, s.idSector, s.descripcion]
+      )
+
+    sectores =
+      CCloud.Repo.all(q)
+      |> Enum.reduce(%{}, fn [
+                               idHospital,
+                               nombreHosp,
+                               idIsla,
+                               idSector,
+                               descSector
+                             ],
+                             acc ->
         cond do
           acc[idHospital] == nil ->
-            sectores = [idSector]
-            hospital = Map.put(%{}, idIsla, sectores)
+            sectores = [%{idSetor: idSector, descripcion: descSector}]
+            islas = Map.put(%{}, idIsla, sectores)
+            hospital = Map.put(%{nombre: nombreHosp}, :islas, islas)
             Map.put(acc, idHospital, hospital)
 
           acc[idHospital][idIsla] == nil ->
-            sectores = [idSector]
-            hospital = Map.put(acc[idHospital], idIsla, sectores)
+            sectores = [%{idSetor: idSector, descripcion: descSector}]
+            islas = Map.put(acc[idHospital][:islas], idIsla, sectores)
+            hospital = Map.put(acc[idHospital], :islas, islas)
             Map.put(acc, idHospital, hospital)
 
           true ->
-            sectores = [idSector | acc[idHospital][idIsla]]
-            hospital = Map.put(acc[idHospital], idIsla, sectores)
+            sectores = [
+              %{idSetor: idSector, descripcion: descSector}
+              | acc[idHospital][idIsla]
+            ]
+
+            islas = Map.put(acc[idHospital][:islas], idIsla, sectores)
+            hospital = Map.put(acc[idHospital], :islas, islas)
             Map.put(acc, idHospital, hospital)
         end
       end)
@@ -126,9 +155,26 @@ defmodule Hospitales do
       |> Enum.concat(Map.keys(roles))
       |> Enum.uniq()
 
+    reduce_islas = fn islas ->
+      islas_k = Map.keys(islas)
+
+      Enum.reduce(islas_k, [], fn isla, acc ->
+        [
+          %{idIsla: isla, sectores: islas[isla]} | acc
+        ]
+      end)
+    end
+
     hospitales =
-      Enum.map(hospitales, fn idHospital ->
-        %{sectores: sectores[idHospital], roles: roles[idHospital]}
+      Enum.reduce(hospitales, [], fn idHospital, acc ->
+        [
+          %{
+            nombre: sectores[idHospital][:nombre],
+            islas: reduce_islas.(sectores[idHospital][:islas]),
+            roles: roles[idHospital]
+          }
+          | acc
+        ]
       end)
 
     respuesta = %{usuario: usuario, hospitales: hospitales}

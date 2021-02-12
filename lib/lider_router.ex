@@ -3,9 +3,18 @@ defmodule Lider.Router do
     IO.puts("\nconnection")
 
     case :cowboy_req.headers(req)["upgrade"] do
-      "websocket" -> {:cowboy_websocket, req, state}
-      nil -> http_handle(req, state)
-      _ -> {:stop, req, state}
+      "websocket" ->
+        opts = %{
+          :idle_timeout => 600_000
+        }
+
+        {:cowboy_websocket, req, state, opts}
+
+      nil ->
+        http_handle(req, state)
+
+      _ ->
+        {:stop, req, state}
     end
   end
 
@@ -111,7 +120,7 @@ defmodule Lider.Router do
           connection = SysUsers.get_connection(token)
 
           if connection != nil do
-            run_method(version, method, req, connection.token)
+            run_method(version, method, req, connection)
           else
             %{resp: "403 Forbidden", result: %{}}
           end
@@ -123,7 +132,10 @@ defmodule Lider.Router do
             if connection.ready do
               run_method(version, method, req, connection)
             else
-              %{resp: "403 Forbidden", result: %{}}
+              %{
+                resp: "403 Forbidden",
+                result: %{error: "you need to connect first!"}
+              }
             end
           else
             %{resp: "403 Forbidden", result: %{}}
@@ -196,7 +208,7 @@ defmodule Lider.Router do
 
           resp
       after
-        5000 ->
+        60000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -340,7 +352,7 @@ defmodule Lider.Router do
           send_noleader(%{id: req.id})
       end
     else
-      send_badreq(%{id: req.id})
+      send_badreq(%{id: req.id, result: %{error: "NIL leader"}})
     end
   end
 
@@ -387,7 +399,7 @@ defmodule Lider.Router do
           send_noleader(%{id: req.id})
       end
     else
-      send_badreq(%{id: req.id})
+      send_badreq(%{id: req.id, result: %{error: "Leader not connected"}})
     end
   end
 
@@ -407,7 +419,7 @@ defmodule Lider.Router do
           send_noleader(%{id: req.id})
       end
     else
-      send_badreq(%{id: req.id})
+      send_badreq(%{id: req.id, result: %{error: "Leader not connected"}})
     end
   end
 

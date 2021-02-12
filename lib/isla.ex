@@ -71,6 +71,8 @@ defmodule Isla do
       idHosp: opts[:idHospital]
     }
 
+    IO.inspect(state.idIsla)
+
     {:ok, state}
   end
 

@@ -162,15 +162,15 @@ defmodule SysUsers do
     end
   end
 
-  def handle_call({:add_lider, token}, from, state) do
-    hospital = state.connected[token].hopital
+  def handle_call({:add_lider, token}, _from, state) do
+    hospital = state.connected[token].hospital
     isla = state.connected[token].isla
 
-    {_, pid, _} = handle_call({:get_lider, hospital, isla}, from, state)
+    # {_, pid, _} = handle_call({:get_lider, hospital, isla}, from, state)
 
     cond do
-      pid != nil ->
-        {:reply, :cant, state}
+      # pid != nil ->
+      # {:reply, :cant, state}
 
       hospital == nil or isla == nil ->
         {:reply, :error, state}
@@ -193,7 +193,7 @@ defmodule SysUsers do
     end
   end
 
-  def handle_call({:connect, hospital, isla, sector, token}, state) do
+  def handle_call({:connect, hospital, isla, sector, token}, _from, state) do
     connection = state.connected[token]
 
     {resp, state} =
@@ -210,7 +210,7 @@ defmodule SysUsers do
           })
 
         connected = Map.put(state.connected, token, connection)
-        Map.put(state, :connected, connected)
+        state = Map.put(state, :connected, connected)
         {:ok, state}
       else
         {:fail, state}

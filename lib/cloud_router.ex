@@ -1,11 +1,18 @@
 defmodule Cloud.Router do
+  
+  @tick_timeout 300
   def init(req, state) do
     IO.puts("\nconnection")
+    IO.inspect(state)
 
     case :cowboy_req.headers(req)["upgrade"] do
       "websocket" ->
-        state = Map.put(state, :pending, %{})
-        {:cowboy_websocket, req, state}
+        
+        state = Map.merge(%{pending: %{}}, state)
+        opts = %{
+          :idle_timeout => 600_000
+        }
+        {:cowboy_websocket, req, state, opts}
 
       nil ->
         http_handle(req, state)
@@ -26,53 +33,64 @@ defmodule Cloud.Router do
       "content-type" => "application/json"
     }
 
-    resp = send_badreq(%{result: %{error: "Only websockets
-            are supported"}})
-    body = Poison.encode!(resp) <> "\n"
+    IO.puts("HTTP connection: We don't want your kind here.")
+    resp = send_badreq(%{result: %{error: "Only websockets are supported"}})
+    body = Poison.encode!(resp)
 
     req1 = :cowboy_req.reply(400, headers, body, req)
     {:ok, req1, state}
   end
 
   def websocket_handle({:text, body}, state) do
-    try do
-      req_json = Poison.decode!(body, keys: :atoms!)
+    IO.puts("WS JSON:")
+    IO.inspect(body)
+    IO.inspect(state)
 
-      IO.puts("\nWS JSON:")
-      IO.inspect(req_json)
+    try do
+      req = Poison.decode!(body, keys: :atoms)
 
       {state, resp} =
         cond do
-          req_json[:method] == "hello_cloud" ->
+          req[:method] == "hello_cloud" ->
             # call hello_cloud!
-            hello_cloud(state, req_json)
+            hello_cloud(state, req)
 
-          req_json[:method] == "connect" ->
-            connection = SysUsers.get_connection(req_json.token)
+          req[:method] == "connect" ->
+            connection = SysUsers.get_connection(req[:token])
 
             if connection != nil do
-              connect(state, req_json)
+              connect(state, req)
             else
-              {state, %{resp: "403 Forbidden", result: %{}}}
+              {state, %{resp: "403 Forbidden", result: %{}, id: req[:id]}}
             end
 
-          req_json[:method] == "copy_data" ->
+          req[:method] == "copy_data" ->
             # do copy_data
             {state, send_badreq()}
 
-          state.pending[req_json[:id]] != nil ->
+          state.pending[req[:id]] != nil ->
             # Esta respondiendo a una llamada
-            pending(state, req_json)
+            IO.puts("pending?")
+            pending(state, req)
 
           true ->
             {state, send_badreq()}
         end
 
       if resp == nil do
+        IO.puts("no resp, but OK")
         {:ok, state}
       else
-        body = Poison.encode!(resp) <> "\n"
-        {[{:text, body}], state}
+        send =
+          if is_list(resp) do
+            Enum.map(resp, fn r ->
+              {:text, Poison.encode!(r)}
+            end)
+          else
+            [{:text, Poison.encode!(resp)}]
+          end
+
+        {:reply, send, state}
       end
     rescue
       reason ->
@@ -80,9 +98,10 @@ defmodule Cloud.Router do
         IO.inspect(body)
         IO.puts("\nreason:")
         IO.inspect(reason)
+        IO.puts(Exception.format_stacktrace())
         resp = send_badreq(%{result: %{error: reason.message}, id: nil})
-        body = Poison.encode!(resp) <> "\n"
-        {[{:text, body}], state}
+        body = Poison.encode!(resp)
+        {:reply, [{:text, body}], state}
     end
   end
 
@@ -90,36 +109,49 @@ defmodule Cloud.Router do
     pending = Map.put(state.pending, msg.id, {:to_leader, from, msg.token})
     state = Map.put(state, :pending, pending)
     msg = Map.put(msg, :token, state.token)
-    msg = Poison.encode!(msg) <> "\n"
-    {state, msg}
+    msg = Poison.encode!(msg)
+    {:reply, [{:text, msg}], state}
+  end
+
+  def websocket_info({:ping}, state) do
+    id = UUIDgen.uuidgen
+    pending = Map.put(state.pending, id, {:ping, id})
+    state = Map.put(state, :pending, pending)
+
+    msg = %{version: "0.0", method: "ping", params: %{ping: id}, token:
+    state.token}
+    msg = Poison.encode!(msg)
+    {:reply, [{:text, msg}], state}
+  end
+
+  def websocket_info(msg, state) do
+    IO.puts("websocket_info:")
+    IO.inspect(msg)
+    {:ok, state}
   end
 
   defp hello_cloud(state, req) do
     params = req.params
 
-    call = {:hello_cloud, params.usuario, params.password}
+    token =
+      SysUsers.hello(
+        params[:user],
+        params[:password],
+        self()
+      )
 
-    id = UUIDgen.uuidgen()
-    pending = Map.put(state.pending, id, call)
-    state = Map.put(state, :pending, pending)
+    resp =
+      if token != nil do
+        datosUsuario = Hospitales.get_datos_usuario(params[:user])
 
-    params = %{
-      usuario: "cloud",
-      password: nil
-      # hospital: params.hospital,
-      # isla: params.isla,
-      # sector: params.sector,
-      # sync_id_hosp: Hospital.get_sync_id(params.hospital),
-      # sync_id_isla: Isla.get_sync_id(params.hospital, params.isla)
-    }
-
-    resp = %{
-      version: "0.0",
-      method: "hello",
-      params: params,
-      id: id,
-      token: UUIDgen.uuidgen()
-    }
+        %{
+          resp: "200 OK",
+          result: Map.merge(datosUsuario, %{token: token}),
+          id: req.id
+        }
+      else
+        %{resp: "403 Forbidden", result: %{}, id: req.id}
+      end
 
     {state, resp}
   end
@@ -127,102 +159,61 @@ defmodule Cloud.Router do
   defp connect(state, req) do
     params = req.params
 
-    call = {:connect, params.hospital, params.isla, params.sector, req.token}
+    resp =
+      SysUsers.connect(
+        params.hospital,
+        params.isla,
+        params.sector,
+        req.token
+      )
 
-    id = UUIDgen.uuidgen()
-    pending = Map.put(state.pending, id, call)
-    state = Map.put(state, :pending, pending)
+    {state, resp} =
+      if resp == :ok do
+        spawn(fn -> tick(req.token) end)
+        sync_id_hospital = Hospital.get_sync_id(params.hospital)
+        sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
+              data_isla =
+                Isla.get_update(
+                  params.hospital,
+                  params.isla,
+                  params.sync_id_hospital
+                )
+              data_hospital =
+                Hospital.get_update(
+                  params.hospital,
+                  params.sync_id_hospital
+                )
 
-    params = %{
-      usuario: "cloud",
-      hospital: params.hospital,
-      isla: params.isla,
-      sector: params.sector
-    }
+              data = Map.merge(data_isla, data_hospital)
 
-    resp = %{
-      version: "0.0",
-      method: "connect",
-      params: params,
-      id: id,
-      token: req.token
-    }
+        resp = %{
+          resp: "200 OK",
+          result: %{
+            sync_id_hospital: sync_id_hospital,
+            sync_id_isla: sync_id_isla,
+            update: data
+          },
+          id: req.id
+        }
+
+        SysUsers.add_lider(req.token)
+        state = Map.put(state, :token, req.token)
+
+        {state, resp}
+      else
+        {state, %{resp: "403 Forbidden", result: %{}}, id: req.id}
+      end
 
     {state, resp}
   end
 
   defp pending(state, req) do
     pending = state.pending
-    {state, resp} = handle_pending(pending[req.id], req, state)
-    pending = Map.delete(pending, req.id)
+    id = req.id
+    {state, resp} = handle_pending(pending[id], req, state)
+    pending = state.pending
+    pending = Map.delete(pending, id)
     state = Map.put(state, :pending, pending)
-    {state, resp}
-  end
-
-  defp handle_pending(
-         {:hello_cloud, user, passwd},
-         req,
-         state
-       ) do
-    token =
-      SysUsers.hello(
-        user,
-        passwd,
-        self()
-      )
-
-    {state, resp} =
-      if(token != nil) do
-        result = SysUsers.add_lider(token)
-
-        cond do
-          result == :ok ->
-            # TODO: Hacer un update
-            state = Map.put(state, :token, token)
-            {state, nil}
-
-          result == :cant ->
-            resp = %{resp: "403 Forbidden", result: %{}, id: req[:id]}
-            {state, resp}
-        end
-      else
-        resp = %{resp: "403 Forbidden", result: %{}, id: req[:id]}
-        {state, resp}
-      end
-
-    {state, resp}
-  end
-
-  defp handle_pending(
-         {:connect, _user, hospital, isla, sector, token},
-         req,
-         state
-       ) do
-    resp =
-      SysUsers.connect(
-        hospital,
-        isla,
-        sector,
-        token
-      )
-
-    resp =
-      if resp == :ok do
-        sync_id_hospital = Hospital.get_sync_id(hospital)
-        sync_id_isla = Isla.get_sync_id(hospital, isla)
-
-        %{
-          resp: "200 OK",
-          result: %{
-            sync_id_hospital: sync_id_hospital,
-            sync_id_isla: sync_id_isla
-          },
-          id: req[:id]
-        }
-      else
-        %{resp: "403 Forbidden", result: %{}, id: req[:id]}
-      end
-
     {state, resp}
   end
 
@@ -236,11 +227,30 @@ defmodule Cloud.Router do
     {state, nil}
   end
 
+  defp handle_pending({:ping, id}, msg, state) do
+    
+    if msg[:result][:pong] == id do
+      {state, nil}
+    else
+      {state, :stop}
+    end
+
+  end
+
   defp send_badreq(add \\ %{}) do
     Map.merge(%{status: "400 Bad Request", result: %{}}, add)
   end
 
-  def terminate(_reason, _req, _state) do
+  def terminate(reason, _req, state) do
+    IO.puts("connection termintated")
+    IO.inspect(reason)
+    IO.inspect(state)
     :ok
+  end
+
+  defp tick(token) do
+    :timer.sleep(@tick_timeout * 1000)
+    send(self(), {:ping})
+    tick(token)
   end
 end
