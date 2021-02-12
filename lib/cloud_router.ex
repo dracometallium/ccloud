@@ -1,5 +1,4 @@
 defmodule Cloud.Router do
-  
   @tick_timeout 300
   def init(req, state) do
     IO.puts("\nconnection")
@@ -7,11 +6,12 @@ defmodule Cloud.Router do
 
     case :cowboy_req.headers(req)["upgrade"] do
       "websocket" ->
-        
         state = Map.merge(%{pending: %{}}, state)
+
         opts = %{
           :idle_timeout => 600_000
         }
+
         {:cowboy_websocket, req, state, opts}
 
       nil ->
@@ -114,12 +114,17 @@ defmodule Cloud.Router do
   end
 
   def websocket_info({:ping}, state) do
-    id = UUIDgen.uuidgen
+    id = UUIDgen.uuidgen()
     pending = Map.put(state.pending, id, {:ping, id})
     state = Map.put(state, :pending, pending)
 
-    msg = %{version: "0.0", method: "ping", params: %{ping: id}, token:
-    state.token}
+    msg = %{
+      version: "0.0",
+      method: "ping",
+      params: %{ping: id},
+      token: state.token
+    }
+
     msg = Poison.encode!(msg)
     {:reply, [{:text, msg}], state}
   end
@@ -172,19 +177,21 @@ defmodule Cloud.Router do
         spawn(fn -> tick(req.token) end)
         sync_id_hospital = Hospital.get_sync_id(params.hospital)
         sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
-              data_isla =
-                Isla.get_update(
-                  params.hospital,
-                  params.isla,
-                  params.sync_id_hospital
-                )
-              data_hospital =
-                Hospital.get_update(
-                  params.hospital,
-                  params.sync_id_hospital
-                )
 
-              data = Map.merge(data_isla, data_hospital)
+        data_isla =
+          Isla.get_update(
+            params.hospital,
+            params.isla,
+            params.sync_id_hospital
+          )
+
+        data_hospital =
+          Hospital.get_update(
+            params.hospital,
+            params.sync_id_hospital
+          )
+
+        data = Map.merge(data_isla, data_hospital)
 
         resp = %{
           resp: "200 OK",
@@ -228,13 +235,11 @@ defmodule Cloud.Router do
   end
 
   defp handle_pending({:ping, id}, msg, state) do
-    
     if msg[:result][:pong] == id do
       {state, nil}
     else
       {state, :stop}
     end
-
   end
 
   defp send_badreq(add \\ %{}) do

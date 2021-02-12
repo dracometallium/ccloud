@@ -98,19 +98,22 @@ defmodule Hospitales do
       end)
 
     q =
-      from(u in Hospital.UsuarioSector, as: :usuario,
+      from(u in Hospital.UsuarioSector,
+        as: :usuario,
         where: u.cuil == ^cuil
       )
 
     q =
       from([usuario: u] in q,
-        join: h in Hospital, as: :hospital,
+        join: h in Hospital,
+        as: :hospital,
         on: h.idHosp == u.idHospital
       )
 
     q =
       from([usuario: u, hospital: h] in q,
-        join: s in Hospital.Sector, as: :sector,
+        join: s in Hospital.Sector,
+        as: :sector,
         on: u.idIsla == s.idIsla and u.idSector == s.idSector,
         select: [s.idHospital, h.nombre, s.idIsla, s.idSector, s.descripcion]
       )
