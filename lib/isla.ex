@@ -222,20 +222,20 @@ defmodule Isla do
 
   defp table2module(table) do
     case table do
-      :signosVitales -> Isla.SignoVital
+      :signosVitales -> Isla.SignosVitales
       :laboratorios -> Isla.Laboratorio
-      :rx_toraxs -> Isla.RXTorax
+      :rx_toraxs -> Isla.RxTorax
       :alertas -> Isla.Alerta
       :episodios -> Isla.Episodio
     end
   end
 end
 
-defmodule Isla.SignoVital do
+defmodule Isla.SignosVitales do
   use Ecto.Schema
 
   @primary_key false
-  schema "SignoVital" do
+  schema "SignosVitales" do
     field(:sync_id, :integer)
     field(:id_hospital, :string, primary_key: true)
     field(:numeroHCSignosVitales, :string, primary_key: true)
@@ -272,11 +272,11 @@ defmodule Isla.Laboratorio do
   end
 end
 
-defmodule Isla.RXTorax do
+defmodule Isla.RxTorax do
   use Ecto.Schema
 
   @primary_key false
-  schema "RXTorax" do
+  schema "RxTorax" do
     field(:sync_id, :integer)
     field(:idHospitalRad, :string, primary_key: true)
     field(:numeroHCRad, :string, primary_key: true)
