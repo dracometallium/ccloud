@@ -106,21 +106,23 @@ defmodule Cloud.Router do
   end
 
   def websocket_info({:to_leader, msg, from}, state) do
-    pending = Map.put(state.pending, msg.id, {:to_leader, from, msg.token})
-    state = Map.put(state, :pending, pending)
+    state = add_pending({:to_leader, from, msg.token}, msg.id, state)
+
     msg = Map.put(msg, :token, state.token)
     msg = Poison.encode!(msg)
+
     {:reply, [{:text, msg}], state}
   end
 
   def websocket_info({:ping}, state) do
     id = UUIDgen.uuidgen()
-    pending = Map.put(state.pending, id, {:ping, id})
-    state = Map.put(state, :pending, pending)
+
+    state = add_pending({:ping, id}, id, state)
 
     msg = %{
       version: "0.0",
       method: "ping",
+      id: id,
       params: %{ping: id},
       token: state.token
     }
@@ -129,10 +131,30 @@ defmodule Cloud.Router do
     {:reply, [{:text, msg}], state}
   end
 
+  def websocket_info({:new_data, type, data}, state) do
+    id = UUIDgen.uuidgen()
+    state = add_pending({:new_data}, id, state)
+
+    msg = %{
+      version: "0.0",
+      method: "new_data",
+      id: id,
+      params: %{type: type, data: data},
+      token: state.token
+    }
+
+    {:reply, [{:text, msg}], state}
+  end
+
   def websocket_info(msg, state) do
     IO.puts("websocket_info:")
     IO.inspect(msg)
     {:ok, state}
+  end
+
+  defp add_pending(msg, id, state) do
+    pending = Map.put(state.pending, id, msg)
+    Map.put(state, :pending, pending)
   end
 
   defp hello_cloud(state, req) do
@@ -240,6 +262,10 @@ defmodule Cloud.Router do
     else
       {state, :stop}
     end
+  end
+
+  defp handle_pending({:new_data}, _msg, state) do
+    {state, nil}
   end
 
   defp send_badreq(add \\ %{}) do

@@ -178,11 +178,27 @@ defmodule Lider.Router do
       sync_id_hospital = Hospital.get_sync_id(params.hospital)
       sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
 
+      data_isla =
+        Isla.get_update(
+          params.hospital,
+          params.isla,
+          params.sync_id_hospital
+        )
+
+      data_hospital =
+        Hospital.get_update(
+          params.hospital,
+          params.sync_id_hospital
+        )
+
+      data = Map.merge(data_isla, data_hospital)
+
       %{
         resp: "200 OK",
         result: %{
           sync_id_hospital: sync_id_hospital,
-          sync_id_isla: sync_id_isla
+          sync_id_isla: sync_id_isla,
+          update: data
         }
       }
     else
@@ -227,7 +243,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -254,7 +270,7 @@ defmodule Lider.Router do
 
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -274,7 +290,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -301,7 +317,7 @@ defmodule Lider.Router do
 
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -321,7 +337,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -348,7 +364,7 @@ defmodule Lider.Router do
 
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -368,7 +384,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -395,7 +411,7 @@ defmodule Lider.Router do
 
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -415,7 +431,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -429,6 +445,9 @@ defmodule Lider.Router do
     params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_cama(connection.hospital, data)
+
+    send_new_data(:cama, data, sync_id, connection)
+
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
@@ -442,6 +461,9 @@ defmodule Lider.Router do
     params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_hcpaciente(connection.hospital, data)
+
+    send_new_data(:hcpaciente, data, sync_id, connection)
+
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
@@ -456,6 +478,9 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection.hospital)
     IO.inspect(data)
     sync_id = Hospital.new_isla(connection.hospital, data)
+
+    send_new_data(:isla, data, sync_id, connection)
+
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
@@ -469,6 +494,9 @@ defmodule Lider.Router do
     params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_sector(connection.hospital, data)
+
+    send_new_data(:sector, data, sync_id, connection)
+
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
@@ -488,6 +516,9 @@ defmodule Lider.Router do
     params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_usuario_hospital(connection.hospital, data)
+
+    send_new_data(:usuario_hospital, data, sync_id, connection)
+
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
@@ -501,6 +532,9 @@ defmodule Lider.Router do
     params = req.params
     data = Map.put(params.data, :idHospital, connection.hospital)
     sync_id = Hospital.new_usuario_sector(connection.hospital, data)
+
+    send_new_data(:usuario_sector, data, sync_id, connection)
+
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
@@ -523,8 +557,9 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "new_usuario", req, _connection) do
     params = req.params
-    usuario = Hospitales.new_usuario(params.data)
-    %{status: "200 OK", result: %{usuario: usuario}}
+    data = Hospitales.new_usuario(params.data)
+
+    %{status: "200 OK", result: %{usuario: data}}
   end
 
   defp run_method("0.0", "get_usuarios", _params, _connection) do
@@ -562,7 +597,7 @@ defmodule Lider.Router do
 
           resp
       after
-        5000 ->
+        60_000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -581,6 +616,15 @@ defmodule Lider.Router do
 
   defp send_noleader(add) do
     Map.merge(%{status: "503 Service Unavailable", result: %{}}, add)
+  end
+
+  defp send_new_data(data, type, sync_id, connection) do
+    pid = SysUsers.get_lider(connection.hospital, connection.isla)
+
+    if pid != nil do
+      data = Map.put(data, :sync_id, sync_id)
+      send(pid, {:new_data, type, data})
+    end
   end
 
   def terminate(_reason, _req, _state) do
