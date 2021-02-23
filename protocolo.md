@@ -150,7 +150,7 @@ Respuestas:
         -   update: %{<datos_update>}
     -   https_status: 200
 
--   Si el usuario esta asignado al hospital, isla y sector:
+-   Si el usuario no esta asignado al hospital, isla y sector:
 
     -   status: "403 Forbidden"
     -   result: {}
