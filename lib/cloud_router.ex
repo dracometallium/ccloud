@@ -1,5 +1,5 @@
 defmodule Cloud.Router do
-  @tick_timeout 300
+  @tick_timeout 180
   def init(req, state) do
     IO.puts("\nconnection")
     IO.inspect(state)
@@ -205,7 +205,8 @@ defmodule Cloud.Router do
 
     {state, resp} =
       if resp == :ok do
-        spawn(fn -> tick(req.token) end)
+        pid = self()
+        spawn(fn -> tick(req.token, pid) end)
         sync_id_hospital = Hospital.get_sync_id(params.hospital)
         sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
 
@@ -296,9 +297,9 @@ defmodule Cloud.Router do
     :ok
   end
 
-  defp tick(token) do
+  defp tick(token, pid) do
     :timer.sleep(@tick_timeout * 1000)
-    send(self(), {:ping})
-    tick(token)
+    send(pid, {:ping})
+    tick(token, pid)
   end
 end
