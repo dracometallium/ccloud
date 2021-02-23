@@ -12,7 +12,7 @@ defmodule Hospital do
     field(:calle, :string)
     field(:numero, :string)
     field(:cp, :string)
-    field(:plano_camas, :string)
+    field(:planoCamas, :string)
   end
 
   def new_cama(hospital, cama) do
@@ -265,13 +265,16 @@ defmodule Hospital do
       :islas,
       :sectores,
       :usuarios_hospital,
-      :usuarios_sector,
-      :hospitales
+      :usuarios_sector
     ]
 
     hospital =
-      if state.hospital.sync_id > sync_id do
-        state.hospital
+      if state.sync_id > sync_id do
+        CCloud.Repo.one(
+          from(r in Hospital,
+            where: r.idHosp == ^state.idHosp
+          )
+        )
       else
         nil
       end

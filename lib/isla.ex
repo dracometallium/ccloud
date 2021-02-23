@@ -189,8 +189,7 @@ defmodule Isla do
       :laboratorios,
       :rx_toraxs,
       :alertas,
-      :episodios,
-      :isla
+      :episodios
     ]
 
     result = get_fromlist(list, sync_id, state)
