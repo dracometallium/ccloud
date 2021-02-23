@@ -136,6 +136,9 @@ Parámetros:
 -   Hospital
 -   Isla
 -   Sector
+-   sync_id_isla: opcional. Si es distinto de nil, envía la actualización de la isla.
+-   sync_id_hospital: opcional. Si es distinto de nil, envía la actualización
+    del hospital.
 
 Respuestas:
 

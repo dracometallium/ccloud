@@ -179,17 +179,25 @@ defmodule Lider.Router do
       sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
 
       data_isla =
-        Isla.get_update(
-          params.hospital,
-          params.isla,
-          params.sync_id_hospital
-        )
+        if params[:sync_id_isla] != nil do
+          Isla.get_update(
+            params.hospital,
+            params.isla,
+            params.sync_id_isla
+          )
+        else
+          %{}
+        end
 
       data_hospital =
-        Hospital.get_update(
-          params.hospital,
-          params.sync_id_hospital
-        )
+        if params[:sync_id_hospital] != nil do
+          Hospital.get_update(
+            params.hospital,
+            params.sync_id_hospital
+          )
+        else
+          %{}
+        end
 
       data = Map.merge(data_isla, data_hospital)
 
