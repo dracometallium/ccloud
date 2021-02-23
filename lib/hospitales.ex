@@ -130,20 +130,20 @@ defmodule Hospitales do
                              acc ->
         cond do
           acc[idHospital] == nil ->
-            sectores = [%{idSetor: idSector, descripcion: descSector}]
+            sectores = [%{idSector: idSector, descripcion: descSector}]
             islas = Map.put(%{}, idIsla, sectores)
             hospital = Map.put(%{nombre: nombreHosp}, :islas, islas)
             Map.put(acc, idHospital, hospital)
 
           acc[idHospital][idIsla] == nil ->
-            sectores = [%{idSetor: idSector, descripcion: descSector}]
+            sectores = [%{idSector: idSector, descripcion: descSector}]
             islas = Map.put(acc[idHospital][:islas], idIsla, sectores)
             hospital = Map.put(acc[idHospital], :islas, islas)
             Map.put(acc, idHospital, hospital)
 
           true ->
             sectores = [
-              %{idSetor: idSector, descripcion: descSector}
+              %{idSector: idSector, descripcion: descSector}
               | acc[idHospital][idIsla]
             ]
 
@@ -172,6 +172,7 @@ defmodule Hospitales do
       Enum.reduce(hospitales, [], fn idHospital, acc ->
         [
           %{
+            idHospital: idHospital,
             nombre: sectores[idHospital][:nombre],
             islas: reduce_islas.(sectores[idHospital][:islas]),
             roles: roles[idHospital]
