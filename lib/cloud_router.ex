@@ -68,6 +68,15 @@ defmodule Cloud.Router do
             # do copy_data
             {state, send_badreq()}
 
+          req[:method] == "copy_data" ->
+            resp = %{
+              resp: "200 OK",
+              result: %{resp: "aca va la respuesta de copy_dat"},
+              id: req[:id]
+            }
+
+            {state, resp}
+
           state.pending[req[:id]] != nil ->
             # Esta respondiendo a una llamada
             IO.puts("pending?")
