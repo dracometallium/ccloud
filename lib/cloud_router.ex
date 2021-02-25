@@ -51,7 +51,7 @@ defmodule Cloud.Router do
 
       {state, resp} =
         cond do
-          req[:method] == "hello_cloud" ->
+          req[:method] == "hello" ->
             # call hello_cloud!
             hello_cloud(state, req)
 
@@ -98,6 +98,8 @@ defmodule Cloud.Router do
           else
             [{:text, Poison.encode!(resp)}]
           end
+          IO.puts "to leader:"
+          IO.inspect send
 
         {:reply, send, state}
       end
@@ -240,6 +242,7 @@ defmodule Cloud.Router do
             sync_id_isla: sync_id_isla,
             update: data
           },
+          method: "update_response",
           id: req.id
         }
 

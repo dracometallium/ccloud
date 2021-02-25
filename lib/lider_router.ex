@@ -46,6 +46,8 @@ defmodule Lider.Router do
           headers = headers()
 
           body = Poison.encode!(resp) <> "\n"
+          IO.puts "to client:"
+          IO.puts body
 
           req1 = :cowboy_req.reply(200, headers, body, req0)
 
@@ -96,6 +98,9 @@ defmodule Lider.Router do
 
       resp = connect_and_run_method(version, method, req_json, id, token)
       body = Poison.encode!(resp) <> "\n"
+
+      IO.puts "to client:"
+      IO.puts body
 
       {[{:text, body}], state}
     rescue
@@ -232,7 +237,7 @@ defmodule Lider.Router do
 
           resp
       after
-        60000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -251,7 +256,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -278,7 +283,7 @@ defmodule Lider.Router do
 
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -298,7 +303,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -325,7 +330,7 @@ defmodule Lider.Router do
 
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -345,7 +350,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -372,7 +377,7 @@ defmodule Lider.Router do
 
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -392,7 +397,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -419,7 +424,7 @@ defmodule Lider.Router do
 
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -439,7 +444,7 @@ defmodule Lider.Router do
         {:from_leader, resp, ^id} ->
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
@@ -605,7 +610,7 @@ defmodule Lider.Router do
 
           resp
       after
-        60_000 ->
+        10000 ->
           send_noleader(%{id: req.id})
       end
     else
