@@ -214,22 +214,22 @@ CREATE TABLE `RxTorax` (
 CREATE TABLE `Sector` (
   `sync_id` int(11),
   `idHospital` varchar(15),
-  `idIsla` varchar(150),
+  `idIsla` varchar(15),
   `idSector` varchar(15),
-  `descripcion` varchar(15)
+  `descripcion` varchar(150)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `SignosVitales`
+-- Estructura de tabla para la tabla `ControlesEnfermeria`
 --
 
-CREATE TABLE `SignosVitales` (
+CREATE TABLE `ControlesEnfermeria` (
   `sync_id` int(11),
   `id_hospital` varchar(15),
-  `numeroHCSignosVitales` varchar(15),
-  `fechaSignosVitales` int(11),
+  `numeroHCControlesEnfermeria` varchar(15),
+  `fechaControlesEnfermeria` int(11),
   `auditoria` varchar(15),
   `frec_resp` int(11),
   `sat_oxi` int(11),
@@ -251,11 +251,11 @@ CREATE TABLE `SignosVitales` (
 CREATE TABLE `Usuario` (
   `cuil` varchar(15),
   `clave` varchar(150),
-  `sal` varchar(15),
+  `sal` varchar(37),
   `nombre` varchar(150),
   `apellido` varchar(150),
   `email` varchar(150),
-  `telefono` varchar(15)
+  `telefono` varchar(20)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -347,10 +347,10 @@ ALTER TABLE `Sector`
   ADD PRIMARY KEY (`idHospital`,`idIsla`,`idSector`);
 
 --
--- Indices de la tabla `SignosVitales`
+-- Indices de la tabla `ControlesEnfermeria`
 --
-ALTER TABLE `SignosVitales`
-  ADD PRIMARY KEY (`id_hospital`,`numeroHCSignosVitales`,`fechaSignosVitales`);
+ALTER TABLE `ControlesEnfermeria`
+  ADD PRIMARY KEY (`id_hospital`,`numeroHCControlesEnfermeria`,`fechaControlesEnfermeria`);
 
 --
 -- Indices de la tabla `Usuario`
