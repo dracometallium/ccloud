@@ -1,7 +1,7 @@
 defmodule Cloud.Router do
   @tick_timeout 180
   def init(req, state) do
-    IO.puts("\nconnection")
+    IO.puts("\nCloud connection")
     IO.inspect(state)
 
     case :cowboy_req.headers(req)["upgrade"] do
@@ -42,7 +42,7 @@ defmodule Cloud.Router do
   end
 
   def websocket_handle({:text, body}, state) do
-    IO.puts("WS JSON:")
+    IO.puts("CLOUD WS JSON:")
     IO.inspect(body)
     IO.inspect(state)
 
@@ -98,19 +98,20 @@ defmodule Cloud.Router do
           else
             [{:text, Poison.encode!(resp)}]
           end
-          IO.puts "to leader:"
-          IO.inspect send
+
+        IO.puts("to leader:")
+        IO.inspect(send)
 
         {:reply, send, state}
       end
     rescue
       reason ->
-        IO.puts("\nERROR\nbody:")
+        IO.puts("Cloud ERROR\nbody:")
         IO.inspect(body)
-        IO.puts("\nreason:")
+        IO.puts("Cloud reason:")
         IO.inspect(reason)
         IO.puts(Exception.format_stacktrace())
-        resp = send_badreq(%{result: %{error: reason.message}, id: nil})
+        resp = send_badreq(%{result: %{error: reason}, id: nil})
         body = Poison.encode!(resp)
         {:reply, [{:text, body}], state}
     end
@@ -154,6 +155,7 @@ defmodule Cloud.Router do
       token: state.token
     }
 
+    msg = Poison.encode!(msg)
     {:reply, [{:text, msg}], state}
   end
 
@@ -199,9 +201,9 @@ defmodule Cloud.Router do
 
     resp =
       SysUsers.connect(
-        params.hospital,
-        params.isla,
-        params.sector,
+        params[:hospital],
+        params[:isla],
+        params[:sector],
         req.token
       )
 

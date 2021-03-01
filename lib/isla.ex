@@ -4,10 +4,10 @@ defmodule Isla do
   import Ecto.Query
   import Utils
 
-  def new_signo_vital(hospital, isla, signo_vital) do
+  def new_control_enfermeria(hospital, isla, control_enfermeria) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:new, :signosVitales, signo_vital}
+      {:new, :controlesEnfermeria, control_enfermeria}
     )
   end
 
@@ -30,10 +30,10 @@ defmodule Isla do
     GenServer.call(get_name_id(hospital, isla), {:new, :episodios, episodio})
   end
 
-  def get_signos_vitales(hospital, isla, sync_id) do
+  def get_controles_enfermeria(hospital, isla, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :signosVitales, sync_id}
+      {:get, :controlesEnfermeria, sync_id}
     )
   end
 
@@ -185,7 +185,7 @@ defmodule Isla do
 
   def handle_call({:get_update, sync_id}, _from, state) do
     list = [
-      :signosVitales,
+      :controlesEnfermeria,
       :laboratorios,
       :rx_toraxs,
       :alertas,
@@ -221,7 +221,7 @@ defmodule Isla do
 
   defp table2module(table) do
     case table do
-      :signosVitales -> Isla.SignosVitales
+      :controlesEnfermeria -> Isla.ControlesEnfermeria
       :laboratorios -> Isla.Laboratorio
       :rx_toraxs -> Isla.RxTorax
       :alertas -> Isla.Alerta
@@ -230,15 +230,15 @@ defmodule Isla do
   end
 end
 
-defmodule Isla.SignosVitales do
+defmodule Isla.ControlesEnfermeria do
   use Ecto.Schema
 
   @primary_key false
-  schema "SignosVitales" do
+  schema "ControlesEnfermeria" do
     field(:sync_id, :integer)
     field(:id_hospital, :string, primary_key: true)
-    field(:numeroHCSignosVitales, :string, primary_key: true)
-    field(:fechaSignosVitales, :integer, primary_key: true)
+    field(:numeroHCControlesEnfermeria, :string, primary_key: true)
+    field(:fechaControlesEnfermeria, :integer, primary_key: true)
     field(:auditoria, :string)
     field(:frec_resp, :integer)
     field(:sat_oxi, :integer)

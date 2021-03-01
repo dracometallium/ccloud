@@ -34,7 +34,7 @@ defmodule Utils do
       :laboratorios -> :idHospitalLab
       :rx_toraxs -> :idHospitalRad
       :sectores -> :idHospital
-      :signosVitales -> :id_hospital
+      :controlesEnfermeria -> :id_hospital
       :usuarios_hospital -> :idHospital
       :usuarios_sector -> :idHospital
     end
