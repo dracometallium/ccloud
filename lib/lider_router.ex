@@ -41,7 +41,15 @@ defmodule Lider.Router do
             :token => token
           } = req_json
 
-          resp = connect_and_run_method(version, method, req_json, id, token)
+          {state, resp} =
+            connect_and_run_method(
+              version,
+              method,
+              req_json,
+              id,
+              token,
+              state
+            )
 
           headers = headers()
 
@@ -98,7 +106,9 @@ defmodule Lider.Router do
       IO.puts("\nWS JSON:")
       IO.inspect(req_json)
 
-      resp = connect_and_run_method(version, method, req_json, id, token)
+      {state, resp} =
+        connect_and_run_method(version, method, req_json, id, token, state)
+
       body = Poison.encode!(resp) <> "\n"
 
       IO.puts("to client (ws):")
@@ -117,39 +127,54 @@ defmodule Lider.Router do
     end
   end
 
-  defp connect_and_run_method(version, method, req, id, token) do
-    resp =
+  defp connect_and_run_method(version, method, req, id, token, state) do
+    {state, resp} =
       case method do
         "hello" ->
-          run_method(version, method, req, nil)
+          resp = run_method(version, method, req, nil)
+          {state, resp}
 
         "connect" ->
           connection = SysUsers.get_connection(token)
 
           if connection != nil do
-            run_method(version, method, req, connection)
+            resp = run_method(version, method, req, connection)
+            state = Map.put(state, :token, token)
+            {state, resp}
           else
-            %{resp: "403 Forbidden", result: %{}}
+            resp = %{
+              resp: "403 Forbidden",
+              result: %{error: "Did you make a `hello`?"}
+            }
+
+            {state, resp}
           end
 
         _ ->
           connection = SysUsers.get_connection(token)
 
-          if connection != nil do
-            if connection.ready do
-              run_method(version, method, req, connection)
+          resp =
+            if connection != nil do
+              if connection.ready do
+                run_method(version, method, req, connection)
+              else
+                %{
+                  resp: "403 Forbidden",
+                  result: %{error: "you need to connect first!"}
+                }
+              end
             else
               %{
                 resp: "403 Forbidden",
-                result: %{error: "you need to connect first!"}
+                result: %{error: "Sorry, I didn't find the token."}
               }
             end
-          else
-            %{resp: "403 Forbidden", result: %{}}
-          end
+
+          {state, resp}
       end
 
-    Map.put(resp, :id, id)
+    resp = Map.put(resp, :id, id)
+    {state, resp}
   end
 
   defp run_method("0.0", "hello", req, _connection) do
@@ -166,7 +191,7 @@ defmodule Lider.Router do
       datosUsuario = Hospitales.get_datos_usuario(params[:user])
       %{resp: "200 OK", result: Map.merge(datosUsuario, %{token: token})}
     else
-      %{resp: "403 Forbidden", result: %{}}
+      %{resp: "403 Forbidden", result: %{error: "Wrong password."}}
     end
   end
 
@@ -217,11 +242,14 @@ defmodule Lider.Router do
         }
       }
     else
-      %{resp: "403 Forbidden", result: %{}}
+      %{
+        resp: "403 Forbidden",
+        result: %{error: "Error while connecting, sorry."}
+      }
     end
   end
 
-  defp run_method("0.0", "new_control_enfermeria", req, connection) do
+  defp run_method("0.0", "new_signo_vital", req, connection) do
     params = req.params
 
     pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
@@ -235,7 +263,7 @@ defmodule Lider.Router do
           if(resp.resp == "200 OK") do
             data = Map.put(params.data, :sync_id, resp.sync_id)
 
-            Isla.new_control_enfermeria(
+            Isla.new_signo_vital(
               connection[:hospital],
               connection[:isla],
               data
@@ -245,14 +273,16 @@ defmodule Lider.Router do
           resp
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
-  defp run_method("0.0", "get_controles_enfermeria", req, connection) do
+  defp run_method("0.0", "modify_signo_vital", req, connection) do
+    params = req.params
+
     pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
 
     if pid != nil do
@@ -261,13 +291,49 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+
+            Isla.modify_signo_vital(
+              connection[:hospital],
+              connection[:isla],
+              data
+            )
+          end
+
           resp
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
+    end
+  end
+
+  defp run_method("0.0", "get_signos_vitales", req, connection) do
+    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+      id = req.id
+
+      receive do
+        {:from_leader, resp, ^id} ->
+          Map.put(resp, :actual, 1)
+      after
+        10000 ->
+          data =
+            Isla.get_signos_vitales(
+              connection.hospital,
+              connection.isla,
+              req.params.sync_id
+            )
+
+          %{status: "200 OK", result: %{data: data}, actual: 0}
+      end
+    else
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -296,10 +362,42 @@ defmodule Lider.Router do
           resp
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
+    end
+  end
+
+  defp run_method("0.0", "modify_laboratorio", req, connection) do
+    params = req.params
+
+    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      id = req.id
+
+      receive do
+        {:from_leader, resp, ^id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+
+            Isla.modify_laboratorio(
+              connection[:hospital],
+              connection[:isla],
+              data
+            )
+          end
+
+          resp
+      after
+        10000 ->
+          send_noleader(%{})
+      end
+    else
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -313,13 +411,21 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          resp
+          Map.put(resp, :actual, 1)
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          data =
+            Isla.get_laboratorios(
+              connection.hospital,
+              connection.isla,
+              req.params.sync_id
+            )
+
+          %{status: "200 OK", result: %{data: data}, actual: 0}
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -343,10 +449,42 @@ defmodule Lider.Router do
           resp
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
+    end
+  end
+
+  defp run_method("0.0", "modify_rx_torax", req, connection) do
+    params = req.params
+
+    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      id = req.id
+
+      receive do
+        {:from_leader, resp, ^id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+
+            Isla.modify_rx_torax(
+              connection[:hospital],
+              connection[:isla],
+              data
+            )
+          end
+
+          resp
+      after
+        10000 ->
+          send_noleader(%{})
+      end
+    else
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -360,13 +498,20 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          resp
+          Map.put(resp, :actual, 1)
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          data =
+            Isla.get_rx_toraxs(
+              connection.hospital,
+              connection.isla,
+              req.params.sync_id
+            )
+
+          %{status: "200 OK", result: %{data: data}, actual: 0}
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -390,10 +535,37 @@ defmodule Lider.Router do
           resp
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
+    end
+  end
+
+  defp run_method("0.0", "modify_alerta", req, connection) do
+    params = req.params
+
+    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      id = req.id
+
+      receive do
+        {:from_leader, resp, ^id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+            Isla.modify_alerta(connection[:hospital], connection[:isla], data)
+          end
+
+          resp
+      after
+        10000 ->
+          send_noleader(%{})
+      end
+    else
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -407,13 +579,20 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          resp
+          Map.put(resp, :actual, 1)
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          data =
+            Isla.get_alertas(
+              connection.hospital,
+              connection.isla,
+              req.params.sync_id
+            )
+
+          %{status: "200 OK", result: %{data: data}, actual: 0}
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -437,10 +616,42 @@ defmodule Lider.Router do
           resp
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
+    end
+  end
+
+  defp run_method("0.0", "modify_episodio", req, connection) do
+    params = req.params
+
+    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+
+    if pid != nil do
+      send(pid, {:to_leader, req, self()})
+
+      id = req.id
+
+      receive do
+        {:from_leader, resp, ^id} ->
+          if(resp.resp == "200 OK") do
+            data = Map.put(params.data, :sync_id, resp.sync_id)
+
+            Isla.modify_episodio(
+              connection[:hospital],
+              connection[:isla],
+              data
+            )
+          end
+
+          resp
+      after
+        10000 ->
+          send_noleader(%{})
+      end
+    else
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -454,13 +665,20 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          resp
+          Map.put(resp, :actual, 1)
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          data =
+            Isla.get_episodios(
+              connection.hospital,
+              connection.isla,
+              req.params.sync_id
+            )
+
+          %{status: "200 OK", result: %{data: data}, actual: 0}
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -471,7 +689,17 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospitalCama, connection[:hospital])
     sync_id = Hospital.new_cama(connection[:hospital], data)
 
-    send_new_data(:cama, data, sync_id, connection)
+    send_copy_data(:cama, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "modify_cama", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospitalCama, connection[:hospital])
+    sync_id = Hospital.modify_cama(connection[:hospital], data)
+
+    send_copy_data(:cama, data, sync_id, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -479,7 +707,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_camas", req, connection) do
     params = req.params
     data = Hospital.get_camas(connection[:hospital], params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "new_hcpaciente", req, connection) do
@@ -487,7 +715,17 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.new_hcpaciente(connection[:hospital], data)
 
-    send_new_data(:hcpaciente, data, sync_id, connection)
+    send_copy_data(:hcpaciente, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "modify_hcpaciente", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospital, connection[:hospital])
+    sync_id = Hospital.modify_hcpaciente(connection[:hospital], data)
+
+    send_copy_data(:hcpaciente, data, sync_id, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -495,7 +733,8 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_hcpacientes", req, connection) do
     params = req.params
     data = Hospital.get_hcpacientes(connection[:hospital], params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "new_isla", req, connection) do
@@ -504,7 +743,18 @@ defmodule Lider.Router do
     IO.inspect(data)
     sync_id = Hospital.new_isla(connection[:hospital], data)
 
-    send_new_data(:isla, data, sync_id, connection)
+    send_copy_data(:isla, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "modify_isla", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospital, connection[:hospital])
+    IO.inspect(data)
+    sync_id = Hospital.modify_isla(connection[:hospital], data)
+
+    send_copy_data(:isla, data, sync_id, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -512,7 +762,8 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_islas", req, connection) do
     params = req.params
     data = Hospital.get_islas(connection[:hospital], params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "new_sector", req, connection) do
@@ -520,7 +771,17 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.new_sector(connection[:hospital], data)
 
-    send_new_data(:sector, data, sync_id, connection)
+    send_copy_data(:sector, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "modify_sector", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospital, connection[:hospital])
+    sync_id = Hospital.modify_sector(connection[:hospital], data)
+
+    send_copy_data(:sector, data, sync_id, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -528,13 +789,15 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_sectores", req, connection) do
     params = req.params
     data = Hospital.get_sectores(connection[:hospital], params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
+
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "get_datos_usuario", req, _connection) do
     params = req.params
     data = Hospital.get_datos_usuario(params.hospital, params.cuil)
-    %{status: "200 OK", result: %{data: data}}
+
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "new_usuario_hospital", req, connection) do
@@ -542,7 +805,29 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.new_usuario_hospital(connection[:hospital], data)
 
-    send_new_data(:usuario_hospital, data, sync_id, connection)
+    send_copy_data(
+      :usuario_hospital,
+      data,
+      sync_id,
+      connection[:hospital],
+      nil
+    )
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "modify_usuario_hospital", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospital, connection[:hospital])
+    sync_id = Hospital.modify_usuario_hospital(connection[:hospital], data)
+
+    send_copy_data(
+      :usuario_hospital,
+      data,
+      sync_id,
+      connection[:hospital],
+      nil
+    )
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -553,7 +838,7 @@ defmodule Lider.Router do
     data =
       Hospital.get_usuarios_hospital(connection[:hospital], params.sync_id)
 
-    %{status: "200 OK", result: %{data: data}}
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "new_usuario_sector", req, connection) do
@@ -561,7 +846,17 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.new_usuario_sector(connection[:hospital], data)
 
-    send_new_data(:usuario_sector, data, sync_id, connection)
+    send_copy_data(:usuario_sector, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "modify_usuario_sector", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospital, connection[:hospital])
+    sync_id = Hospital.modify_usuario_sector(connection[:hospital], data)
+
+    send_copy_data(:usuario_sector, data, sync_id, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -569,18 +864,18 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_usuarios_sector", req, connection) do
     params = req.params
     data = Hospital.get_usuarios_sector(connection[:hospital], params.sync_id)
-    %{status: "200 OK", result: %{data: data}}
-  end
-
-  defp run_method("0.0", "get_hospital", _params, connection) do
-    data = Hospital.get_hospital(connection[:hospital])
-    %{status: "200 OK", result: %{data: data}}
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "new_hospital", req, _connection) do
     params = req.params
     sync_id = Hospitales.new_hospital(params.data)
     %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_hospital", _req, connection) do
+    data = Hospital.get_hospital(connection[:hospital])
+    %{status: "200 OK", result: %{data: data}, actual: 1}
   end
 
   defp run_method("0.0", "new_usuario", req, _connection) do
@@ -590,9 +885,9 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{usuario: data}}
   end
 
-  defp run_method("0.0", "get_usuarios", _params, _connection) do
+  defp run_method("0.0", "get_usuarios", _req, _connection) do
     sync_id = Hospitales.get_usuarios()
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+    %{status: "200 OK", result: %{sync_id: sync_id}, actual: 1}
   end
 
   defp run_method("0.0", "get_update", req, connection) do
@@ -626,10 +921,10 @@ defmodule Lider.Router do
           resp
       after
         10000 ->
-          send_noleader(%{id: req.id})
+          send_noleader(%{})
       end
     else
-      send_noleader(%{id: req.id, result: %{error: "Leader not connected"}})
+      send_noleader(%{result: %{error: "Leader not connected"}})
     end
   end
 
@@ -646,13 +941,45 @@ defmodule Lider.Router do
     Map.merge(%{status: "503 Service Unavailable", result: %{}}, add)
   end
 
-  defp send_new_data(type, data, sync_id, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+  defp send_copy_data(type, data, sync_id, hospital, isla) do
+    # Sends the new hospital data to the other clients
+    spawn(fn -> send_copy_data_async(type, data, sync_id, hospital, isla) end)
+    :ok
+  end
 
-    if pid != nil do
-      data = Map.put(data, :sync_id, sync_id)
-      send(pid, {:new_data, type, data})
-    end
+  defp send_copy_data_async(type, data, sync_id, hospital, isla) do
+    # Sends the new data to the other clients
+    clients = SysUsers.get_clients(hospital, isla)
+
+    data = Map.put(data, :sync_id, sync_id)
+
+    Enum.each(clients, fn pid ->
+      if pid != nil and Process.alive?(pid) do
+        send(pid, {:copy_data, type, data})
+      end
+    end)
+  end
+
+  def websocket_info({:copy_data, type, data}, state) do
+    id = UUIDgen.uuidgen()
+
+    msg = %{
+      version: "0.0",
+      method: "copy_data",
+      id: id,
+      params: %{tipo: type, dato: data, triage: nil, nHC: nil},
+      token: state.token
+    }
+
+    msg = Poison.encode!(msg)
+    self() |> IO.inspect(label: "copy_data")
+    {:reply, [{:text, msg}], state}
+  end
+
+  def websocket_info(msg, state) do
+    IO.puts("websocket_info:")
+    IO.inspect(msg)
+    {:ok, state}
   end
 
   def terminate(_reason, _req, _state) do

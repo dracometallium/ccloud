@@ -74,6 +74,10 @@ defmodule SysUsers do
     GenServer.call(__MODULE__, {:get_lider, hospital, isla})
   end
 
+  def get_clients(hospital, isla) do
+    GenServer.call(__MODULE__, {:get_clients, hospital, isla})
+  end
+
   def get_connection(token) do
     GenServer.call(__MODULE__, {:get_connection, token})
   end
@@ -191,6 +195,19 @@ defmodule SysUsers do
       Process.alive?(pid) -> {:reply, pid, state}
       true -> {:reply, nil, state}
     end
+  end
+
+  def handle_call({:get_clients, hospital, isla}, _from, state) do
+    clients =
+      Enum.filter(state.connected, fn {_t, v} ->
+        v[:hospital] ==
+          hospital and (isla == nil or v[:isla] == isla)
+      end)
+      |> Enum.reduce([], fn {_t, v}, acc ->
+        [v.pid | acc]
+      end)
+
+    {:reply, clients, state}
   end
 
   def handle_call({:connect, hospital, isla, sector, token}, _from, state) do

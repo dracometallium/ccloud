@@ -68,7 +68,7 @@ CREATE TABLE `Cama` (
   `ubicacionX` int(11),
   `ubicacionY` int(11),
   `orientacion` varchar(150),
-  `estado` varchar(150)
+  `estado` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -222,14 +222,14 @@ CREATE TABLE `Sector` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `ControlesEnfermeria`
+-- Estructura de tabla para la tabla `SignosVitales`
 --
 
-CREATE TABLE `ControlesEnfermeria` (
+CREATE TABLE `SignosVitales` (
   `sync_id` int(11),
   `id_hospital` varchar(15),
-  `numeroHCControlesEnfermeria` varchar(15),
-  `fechaControlesEnfermeria` int(11),
+  `numeroHCSignosVitales` varchar(15),
+  `fechaSignosVitales` int(11),
   `auditoria` varchar(15),
   `frec_resp` int(11),
   `sat_oxi` int(11),
@@ -347,10 +347,10 @@ ALTER TABLE `Sector`
   ADD PRIMARY KEY (`idHospital`,`idIsla`,`idSector`);
 
 --
--- Indices de la tabla `ControlesEnfermeria`
+-- Indices de la tabla `SignosVitales`
 --
-ALTER TABLE `ControlesEnfermeria`
-  ADD PRIMARY KEY (`id_hospital`,`numeroHCControlesEnfermeria`,`fechaControlesEnfermeria`);
+ALTER TABLE `SignosVitales`
+  ADD PRIMARY KEY (`id_hospital`,`numeroHCSignosVitales`,`fechaSignosVitales`);
 
 --
 -- Indices de la tabla `Usuario`

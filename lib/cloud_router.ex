@@ -1,5 +1,5 @@
 defmodule Cloud.Router do
-  @tick_timeout 180
+  @tick_timeout 30
   def init(req, state) do
     IO.puts("\nCloud connection")
     IO.inspect(state)
@@ -52,7 +52,6 @@ defmodule Cloud.Router do
       {state, resp} =
         cond do
           req[:method] == "hello" ->
-            # call hello_cloud!
             hello_cloud(state, req)
 
           req[:method] == "connect" ->
@@ -61,12 +60,13 @@ defmodule Cloud.Router do
             if connection != nil do
               connect(state, req)
             else
-              {state, %{resp: "403 Forbidden", result: %{}, id: req[:id]}}
+              {state,
+               %{
+                 resp: "403 Forbidden",
+                 result: %{error: "Did you make a `hello`?"},
+                 id: req[:id]
+               }}
             end
-
-          req[:method] == "copy_data" ->
-            # do copy_data
-            {state, send_badreq()}
 
           req[:method] == "copy_data" ->
             resp = %{
@@ -118,7 +118,9 @@ defmodule Cloud.Router do
   end
 
   def websocket_info({:to_leader, msg, from}, state) do
-    state = add_pending({:to_leader, from, msg.token}, msg.id, state)
+    old_id = msg.id
+    msg = Map.put(msg, :id, UUIDgen.uuidgen())
+    state = add_pending({:to_leader, from, msg.token, old_id}, msg.id, state)
 
     msg = Map.put(msg, :token, state.token)
     msg = Poison.encode!(msg)
@@ -143,24 +145,24 @@ defmodule Cloud.Router do
     {:reply, [{:text, msg}], state}
   end
 
-  def websocket_info({:new_data, type, data}, state) do
+  def websocket_info({:copy_data, type, data}, state) do
     id = UUIDgen.uuidgen()
-    state = add_pending({:new_data}, id, state)
 
     msg = %{
       version: "0.0",
-      method: "new_data",
+      method: "copy_data",
       id: id,
-      params: %{type: type, data: data},
+      params: %{tipo: type, dato: data, triage: nil, nHC: nil},
       token: state.token
     }
 
     msg = Poison.encode!(msg)
+    self() |> IO.inspect(label: "Cloud copy_data")
     {:reply, [{:text, msg}], state}
   end
 
   def websocket_info(msg, state) do
-    IO.puts("websocket_info:")
+    IO.puts("Cloud websocket_info:")
     IO.inspect(msg)
     {:ok, state}
   end
@@ -190,7 +192,11 @@ defmodule Cloud.Router do
           id: req.id
         }
       else
-        %{resp: "403 Forbidden", result: %{}, id: req.id}
+        %{
+          resp: "403 Forbidden",
+          result: %{error: "Wrong password."},
+          id: req.id
+        }
       end
 
     {state, resp}
@@ -253,7 +259,11 @@ defmodule Cloud.Router do
 
         {state, resp}
       else
-        {state, %{resp: "403 Forbidden", result: %{}}, id: req.id}
+        {state,
+         %{
+           resp: "403 Forbidden",
+           result: %{error: "Error while connecting, sorry."}
+         }, id: req.id}
       end
 
     {state, resp}
@@ -269,8 +279,9 @@ defmodule Cloud.Router do
     {state, resp}
   end
 
-  defp handle_pending({:to_leader, pid, token}, msg, state) do
+  defp handle_pending({:to_leader, pid, token, old_id}, msg, state) do
     msg = Map.put(msg, :token, token)
+    msg = Map.put(msg, :id, old_id)
 
     if(Process.alive?(pid)) do
       send(pid, {:from_leader, msg, msg.id})
@@ -287,7 +298,7 @@ defmodule Cloud.Router do
     end
   end
 
-  defp handle_pending({:new_data}, _msg, state) do
+  defp handle_pending({:copy_data}, _msg, state) do
     {state, nil}
   end
 
@@ -296,7 +307,7 @@ defmodule Cloud.Router do
   end
 
   def terminate(reason, _req, state) do
-    IO.puts("connection termintated")
+    IO.puts("Cloud connection termintated")
     IO.inspect(reason)
     IO.inspect(state)
     :ok

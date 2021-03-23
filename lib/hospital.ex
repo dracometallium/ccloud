@@ -45,6 +45,36 @@ defmodule Hospital do
     )
   end
 
+  def modify_cama(hospital, cama) do
+    GenServer.call(get_name_id(hospital), {:modify, :camas, cama})
+  end
+
+  def modify_hcpaciente(hospital, hcpaciente) do
+    GenServer.call(get_name_id(hospital), {:modify, :hcpacientes, hcpaciente})
+  end
+
+  def modify_isla(hospital, isla) do
+    GenServer.call(get_name_id(hospital), {:modify, :islas, isla})
+  end
+
+  def modify_sector(hospital, sector) do
+    GenServer.call(get_name_id(hospital), {:modify, :sectores, sector})
+  end
+
+  def modify_usuario_hospital(hospital, usuario_hospital) do
+    GenServer.call(
+      get_name_id(hospital),
+      {:modify, :usuarios_hospital, usuario_hospital}
+    )
+  end
+
+  def modify_usuario_sector(hospital, usuario_sector) do
+    GenServer.call(
+      get_name_id(hospital),
+      {:modify, :usuarios_sector, usuario_sector}
+    )
+  end
+
   def get_state(idHosp) do
     GenServer.call(get_name_id(idHosp), {:get_state})
   end
@@ -145,6 +175,51 @@ defmodule Hospital do
     else
       Ecto.Multi.new()
       |> Ecto.Multi.insert(:registro, registro)
+      |> Ecto.Multi.update(
+        :max_sync_id,
+        Ecto.Changeset.change(
+          %CCloud.Repo.SyncIDHosp{
+            idHosp: state.idHosp
+          },
+          sync_id: sync_id
+        )
+      )
+      |> CCloud.Repo.transaction()
+    end
+
+    nstate = Map.put(state, :sync_id, sync_id)
+
+    {:reply, sync_id, nstate}
+  end
+
+  def handle_call({:modify, table, registro}, _from, state) do
+    sync_id =
+      if registro[:sync_id] == nil do
+        state.sync_id + 1
+      else
+        registro.sync_id
+      end
+
+    registro = Map.put(registro, :sync_id, sync_id)
+
+    keys =
+      Map.take(
+        registro,
+        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
+      )
+
+    keys = struct(table2module(table), keys)
+    IO.inspect(struct(table2module(table), registro))
+    IO.inspect(keys)
+
+    registro = Ecto.Changeset.change(keys, registro)
+    IO.inspect(registro)
+
+    if table == :islas do
+      :fail
+    else
+      Ecto.Multi.new()
+      |> Ecto.Multi.update(:registro, registro)
       |> Ecto.Multi.update(
         :max_sync_id,
         Ecto.Changeset.change(
@@ -434,7 +509,7 @@ defmodule Hospital.Cama do
     field(:ubicacionX, :integer)
     field(:ubicacionY, :integer)
     field(:orientacion, :string)
-    field(:estado, :string)
+    field(:estado, :integer)
   end
 end
 

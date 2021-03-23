@@ -4,10 +4,10 @@ defmodule Isla do
   import Ecto.Query
   import Utils
 
-  def new_control_enfermeria(hospital, isla, control_enfermeria) do
+  def new_signo_vital(hospital, isla, signo_vital) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:new, :controlesEnfermeria, control_enfermeria}
+      {:new, :signosVitales, signo_vital}
     )
   end
 
@@ -30,10 +30,42 @@ defmodule Isla do
     GenServer.call(get_name_id(hospital, isla), {:new, :episodios, episodio})
   end
 
-  def get_controles_enfermeria(hospital, isla, sync_id) do
+  def modify_signo_vital(hospital, isla, signo_vital) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :controlesEnfermeria, sync_id}
+      {:modify, :signosVitales, signo_vital}
+    )
+  end
+
+  def modify_laboratorio(hospital, isla, laboratorio) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:modify, :laboratorios, laboratorio}
+    )
+  end
+
+  def modify_rx_torax(hospital, isla, rx_torax) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:modify, :rx_toraxs, rx_torax}
+    )
+  end
+
+  def modify_alerta(hospital, isla, alerta) do
+    GenServer.call(get_name_id(hospital, isla), {:modify, :alertas, alerta})
+  end
+
+  def modify_episodio(hospital, isla, episodio) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:modify, :episodios, episodio}
+    )
+  end
+
+  def get_signos_vitales(hospital, isla, sync_id) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :signosVitales, sync_id}
     )
   end
 
@@ -92,10 +124,51 @@ defmodule Isla do
 
     registro = Map.put(registro, :sync_id, sync_id)
     registro = struct(table2module(table), registro)
-    CCloud.Repo.insert(registro)
+    # CCloud.Repo.insert(registro)
 
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:registro, registro)
+    |> Ecto.Multi.update(
+      :max_sync_id,
+      Ecto.Changeset.change(
+        %CCloud.Repo.SyncIDIsla{
+          idHosp: state.idHosp,
+          idIsla: state.idIsla
+        },
+        sync_id: sync_id
+      )
+    )
+    |> CCloud.Repo.transaction()
+
+    nstate = Map.put(state, :sync_id, sync_id)
+
+    {triage, nstate} = run_triage(nstate)
+
+    {:reply, {sync_id, triage}, nstate}
+  end
+
+  def handle_call({:modify, table, registro}, _from, state) do
+    sync_id =
+      if registro[:sync_id] == nil do
+        state.sync_id + 1
+      else
+        registro.sync_id
+      end
+
+    registro = Map.put(registro, :sync_id, sync_id)
+
+    keys =
+      Map.take(
+        registro,
+        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
+      )
+
+    keys = struct(table2module(table), keys)
+
+    registro = Ecto.Changeset.change(keys, registro)
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:registro, registro)
     |> Ecto.Multi.update(
       :max_sync_id,
       Ecto.Changeset.change(
@@ -185,7 +258,7 @@ defmodule Isla do
 
   def handle_call({:get_update, sync_id}, _from, state) do
     list = [
-      :controlesEnfermeria,
+      :signosVitales,
       :laboratorios,
       :rx_toraxs,
       :alertas,
@@ -221,7 +294,7 @@ defmodule Isla do
 
   defp table2module(table) do
     case table do
-      :controlesEnfermeria -> Isla.ControlesEnfermeria
+      :signosVitales -> Isla.SignosVitales
       :laboratorios -> Isla.Laboratorio
       :rx_toraxs -> Isla.RxTorax
       :alertas -> Isla.Alerta
@@ -230,15 +303,15 @@ defmodule Isla do
   end
 end
 
-defmodule Isla.ControlesEnfermeria do
+defmodule Isla.SignosVitales do
   use Ecto.Schema
 
   @primary_key false
-  schema "ControlesEnfermeria" do
+  schema "SignosVitales" do
     field(:sync_id, :integer)
     field(:id_hospital, :string, primary_key: true)
-    field(:numeroHCControlesEnfermeria, :string, primary_key: true)
-    field(:fechaControlesEnfermeria, :integer, primary_key: true)
+    field(:numeroHCSignosVitales, :string, primary_key: true)
+    field(:fechaSignosVitales, :integer, primary_key: true)
     field(:auditoria, :string)
     field(:frec_resp, :integer)
     field(:sat_oxi, :integer)

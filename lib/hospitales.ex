@@ -76,8 +76,6 @@ defmodule Hospitales do
           select: r
         )
       )
-      |> Map.delete(:sal)
-      |> Map.delete(:clave)
       |> Map.delete(:__meta__)
       |> Map.delete(:__struct__)
 
