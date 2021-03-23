@@ -130,8 +130,9 @@ defmodule Cloud.Router do
 
   def websocket_info({:ping}, state) do
     id = UUIDgen.uuidgen()
+    date = DateTime.utc_now() |> DateTime.to_string()
 
-    state = add_pending({:ping, id}, id, state)
+    state = add_pending({:ping, id, date}, id, state)
 
     msg = %{
       version: "0.0",
@@ -290,8 +291,10 @@ defmodule Cloud.Router do
     {state, nil}
   end
 
-  defp handle_pending({:ping, id}, msg, state) do
+  defp handle_pending({:ping, id, date}, msg, state) do
     if msg[:result][:pong] == id do
+      now = DateTime.utc_now() |> DateTime.to_string()
+      IO.puts("ping: " <> date <> "-" <> now)
       {state, nil}
     else
       {state, :stop}
