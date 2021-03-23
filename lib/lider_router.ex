@@ -314,26 +314,33 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_signos_vitales", req, connection) do
     pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
 
-    if pid != nil do
-      send(pid, {:to_leader, req, self()})
-      id = req.id
+    resp =
+      if pid != nil do
+        send(pid, {:to_leader, req, self()})
+        id = req.id
 
-      receive do
-        {:from_leader, resp, ^id} ->
-          Map.put(resp, :actual, 1)
-      after
-        10000 ->
-          data =
-            Isla.get_signos_vitales(
-              connection.hospital,
-              connection.isla,
-              req.params.sync_id
-            )
-
-          %{status: "200 OK", result: %{data: data}, actual: 0}
+        receive do
+          {:from_leader, resp, ^id} ->
+            Map.put(resp, :actual, 1)
+        after
+          10000 ->
+            nil
+        end
+      else
+        nil
       end
+
+    if resp == nil do
+      data =
+        Isla.get_signos_vitales(
+          connection.hospital,
+          connection.isla,
+          req.params.sync_id
+        )
+
+      %{status: "200 OK", result: %{data: data}, actual: 0}
     else
-      send_noleader(%{result: %{error: "Leader not connected"}})
+      resp
     end
   end
 
@@ -404,28 +411,34 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_laboratorios", req, connection) do
     pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
 
-    if pid != nil do
-      send(pid, {:to_leader, req, self()})
+    resp =
+      if pid != nil do
+        send(pid, {:to_leader, req, self()})
 
-      id = req.id
+        id = req.id
 
-      receive do
-        {:from_leader, resp, ^id} ->
-          Map.put(resp, :actual, 1)
-      after
-        10000 ->
-          data =
-            Isla.get_laboratorios(
-              connection.hospital,
-              connection.isla,
-              req.params.sync_id
-            )
-
-          %{status: "200 OK", result: %{data: data}, actual: 0}
-          send_noleader(%{})
+        receive do
+          {:from_leader, resp, ^id} ->
+            Map.put(resp, :actual, 1)
+        after
+          10000 ->
+            nil
+        end
+      else
+        nil
       end
+
+    if resp == nil do
+      data =
+        Isla.get_laboratorios(
+          connection.hospital,
+          connection.isla,
+          req.params.sync_id
+        )
+
+      %{status: "200 OK", result: %{data: data}, actual: 0}
     else
-      send_noleader(%{result: %{error: "Leader not connected"}})
+      resp
     end
   end
 
@@ -491,27 +504,34 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_rx_toraxs", req, connection) do
     pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
 
-    if pid != nil do
-      send(pid, {:to_leader, req, self()})
+    resp =
+      if pid != nil do
+        send(pid, {:to_leader, req, self()})
 
-      id = req.id
+        id = req.id
 
-      receive do
-        {:from_leader, resp, ^id} ->
-          Map.put(resp, :actual, 1)
-      after
-        10000 ->
-          data =
-            Isla.get_rx_toraxs(
-              connection.hospital,
-              connection.isla,
-              req.params.sync_id
-            )
-
-          %{status: "200 OK", result: %{data: data}, actual: 0}
+        receive do
+          {:from_leader, resp, ^id} ->
+            Map.put(resp, :actual, 1)
+        after
+          10000 ->
+            nil
+        end
+      else
+        nil
       end
+
+    if resp == nil do
+      data =
+        Isla.get_rx_toraxs(
+          connection.hospital,
+          connection.isla,
+          req.params.sync_id
+        )
+
+      %{status: "200 OK", result: %{data: data}, actual: 0}
     else
-      send_noleader(%{result: %{error: "Leader not connected"}})
+      resp
     end
   end
 
@@ -572,27 +592,34 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_alertas", req, connection) do
     pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
 
-    if pid != nil do
-      send(pid, {:to_leader, req, self()})
+    resp =
+      if pid != nil do
+        send(pid, {:to_leader, req, self()})
 
-      id = req.id
+        id = req.id
 
-      receive do
-        {:from_leader, resp, ^id} ->
-          Map.put(resp, :actual, 1)
-      after
-        10000 ->
-          data =
-            Isla.get_alertas(
-              connection.hospital,
-              connection.isla,
-              req.params.sync_id
-            )
-
-          %{status: "200 OK", result: %{data: data}, actual: 0}
+        receive do
+          {:from_leader, resp, ^id} ->
+            Map.put(resp, :actual, 1)
+        after
+          10000 ->
+            nil
+        end
+      else
+        nil
       end
+
+    if resp == nil do
+      data =
+        Isla.get_alertas(
+          connection.hospital,
+          connection.isla,
+          req.params.sync_id
+        )
+
+      %{status: "200 OK", result: %{data: data}, actual: 0}
     else
-      send_noleader(%{result: %{error: "Leader not connected"}})
+      resp
     end
   end
 
@@ -658,27 +685,34 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_episodios", req, connection) do
     pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
 
-    if pid != nil do
-      send(pid, {:to_leader, req, self()})
+    resp =
+      if pid != nil do
+        send(pid, {:to_leader, req, self()})
 
-      id = req.id
+        id = req.id
 
-      receive do
-        {:from_leader, resp, ^id} ->
-          Map.put(resp, :actual, 1)
-      after
-        10000 ->
-          data =
-            Isla.get_episodios(
-              connection.hospital,
-              connection.isla,
-              req.params.sync_id
-            )
-
-          %{status: "200 OK", result: %{data: data}, actual: 0}
+        receive do
+          {:from_leader, resp, ^id} ->
+            Map.put(resp, :actual, 1)
+        after
+          10000 ->
+            nil
+        end
+      else
+        nil
       end
+
+    if resp == nil do
+      data =
+        Isla.get_episodios(
+          connection.hospital,
+          connection.isla,
+          req.params.sync_id
+        )
+
+      %{status: "200 OK", result: %{data: data}, actual: 0}
     else
-      send_noleader(%{result: %{error: "Leader not connected"}})
+      resp
     end
   end
 
