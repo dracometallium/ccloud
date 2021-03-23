@@ -321,7 +321,9 @@ defmodule Lider.Router do
 
         receive do
           {:from_leader, resp, ^id} ->
-            Map.put(resp, :actual, 1)
+            result = resp.result
+            result = Map.put(result, :actual, 1)
+            Map.put(resp, :result, result)
         after
           10000 ->
             nil
@@ -338,7 +340,7 @@ defmodule Lider.Router do
           req.params.sync_id
         )
 
-      %{status: "200 OK", result: %{data: data}, actual: 0}
+      %{status: "200 OK", result: %{data: data, actual: 0}}
     else
       resp
     end
@@ -419,7 +421,9 @@ defmodule Lider.Router do
 
         receive do
           {:from_leader, resp, ^id} ->
-            Map.put(resp, :actual, 1)
+            result = resp.result
+            result = Map.put(result, :actual, 1)
+            Map.put(resp, :result, result)
         after
           10000 ->
             nil
@@ -436,7 +440,7 @@ defmodule Lider.Router do
           req.params.sync_id
         )
 
-      %{status: "200 OK", result: %{data: data}, actual: 0}
+      %{status: "200 OK", result: %{data: data, actual: 0}}
     else
       resp
     end
@@ -512,7 +516,9 @@ defmodule Lider.Router do
 
         receive do
           {:from_leader, resp, ^id} ->
-            Map.put(resp, :actual, 1)
+            result = resp.result
+            result = Map.put(result, :actual, 1)
+            Map.put(resp, :result, result)
         after
           10000 ->
             nil
@@ -529,7 +535,7 @@ defmodule Lider.Router do
           req.params.sync_id
         )
 
-      %{status: "200 OK", result: %{data: data}, actual: 0}
+      %{status: "200 OK", result: %{data: data, actual: 0}}
     else
       resp
     end
@@ -600,7 +606,9 @@ defmodule Lider.Router do
 
         receive do
           {:from_leader, resp, ^id} ->
-            Map.put(resp, :actual, 1)
+            result = resp.result
+            result = Map.put(result, :actual, 1)
+            Map.put(resp, :result, result)
         after
           10000 ->
             nil
@@ -617,7 +625,7 @@ defmodule Lider.Router do
           req.params.sync_id
         )
 
-      %{status: "200 OK", result: %{data: data}, actual: 0}
+      %{status: "200 OK", result: %{data: data, actual: 0}}
     else
       resp
     end
@@ -693,7 +701,9 @@ defmodule Lider.Router do
 
         receive do
           {:from_leader, resp, ^id} ->
-            Map.put(resp, :actual, 1)
+            result = resp.result
+            result = Map.put(result, :actual, 1)
+            Map.put(resp, :result, result)
         after
           10000 ->
             nil
@@ -710,7 +720,7 @@ defmodule Lider.Router do
           req.params.sync_id
         )
 
-      %{status: "200 OK", result: %{data: data}, actual: 0}
+      %{status: "200 OK", result: %{data: data, actual: 0}}
     else
       resp
     end
@@ -741,7 +751,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_camas", req, connection) do
     params = req.params
     data = Hospital.get_camas(connection[:hospital], params.sync_id)
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "new_hcpaciente", req, connection) do
@@ -768,7 +778,7 @@ defmodule Lider.Router do
     params = req.params
     data = Hospital.get_hcpacientes(connection[:hospital], params.sync_id)
 
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "new_isla", req, connection) do
@@ -797,7 +807,7 @@ defmodule Lider.Router do
     params = req.params
     data = Hospital.get_islas(connection[:hospital], params.sync_id)
 
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "new_sector", req, connection) do
@@ -824,14 +834,14 @@ defmodule Lider.Router do
     params = req.params
     data = Hospital.get_sectores(connection[:hospital], params.sync_id)
 
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "get_datos_usuario", req, _connection) do
     params = req.params
     data = Hospital.get_datos_usuario(params.hospital, params.cuil)
 
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "new_usuario_hospital", req, connection) do
@@ -872,7 +882,7 @@ defmodule Lider.Router do
     data =
       Hospital.get_usuarios_hospital(connection[:hospital], params.sync_id)
 
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "new_usuario_sector", req, connection) do
@@ -898,7 +908,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "get_usuarios_sector", req, connection) do
     params = req.params
     data = Hospital.get_usuarios_sector(connection[:hospital], params.sync_id)
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "new_hospital", req, _connection) do
@@ -909,7 +919,7 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_hospital", _req, connection) do
     data = Hospital.get_hospital(connection[:hospital])
-    %{status: "200 OK", result: %{data: data}, actual: 1}
+    %{status: "200 OK", result: %{data: data, actual: 1}}
   end
 
   defp run_method("0.0", "new_usuario", req, _connection) do
@@ -921,7 +931,7 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_usuarios", _req, _connection) do
     sync_id = Hospitales.get_usuarios()
-    %{status: "200 OK", result: %{sync_id: sync_id}, actual: 1}
+    %{status: "200 OK", result: %{sync_id: sync_id, actual: 1}}
   end
 
   defp run_method("0.0", "get_update", req, connection) do
