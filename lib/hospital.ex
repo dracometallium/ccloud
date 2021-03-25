@@ -253,13 +253,13 @@ defmodule Hospital do
       |> Enum.reduce(
         %{},
         fn x, acc ->
-          Map.merge(acc, %{cuil: x.cuil, sync_id: x.sync_id_usuario})
+          Map.merge(acc, %{x.cuil => x.sync_id_usuario})
         end
       )
 
     usuarios =
       Hospitales.get_usuarios()
-      |> Enum.filter(fn x -> Enum.member?(usuarios_id, x) end)
+      |> Enum.filter(fn x -> Map.has_key?(usuarios_id, x.cuil) end)
       |> Enum.map(fn x -> Map.put(x, :sync_id, usuarios_id[x.cuil]) end)
 
     {:reply, usuarios, state}
