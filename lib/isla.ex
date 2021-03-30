@@ -62,6 +62,38 @@ defmodule Isla do
     )
   end
 
+  def copy_signo_vital(hospital, isla, signo_vital) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:copy, :signosVitales, signo_vital}
+    )
+  end
+
+  def copy_laboratorio(hospital, isla, laboratorio) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:copy, :laboratorios, laboratorio}
+    )
+  end
+
+  def copy_rx_torax(hospital, isla, rx_torax) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:copy, :rx_toraxs, rx_torax}
+    )
+  end
+
+  def copy_alerta(hospital, isla, alerta) do
+    GenServer.call(get_name_id(hospital, isla), {:copy, :alertas, alerta})
+  end
+
+  def copy_episodio(hospital, isla, episodio) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:copy, :episodios, episodio}
+    )
+  end
+
   def get_signos_vitales(hospital, isla, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
@@ -186,6 +218,38 @@ defmodule Isla do
     {triage, nstate} = run_triage(nstate)
 
     {:reply, {sync_id, triage}, nstate}
+  end
+
+  def handle_call({:copy, table, registro}, _from, state) do
+    sync_id = registro.sync_id
+
+    keys =
+      Map.take(
+        registro,
+        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
+      )
+
+    keys = struct(table2module(table), keys)
+
+    registro = Ecto.Changeset.change(keys, registro)
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert_or_update(:registro, registro)
+    |> Ecto.Multi.update(
+      :max_sync_id,
+      Ecto.Changeset.change(
+        %CCloud.Repo.SyncIDIsla{
+          idHosp: state.idHosp,
+          idIsla: state.idIsla
+        },
+        sync_id: sync_id
+      )
+    )
+    |> CCloud.Repo.transaction()
+
+    nstate = Map.put(state, :sync_id, sync_id)
+
+    {:reply, sync_id, nstate}
   end
 
   def handle_call({:get, table, sync_id}, _from, state) do

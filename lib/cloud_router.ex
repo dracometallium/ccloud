@@ -69,11 +69,30 @@ defmodule Cloud.Router do
             end
 
           req[:method] == "copy_data" ->
-            resp = %{
-              resp: "200 OK",
-              result: %{resp: "aca va la respuesta de copy_dat"},
-              id: req[:id]
-            }
+            connection = SysUsers.get_connection(req[:token])
+
+            resp =
+              if connection != nil do
+                if connection.ready do
+                  copy_data(req[:version], req.params.tipo, req, connection)
+
+                  %{
+                    resp: "200 OK",
+                    result: %{resp: "aca va la respuesta de copy_dat"},
+                    id: req[:id]
+                  }
+                else
+                  %{
+                    resp: "403 Forbidden",
+                    result: %{error: "you need to connect first!"}
+                  }
+                end
+              else
+                %{
+                  resp: "403 Forbidden",
+                  result: %{error: "Sorry, I didn't find the token."}
+                }
+              end
 
             {state, resp}
 
@@ -146,14 +165,14 @@ defmodule Cloud.Router do
     {:reply, [{:text, msg}], state}
   end
 
-  def websocket_info({:copy_data, type, data}, state) do
+  def websocket_info({:copy_data, type, data, triage, nhc}, state) do
     id = UUIDgen.uuidgen()
 
     msg = %{
       version: "0.0",
       method: "copy_data",
       id: id,
-      params: %{tipo: type, dato: data, triage: nil, nHC: nil},
+      params: %{tipo: type, dato: data, triage: triage, nHC: nhc},
       token: state.token
     }
 
@@ -270,6 +289,81 @@ defmodule Cloud.Router do
     {state, resp}
   end
 
+  defp copy_data("0.0", "signo_vital", req, connection) do
+    params = req.params
+    data = params.dato
+    triage = params[:triage]
+    nhc = params[:nHC]
+    isla = connection[:isla]
+    hospital = connection[:hospital]
+
+    sync_id = Isla.copy_signo_vital(hospital, isla, data)
+
+    send_copy_data(:signo_vital, data, sync_id, hospital, isla, triage, nhc)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp copy_data("0.0", "laboratorio", req, connection) do
+    params = req.params
+    data = params.dato
+    triage = params[:triage]
+    nhc = params[:nHC]
+    isla = connection[:isla]
+    hospital = connection[:hospital]
+
+    sync_id = Isla.copy_laboratorio(hospital, isla, data)
+
+    send_copy_data(:laboratorio, data, sync_id, hospital, isla, triage, nhc)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp copy_data("0.0", "rx_torax", req, connection) do
+    params = req.params
+    data = params.dato
+    triage = params[:triage]
+    nhc = params[:nHC]
+    isla = connection[:isla]
+    hospital = connection[:hospital]
+
+    sync_id = Isla.copy_rx_torax(hospital, isla, data)
+
+    send_copy_data(:rx_torax, data, sync_id, hospital, isla, triage, nhc)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp copy_data("0.0", "alerta", req, connection) do
+    params = req.params
+    data = params.dato
+    triage = params[:triage]
+    nhc = params[:nHC]
+    isla = connection[:isla]
+    hospital = connection[:hospital]
+
+    sync_id = Isla.copy_alerta(hospital, isla, data)
+
+    send_copy_data(:alerta, data, sync_id, hospital, isla, triage, nhc)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp copy_data("0.0", "episodio", req, connection) do
+    params = req.params
+    data = params.dato
+    triage = params[:triage]
+    nhc = params[:nHC]
+    isla = connection[:isla]
+    hospital = connection[:hospital]
+
+    sync_id = Isla.copy_episodio(hospital, isla, data)
+
+    send_copy_data(:episodio, data, sync_id, hospital, isla, triage, nhc)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
   defp pending(state, req) do
     pending = state.pending
     id = req.id
@@ -303,6 +397,36 @@ defmodule Cloud.Router do
 
   defp handle_pending({:copy_data}, _msg, state) do
     {state, nil}
+  end
+
+  defp send_copy_data(
+         type,
+         data,
+         sync_id,
+         hospital,
+         isla,
+         triage \\ nil,
+         nhc \\ nil
+       ) do
+    # Sends the new hospital data to the other clients
+    spawn(fn ->
+      send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc)
+    end)
+
+    :ok
+  end
+
+  defp send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc) do
+    # Sends the new data to the other clients
+    clients = SysUsers.get_clients(hospital, isla)
+
+    data = Map.put(data, :sync_id, sync_id)
+
+    Enum.each(clients, fn pid ->
+      if pid != nil and Process.alive?(pid) do
+        send(pid, {:copy_data, type, data, triage, nhc})
+      end
+    end)
   end
 
   defp send_badreq(add \\ %{}) do

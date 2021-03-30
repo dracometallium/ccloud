@@ -985,13 +985,24 @@ defmodule Lider.Router do
     Map.merge(%{status: "503 Service Unavailable", result: %{}}, add)
   end
 
-  defp send_copy_data(type, data, sync_id, hospital, isla) do
+  defp send_copy_data(
+         type,
+         data,
+         sync_id,
+         hospital,
+         isla,
+         triage \\ nil,
+         nhc \\ nil
+       ) do
     # Sends the new hospital data to the other clients
-    spawn(fn -> send_copy_data_async(type, data, sync_id, hospital, isla) end)
+    spawn(fn ->
+      send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc)
+    end)
+
     :ok
   end
 
-  defp send_copy_data_async(type, data, sync_id, hospital, isla) do
+  defp send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc) do
     # Sends the new data to the other clients
     clients = SysUsers.get_clients(hospital, isla)
 
@@ -999,19 +1010,19 @@ defmodule Lider.Router do
 
     Enum.each(clients, fn pid ->
       if pid != nil and Process.alive?(pid) do
-        send(pid, {:copy_data, type, data})
+        send(pid, {:copy_data, type, data, triage, nhc})
       end
     end)
   end
 
-  def websocket_info({:copy_data, type, data}, state) do
+  def websocket_info({:copy_data, type, data, triage, nhc}, state) do
     id = UUIDgen.uuidgen()
 
     msg = %{
       version: "0.0",
       method: "copy_data",
       id: id,
-      params: %{tipo: type, dato: data, triage: nil, nHC: nil},
+      params: %{tipo: type, dato: data, triage: triage, nHC: nhc},
       token: state.token
     }
 
