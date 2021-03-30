@@ -68,12 +68,6 @@ Respuestas:
     -   result: {}
     -   http_status: "403 Forbidden"
 
--   Si es la nube y no tiene conexión al líder:
-
-    -   status: "503 Service Unavailable"
-    -   result: {}
-    -   http_status: "503 Service Unavailable"
-
 -   Otros:
 
     -   status: "400 Bad Request"
@@ -195,7 +189,81 @@ Respuestas:
 
 **Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
 `laboratorio`, `rx_torax`, `alerta` o `episodio` en cuyo caso retornan un
-triage, o `camas`, `hcpasientes`, `islas`, `sectores`, `usuarios_hospital`,
+triage, o `camas`, `hcpaciente`, `isla`, `sector`, `usuario_hospital`,
+`usuario_sector` u `hospital` en cuyo caso no retornan el triage.
+
+Parámetros:
+
+-   data: <dict_datos>
+
+Respuestas:
+
+-   Si el servidor reconoce el token y esta en la lista de conectados:
+
+    -   status: "200 OK"
+    -   result:
+        -   sync_id: <sync_id>
+        -   triage: <valor 1 a 4> #solo algunas tablas.
+    -   https_status: 200
+
+-   Si es un dato de líder pero no tiene conexión al este:
+
+    -   status: "503 Service Unavailable"
+    -   result: {}
+    -   http_status: "503 Service Unavailable"
+
+-   Si no reconoce el token o no esta en la lista de conectados:
+
+    -   status: "401 Unauthorized"
+    -   result: {}
+    -   http_status: "401 Unauthorized"
+
+
+# get_data
+
+**Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
+`laboratorio`, `rx_torax`, `alerta`, `episodio`,`camas`, `hcpacientes`,
+`islas`, `sectores`, `usuarios_hospital`, `usuarios_sector`.
+
+Parámetros:
+
+-   sync_id: <max_sync_id>
+
+Respuestas:
+
+-   Si el servidor reconoce el token y esta en la lista de conectados:
+
+    -   status: "200 OK"
+    -   result:
+        -   data: [lista de datos]
+    -   https_status: 200
+
+-   Si no reconoce el token o no esta en la lista de conectados:
+
+    -   status: "401 Unauthorized"
+    -   result: {}
+    -   http_status: "401 Unauthorized"
+
+-   Si es un dato de líder pero no tiene conexión al este:
+
+    -   status: "503 Service Unavailable"
+    -   result: {}
+    -   http_status: "503 Service Unavailable"
+
+-   Otros:
+
+    -   status: "400 Bad Request"
+    -   result: {}
+    -   http_status: "400 Bad Request"
+
+-   Otros posibles casos:
+    -   Que no reconozca el usuario.
+
+# modify_data
+
+**Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
+`laboratorio`, `rx_torax`, `alerta` o `episodio` en cuyo caso retornan un
+triage, o `cama`, `hcpaciente`, `islas`, `sectores`, `usuarios_hospital`,
 `usuarios_sector` u `hospital` en cuyo caso no retornan el triage.
 
 Parámetros:
@@ -218,66 +286,11 @@ Respuestas:
     -   result: {}
     -   http_status: "401 Unauthorized"
 
+-   Si es un dato de líder pero no tiene conexión al este:
 
-# get_data
-
-**Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
-`laboratorio`, `rx_torax`, `alerta`, `episodio`,`camas`, `hcpasientes`,
-`islas`, `sectores`, `usuarios_hospital`, `usuarios_sector`.
-
-Parámetros:
-
--   sync_id: <max_sync_id>
-
-Respuestas:
-
--   Si el servidor reconoce el token y esta en la lista de conectados:
-
-    -   status: "200 OK"
-    -   result:
-        -   data: [lista de datos]
-    -   https_status: 200
-
--   Si no reconoce el token o no esta en la lista de conectados:
-
-    -   status: "401 Unauthorized"
+    -   status: "503 Service Unavailable"
     -   result: {}
-    -   http_status: "401 Unauthorized"
-
--   Otros:
-
-    -   status: "400 Bad Request"
-    -   result: {}
-    -   http_status: "400 Bad Request"
-
--   Otros posibles casos:
-    -   Que no reconozca el usuario.
-
-# get_hospital
-
-Respuestas:
-
--   Si el servidor reconoce el token y esta en la lista de conectados:
-
-    -   status: "200 OK"
-    -   result:
-        -   data: <hospital>
-    -   https_status: 200
-
--   Si no reconoce el token o no esta en la lista de conectados:
-
-    -   status: "401 Unauthorized"
-    -   result: {}
-    -   http_status: "401 Unauthorized"
-
--   Otros:
-
-    -   status: "400 Bad Request"
-    -   result: {}
-    -   http_status: "400 Bad Request"
-
--   Otros posibles casos:
-    -   Que no reconozca el usuario.
+    -   http_status: "503 Service Unavailable"
 
 # get_update
 
@@ -298,7 +311,7 @@ Respuestas:
         -   alertas: [lista de `alerta`]
         -   episodios: [lista de `episodio`]
         -   camas: [lista de `cama`]
-        -   hcpasientes: [lista de `hcpasiente`]
+        -   hcpacientes: [lista de `hcpasiente`]
         -   islas: [lista de `isla`]
         -   sectores: [lista de `sector`]
         -   usuarios_hospital: [lista de `usuario_hospital`]
@@ -323,23 +336,30 @@ Respuestas:
 
 # copy_data
 
-(se puede hacer esto??)
+**Nota:** <tipo> puede ser cada una de las tablas: `control_enfermeria`,
+`laboratorio`, `rx_torax`, `alerta` o `episodio` en cuyo caso retornan un
+triage, o `cama`, `hcpaciente`, `isla`, `sector`, `usuario_hospital`,
+`usuario_sector` u `hospital`.
 
 Parámetros:
 
--   data: <dict_datos>
+-   dato: <dict_datos>
+-   tipo: <string>
+-   triage: <int | nil>
+-   nHC: <strign | nil>
 
 Respuestas:
 
--   Siempre que se reconozca el mensaje:
+-   Si el servidor reconoce el token y esta en la lista de conectados:
 
     -   status: "200 OK"
-    -   result: {}
+    -   result:
+        -   sync_id: <sync_id>
     -   https_status: 200
 
--   Otros:
+-   Si no reconoce el token o no esta en la lista de conectados:
 
-    -   status: "400 Bad Request"
+    -   status: "401 Unauthorized"
     -   result: {}
-    -   http_status: "400 Bad Request"
+    -   http_status: "401 Unauthorized"
 
