@@ -215,22 +215,18 @@ defmodule Hospital do
     registro = Ecto.Changeset.change(keys, registro)
     IO.inspect(registro)
 
-    if table == :islas do
-      :fail
-    else
-      Ecto.Multi.new()
-      |> Ecto.Multi.update(:registro, registro)
-      |> Ecto.Multi.update(
-        :max_sync_id,
-        Ecto.Changeset.change(
-          %CCloud.Repo.SyncIDHosp{
-            idHosp: state.idHosp
-          },
-          sync_id: sync_id
-        )
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:registro, registro)
+    |> Ecto.Multi.update(
+      :max_sync_id,
+      Ecto.Changeset.change(
+        %CCloud.Repo.SyncIDHosp{
+          idHosp: state.idHosp
+        },
+        sync_id: sync_id
       )
-      |> CCloud.Repo.transaction()
-    end
+    )
+    |> CCloud.Repo.transaction()
 
     nstate = Map.put(state, :sync_id, sync_id)
 
