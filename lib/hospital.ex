@@ -75,12 +75,19 @@ defmodule Hospital do
     )
   end
 
+  def modify_hospital(hospital, dato_hospital) do
+    GenServer.call(
+      get_name_id(hospital),
+      {:modify, :hospitales, dato_hospital}
+    )
+  end
+
   def get_state(idHosp) do
     GenServer.call(get_name_id(idHosp), {:get_state})
   end
 
   def get_hospital(idHosp) do
-    GenServer.call(get_name_id(idHosp), {:get, :hospital})
+    GenServer.call(get_name_id(idHosp), {:get, :hospitales})
   end
 
   def get_usuarios(hospital, sync_id) do

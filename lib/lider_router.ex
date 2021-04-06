@@ -917,6 +917,17 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
+  defp run_method("0.0", "modify_hospital", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHosp, connection[:hospital])
+    sync_id = Hospital.modify_usuario_sector(connection[:hospital], data)
+
+    send_copy_data(:usuario_sector, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+
   defp run_method("0.0", "get_hospital", _req, connection) do
     data = Hospital.get_hospital(connection[:hospital])
     %{status: "200 OK", result: %{data: data, actual: 1}}
