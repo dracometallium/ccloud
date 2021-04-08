@@ -40,7 +40,7 @@ CREATE TABLE `Alerta` (
   `sync_id` int(11),
   `idHospital` varchar(15),
   `numeroHC` varchar(15),
-  `fechaAlerta` int(11),
+  `fechaAlerta` bigint(11),
   `gravedadAlerta` int(11),
   `gravedadAnterior` int(11),
   `get_laboratorios` varchar(15),
@@ -67,7 +67,7 @@ CREATE TABLE `Cama` (
   `numeroHCPac` varchar(15),
   `ubicacionX` int(11),
   `ubicacionY` int(11),
-  `orientacion` varchar(150),
+  `orientacion` varchar(30),
   `estado` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -81,9 +81,9 @@ CREATE TABLE `Episodio` (
   `sync_id` int(11),
   `idHospital` varchar(15),
   `numeroHC` varchar(15),
-  `fechaIngreso` int(11),
-  `fechaEgreso` int(11),
-  `razon` varchar(15),
+  `fechaIngreso` bigint(11),
+  `fechaEgreso` bigint(11),
+  `razon` varchar(30),
   `cuil` varchar(15)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -100,7 +100,7 @@ CREATE TABLE `Hospital` (
   `calle` varchar(150),
   `numero` varchar(15),
   `CP` varchar(15),
-  `planoCamas` varchar(150)
+  `planoCamas` varchar(300)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -144,7 +144,7 @@ CREATE TABLE `Laboratorio` (
   `sync_id` int(11),
   `idHospitalLab` varchar(15),
   `numeroHCLab` varchar(15),
-  `fecha` int(11),
+  `fecha` bigint(11),
   `cuil` varchar(15),
   `dimeroD` int(11),
   `Linfopenia` int(11),
@@ -178,7 +178,7 @@ CREATE TABLE `HCpaciente` (
   `telefono` varchar(15),
   `telefonoFamiliar` varchar(15),
   `telefonoFamiliar2` varchar(15),
-  `fechaNac` int(11),
+  `fechaNac` bigint(11),
   `gravedad` int(11),
   `nivelConfianza` int(11),
   `auditoriaComorbilidades` varchar(15),
@@ -200,9 +200,9 @@ CREATE TABLE `RxTorax` (
   `sync_id` int(11),
   `idHospitalRad` varchar(15),
   `numeroHCRad` varchar(15),
-  `fechaRad` int(11),
+  `fechaRad` bigint(11),
   `cuil` varchar(15),
-  `resultadoRad` varchar(15)
+  `resultadoRad` varchar(50)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -229,17 +229,17 @@ CREATE TABLE `SignosVitales` (
   `sync_id` int(11),
   `id_hospital` varchar(15),
   `numeroHCSignosVitales` varchar(15),
-  `fechaSignosVitales` int(11),
+  `fechaSignosVitales` bigint(11),
   `auditoria` varchar(15),
   `frec_resp` int(11),
   `sat_oxi` int(11),
-  `disnea` varchar(15),
-  `oxigenoSuplementario` varchar(15),
+  `disnea` varchar(30),
+  `oxigenoSuplementario` varchar(30),
   `fraccionInsOxigeno` int(11),
   `presSist` int(11),
   `frec_card` int(11),
   `temp` double,
-  `nivelConciencia` varchar(15)
+  `nivelConciencia` varchar(30)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
