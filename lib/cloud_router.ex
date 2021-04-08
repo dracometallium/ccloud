@@ -391,6 +391,7 @@ defmodule Cloud.Router do
       IO.puts("ping: " <> date <> "-" <> now)
       {state, nil}
     else
+      msg |> IO.inspect(label: "WRONG PING!!")
       {state, :stop}
     end
   end
