@@ -156,7 +156,17 @@ defmodule Hospital do
         {sync_id, registro}
       end
 
-    registro = Map.put(registro, :sync_id, sync_id)
+    # Cleans register of all incorrect keys
+    proper_keys =
+      Map.keys(struct(table2module(table), %{}))
+      |> List.delete(:__meta__)
+      |> List.delete(:__struct__)
+
+    registro =
+      registro
+      |> Map.take(proper_keys)
+      |> Map.put(registro, :sync_id, sync_id)
+
     registro = struct(table2module(table), registro)
 
     if table == :islas do
@@ -207,7 +217,16 @@ defmodule Hospital do
         registro.sync_id
       end
 
-    registro = Map.put(registro, :sync_id, sync_id)
+    # Cleans register of all incorrect keys
+    proper_keys =
+      Map.keys(struct(table2module(table), %{}))
+      |> List.delete(:__meta__)
+      |> List.delete(:__struct__)
+
+    registro =
+      registro
+      |> Map.take(proper_keys)
+      |> Map.put(registro, :sync_id, sync_id)
 
     keys =
       Map.take(

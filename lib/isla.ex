@@ -154,9 +154,18 @@ defmodule Isla do
         registro.sync_id
       end
 
-    registro = Map.put(registro, :sync_id, sync_id)
+    # Cleans register of all incorrect keys
+    proper_keys =
+      Map.keys(struct(table2module(table), %{}))
+      |> List.delete(:__meta__)
+      |> List.delete(:__struct__)
+
+    registro =
+      registro
+      |> Map.take(proper_keys)
+      |> Map.put(registro, :sync_id, sync_id)
+
     registro = struct(table2module(table), registro)
-    # CCloud.Repo.insert(registro)
 
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:registro, registro)
@@ -187,7 +196,16 @@ defmodule Isla do
         registro.sync_id
       end
 
-    registro = Map.put(registro, :sync_id, sync_id)
+    # Cleans register of all incorrect keys
+    proper_keys =
+      Map.keys(struct(table2module(table), %{}))
+      |> List.delete(:__meta__)
+      |> List.delete(:__struct__)
+
+    registro =
+      registro
+      |> Map.take(proper_keys)
+      |> Map.put(registro, :sync_id, sync_id)
 
     keys =
       Map.take(
