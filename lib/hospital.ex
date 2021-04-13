@@ -165,7 +165,7 @@ defmodule Hospital do
     registro =
       registro
       |> Map.take(proper_keys)
-      |> Map.put(registro, :sync_id, sync_id)
+      |> Map.put(:sync_id, sync_id)
 
     registro = struct(table2module(table), registro)
 
@@ -226,7 +226,7 @@ defmodule Hospital do
     registro =
       registro
       |> Map.take(proper_keys)
-      |> Map.put(registro, :sync_id, sync_id)
+      |> Map.put(:sync_id, sync_id)
 
     keys =
       Map.take(

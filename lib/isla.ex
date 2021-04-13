@@ -163,7 +163,7 @@ defmodule Isla do
     registro =
       registro
       |> Map.take(proper_keys)
-      |> Map.put(registro, :sync_id, sync_id)
+      |> Map.put(:sync_id, sync_id)
 
     registro = struct(table2module(table), registro)
 
@@ -205,7 +205,7 @@ defmodule Isla do
     registro =
       registro
       |> Map.take(proper_keys)
-      |> Map.put(registro, :sync_id, sync_id)
+      |> Map.put(:sync_id, sync_id)
 
     keys =
       Map.take(
