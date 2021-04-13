@@ -249,6 +249,16 @@ defmodule Isla do
 
     keys = struct(table2module(table), keys)
 
+    # Cleans register of all incorrect keys
+    proper_keys =
+      Map.keys(struct(table2module(table), %{}))
+      |> List.delete(:__meta__)
+      |> List.delete(:__struct__)
+
+    registro =
+      registro
+      |> Map.take(proper_keys)
+
     registro = Ecto.Changeset.change(keys, registro)
 
     Ecto.Multi.new()
