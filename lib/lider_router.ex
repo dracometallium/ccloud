@@ -260,16 +260,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-
-            Isla.new_signo_vital(
-              connection[:hospital],
-              connection[:isla],
-              data
-            )
-          end
-
           resp
       after
         10000 ->
@@ -291,16 +281,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-
-            Isla.modify_signo_vital(
-              connection[:hospital],
-              connection[:isla],
-              data
-            )
-          end
-
           resp
       after
         10000 ->
@@ -358,16 +338,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-
-            Isla.new_laboratorio(
-              connection[:hospital],
-              connection[:isla],
-              data
-            )
-          end
-
           resp
       after
         10000 ->
@@ -390,16 +360,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-
-            Isla.modify_laboratorio(
-              connection[:hospital],
-              connection[:isla],
-              data
-            )
-          end
-
           resp
       after
         10000 ->
@@ -458,11 +418,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-            Isla.new_rx_torax(connection[:hospital], connection[:isla], data)
-          end
-
           resp
       after
         10000 ->
@@ -485,16 +440,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-
-            Isla.modify_rx_torax(
-              connection[:hospital],
-              connection[:isla],
-              data
-            )
-          end
-
           resp
       after
         10000 ->
@@ -553,11 +498,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-            Isla.new_alerta(connection[:hospital], connection[:isla], data)
-          end
-
           resp
       after
         10000 ->
@@ -580,11 +520,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-            Isla.modify_alerta(connection[:hospital], connection[:isla], data)
-          end
-
           resp
       after
         10000 ->
@@ -643,11 +578,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-            Isla.new_episodio(connection[:hospital], connection[:isla], data)
-          end
-
           resp
       after
         10000 ->
@@ -670,16 +600,6 @@ defmodule Lider.Router do
 
       receive do
         {:from_leader, resp, ^id} ->
-          if(resp.resp == "200 OK") do
-            data = Map.put(params.data, :sync_id, resp.sync_id)
-
-            Isla.modify_episodio(
-              connection[:hospital],
-              connection[:isla],
-              data
-            )
-          end
-
           resp
       after
         10000 ->
@@ -926,7 +846,6 @@ defmodule Lider.Router do
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
-
 
   defp run_method("0.0", "get_hospital", _req, connection) do
     data = Hospital.get_hospital(connection[:hospital])
