@@ -288,38 +288,12 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_signos_vitales", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
-
-    resp =
-      if pid != nil do
-        send(pid, {:to_leader, req, self()})
-        id = req.id
-
-        receive do
-          {:from_leader, resp, ^id} ->
-            result = resp.result
-            result = Map.put(result, :actual, 1)
-            Map.put(resp, :result, result)
-        after
-          10000 ->
-            nil
-        end
-      else
-        nil
-      end
-
-    if resp == nil do
-      data =
-        Isla.get_signos_vitales(
-          connection.hospital,
-          connection.isla,
-          req.params.sync_id
-        )
-
-      %{status: "200 OK", result: %{data: data, actual: 0}}
-    else
-      resp
+    if_fail = fn isla ->
+      Isla.get_signos_vitales(connection[:hospital], isla, req.params.sync_id)
     end
+
+    data = send_get_data(if_fail, req, connection)
+    %{status: "200 OK", result: %{data: data}}
   end
 
   defp run_method("0.0", "new_laboratorio", req, connection) do
@@ -363,39 +337,12 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_laboratorios", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
-
-    resp =
-      if pid != nil do
-        send(pid, {:to_leader, req, self()})
-
-        id = req.id
-
-        receive do
-          {:from_leader, resp, ^id} ->
-            result = resp.result
-            result = Map.put(result, :actual, 1)
-            Map.put(resp, :result, result)
-        after
-          10000 ->
-            nil
-        end
-      else
-        nil
-      end
-
-    if resp == nil do
-      data =
-        Isla.get_laboratorios(
-          connection.hospital,
-          connection.isla,
-          req.params.sync_id
-        )
-
-      %{status: "200 OK", result: %{data: data, actual: 0}}
-    else
-      resp
+    if_fail = fn isla ->
+      Isla.get_laboratorios(connection[:hospital], isla, req.params.sync_id)
     end
+
+    data = send_get_data(if_fail, req, connection)
+    %{status: "200 OK", result: %{data: data}}
   end
 
   defp run_method("0.0", "new_rx_torax", req, connection) do
@@ -439,39 +386,12 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_rx_toraxs", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
-
-    resp =
-      if pid != nil do
-        send(pid, {:to_leader, req, self()})
-
-        id = req.id
-
-        receive do
-          {:from_leader, resp, ^id} ->
-            result = resp.result
-            result = Map.put(result, :actual, 1)
-            Map.put(resp, :result, result)
-        after
-          10000 ->
-            nil
-        end
-      else
-        nil
-      end
-
-    if resp == nil do
-      data =
-        Isla.get_rx_toraxs(
-          connection.hospital,
-          connection.isla,
-          req.params.sync_id
-        )
-
-      %{status: "200 OK", result: %{data: data, actual: 0}}
-    else
-      resp
+    if_fail = fn isla ->
+      Isla.get_rx_toraxs(connection[:hospital], isla, req.params.sync_id)
     end
+
+    data = send_get_data(if_fail, req, connection)
+    %{status: "200 OK", result: %{data: data}}
   end
 
   defp run_method("0.0", "new_alerta", req, connection) do
@@ -515,39 +435,12 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_alertas", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
-
-    resp =
-      if pid != nil do
-        send(pid, {:to_leader, req, self()})
-
-        id = req.id
-
-        receive do
-          {:from_leader, resp, ^id} ->
-            result = resp.result
-            result = Map.put(result, :actual, 1)
-            Map.put(resp, :result, result)
-        after
-          10000 ->
-            nil
-        end
-      else
-        nil
-      end
-
-    if resp == nil do
-      data =
-        Isla.get_alertas(
-          connection.hospital,
-          connection.isla,
-          req.params.sync_id
-        )
-
-      %{status: "200 OK", result: %{data: data, actual: 0}}
-    else
-      resp
+    if_fail = fn isla ->
+      Isla.get_alertas(connection[:hospital], isla, req.params.sync_id)
     end
+
+    data = send_get_data(if_fail, req, connection)
+    %{status: "200 OK", result: %{data: data}}
   end
 
   defp run_method("0.0", "new_episodio", req, connection) do
@@ -591,39 +484,12 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "get_episodios", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
-
-    resp =
-      if pid != nil do
-        send(pid, {:to_leader, req, self()})
-
-        id = req.id
-
-        receive do
-          {:from_leader, resp, ^id} ->
-            result = resp.result
-            result = Map.put(result, :actual, 1)
-            Map.put(resp, :result, result)
-        after
-          10000 ->
-            nil
-        end
-      else
-        nil
-      end
-
-    if resp == nil do
-      data =
-        Isla.get_episodios(
-          connection.hospital,
-          connection.isla,
-          req.params.sync_id
-        )
-
-      %{status: "200 OK", result: %{data: data, actual: 0}}
-    else
-      resp
+    if_fail = fn isla ->
+      Isla.get_episodios(connection[:hospital], isla, req.params.sync_id)
     end
+
+    data = send_get_data(if_fail, req, connection)
+    %{status: "200 OK", result: %{data: data}}
   end
 
   # Dependen del hospital
@@ -893,6 +759,61 @@ defmodule Lider.Router do
 
   defp send_noleader(add) do
     Map.merge(%{status: "503 Service Unavailable", result: %{}}, add)
+  end
+
+  defp send_get_data(fun_if_fail, req, connection) do
+    hospital = connection[:hospital]
+
+    islas =
+      if connection[:isla] == nil do
+        Hospital.get_islas(hospital, 0)
+        |> Enum.map(fn isla -> isla.idIsla end)
+      else
+        [connection[:isla]]
+      end
+
+    current = self()
+
+    Enum.each(islas, fn isla ->
+      pid = SysUsers.get_lider(hospital, isla)
+
+      if pid != nil do
+        spawn(fn -> send(pid, {:to_leader, req, current}) end)
+      end
+    end)
+
+    id = req.id
+    data =
+      Enum.reduce(islas, [], fn isla, acc ->
+        pid = SysUsers.get_lider(hospital, isla)
+
+        data =
+          if pid != nil do
+            receive do
+              {:from_leader, resp, ^id} ->
+                data = resp.result[:data]
+
+                if data != nil do
+                  data |> Enum.map(fn x -> Map.put(x, :actual, 1) end)
+                end
+            after
+              10000 ->
+                nil
+            end
+          end
+
+        data =
+          if data == nil do
+            fun_if_fail.(isla)
+            |> Enum.map(fn x -> Map.put(x, :actual, 0) end)
+          else
+            data
+          end
+
+        [data | acc]
+      end)
+
+    Enum.concat(data)
   end
 
   defp send_copy_data(
