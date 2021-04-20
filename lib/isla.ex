@@ -30,6 +30,13 @@ defmodule Isla do
     GenServer.call(get_name_id(hospital, isla), {:new, :episodios, episodio})
   end
 
+  def new_hcpaciente(hospital, isla, hcpaciente) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:new, :hcpacientes, hcpaciente}
+    )
+  end
+
   def modify_signo_vital(hospital, isla, signo_vital) do
     GenServer.call(
       get_name_id(hospital, isla),
@@ -59,6 +66,13 @@ defmodule Isla do
     GenServer.call(
       get_name_id(hospital, isla),
       {:modify, :episodios, episodio}
+    )
+  end
+
+  def modify_hcpaciente(hospital, isla, hcpaciente) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:modify, :hcpacientes, hcpaciente}
     )
   end
 
@@ -94,6 +108,13 @@ defmodule Isla do
     )
   end
 
+  def copy_hcpaciente(hospital, isla, hcpaciente) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:copy, :hcpacientes, hcpaciente}
+    )
+  end
+
   def get_signos_vitales(hospital, isla, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
@@ -118,6 +139,10 @@ defmodule Isla do
 
   def get_episodios(hospital, isla, sync_id) do
     GenServer.call(get_name_id(hospital, isla), {:get, :episodios, sync_id})
+  end
+
+  def get_hcpacientes(hospital, isla, sync_id) do
+    GenServer.call(get_name_id(hospital, isla), {:get, :hcpacientes, sync_id})
   end
 
   def get_update(hospital, isla, sync_id) do
@@ -354,7 +379,8 @@ defmodule Isla do
       :laboratorios,
       :rx_toraxs,
       :alertas,
-      :episodios
+      :episodios,
+      :hcpacientes
     ]
 
     result = get_fromlist(list, sync_id, state)
@@ -391,6 +417,7 @@ defmodule Isla do
       :rx_toraxs -> Isla.RxTorax
       :alertas -> Isla.Alerta
       :episodios -> Isla.Episodio
+      :hcpacientes -> Isla.HCpaciente
     end
   end
 end
@@ -483,5 +510,41 @@ defmodule Isla.Episodio do
     field(:fechaEgreso, :integer)
     field(:razon, :string)
     field(:cuil, :string)
+  end
+end
+
+defmodule Isla.HCpaciente do
+  use Ecto.Schema
+
+  @primary_key false
+  schema "HCpaciente" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:idIsla, :string, primary_key: true)
+    field(:numeroHC, :string, primary_key: true)
+    field(:tipoDocumento, :string)
+    field(:paisExp, :string)
+    field(:dni, :string)
+    field(:nombre, :string)
+    field(:apellido, :string)
+    field(:nacionalidad, :string)
+    field(:genero, :string)
+    field(:calle, :string)
+    field(:numero, :string)
+    field(:piso, :string)
+    field(:CP, :string)
+    field(:telefono, :string)
+    field(:telefonoFamiliar, :string)
+    field(:telefonoFamiliar2, :string)
+    field(:fechaNac, :integer)
+    field(:gravedad, :integer)
+    field(:nivelConfianza, :integer)
+    field(:auditoriaComorbilidades, :string)
+    field(:iccGrado2, :integer)
+    field(:epoc, :integer)
+    field(:diabetesDanioOrgano, :integer)
+    field(:hipertension, :integer)
+    field(:obesidad, :integer)
+    field(:enfermedadRenalCronica, :integer)
   end
 end

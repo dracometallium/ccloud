@@ -188,8 +188,8 @@ Respuestas:
 # new_data
 
 **Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
-`laboratorio`, `rx_torax`, `alerta` o `episodio` en cuyo caso retornan un
-triage, o `camas`, `hcpaciente`, `isla`, `sector`, `usuario_hospital`,
+`laboratorio`, `rx_torax`, `alerta`, `hcpaciente` o `episodio` en cuyo caso
+retornan un triage, o `camas`, `isla`, `sector`, `usuario_hospital`,
 `usuario_sector` u `hospital` en cuyo caso no retornan el triage.
 
 Parámetros:
@@ -262,8 +262,8 @@ Respuestas:
 # modify_data
 
 **Nota:** <data> puede ser cada una de las tablas: `control_enfermeria`,
-`laboratorio`, `rx_torax`, `alerta` o `episodio` en cuyo caso retornan un
-triage, o `cama`, `hcpaciente`, `islas`, `sectores`, `usuarios_hospital`,
+`laboratorio`, `rx_torax`, `alerta`, `hcpaciente` o `episodio` en cuyo caso
+retornan un triage, o `cama`, `islas`, `sectores`, `usuarios_hospital`,
 `usuarios_sector` u `hospital` en cuyo caso no retornan el triage.
 
 Parámetros:
@@ -337,8 +337,8 @@ Respuestas:
 # copy_data
 
 **Nota:** <tipo> puede ser cada una de las tablas: `control_enfermeria`,
-`laboratorio`, `rx_torax`, `alerta` o `episodio` en cuyo caso retornan un
-triage, o `cama`, `hcpaciente`, `isla`, `sector`, `usuario_hospital`,
+`laboratorio`, `rx_torax`, `alerta`, `hcpaciente` o `episodio` en cuyo caso
+retornan un triage, o `cama`, `isla`, `sector`, `usuario_hospital`,
 `usuario_sector` u `hospital`.
 
 Parámetros:
