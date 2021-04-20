@@ -252,7 +252,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_signo_vital", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -278,7 +278,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "modify_signo_vital", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -313,7 +313,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_laboratorio", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -340,7 +340,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "modify_laboratorio", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -376,7 +376,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_rx_torax", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -403,7 +403,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "modify_rx_torax", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -439,7 +439,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_alerta", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -466,7 +466,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "modify_alerta", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -502,7 +502,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_episodio", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -529,7 +529,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "modify_episodio", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
@@ -565,7 +565,7 @@ defmodule Lider.Router do
   defp run_method("0.0", "new_hcpaciente", req, connection) do
     isla =
       if connection[:isla] == nil do
-        params.data.idIsla
+        req.params.data.idIsla
       else
         connection[:isla]
       end
