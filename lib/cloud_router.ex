@@ -364,6 +364,21 @@ defmodule Cloud.Router do
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
 
+  defp copy_data("0.0", "hcpaciente", req, connection) do
+    params = req.params
+    data = params.dato
+    triage = params[:triage]
+    nhc = params[:nHC]
+    isla = connection[:isla]
+    hospital = connection[:hospital]
+
+    sync_id = Isla.copy_episodio(hospital, isla, data)
+
+    send_copy_data(:hcpaciente, data, sync_id, hospital, isla, triage, nhc)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
   defp pending(state, req) do
     pending = state.pending
     id = req.id
