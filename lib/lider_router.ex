@@ -496,6 +496,8 @@ defmodule Lider.Router do
     isla =
       if connection[:isla] == nil do
         params.data.idIsla
+      else
+        connection[:isla]
       end
 
     pid = SysUsers.get_lider(connection[:hospital], isla)
@@ -521,6 +523,8 @@ defmodule Lider.Router do
     isla =
       if connection[:isla] == nil do
         req.params.data.idIsla
+      else
+        connection[:isla]
       end
 
     pid = SysUsers.get_lider(connection[:hospital], isla)
