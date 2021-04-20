@@ -250,7 +250,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "new_signo_vital", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -269,7 +276,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "modify_signo_vital", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -297,7 +311,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "new_laboratorio", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -317,7 +338,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "modify_laboratorio", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -346,7 +374,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "new_rx_torax", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -366,7 +401,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "modify_rx_torax", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -395,7 +437,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "new_alerta", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -415,7 +464,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "modify_alerta", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -444,7 +500,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "new_episodio", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
@@ -464,7 +527,14 @@ defmodule Lider.Router do
   end
 
   defp run_method("0.0", "modify_episodio", req, connection) do
-    pid = SysUsers.get_lider(connection[:hospital], connection[:isla])
+    isla =
+      if connection[:isla] == nil do
+        params.data.idIsla
+      else
+        connection[:isla]
+      end
+
+    pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
       send(pid, {:to_leader, req, self()})
