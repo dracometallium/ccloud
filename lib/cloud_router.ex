@@ -372,7 +372,7 @@ defmodule Cloud.Router do
     isla = connection[:isla]
     hospital = connection[:hospital]
 
-    sync_id = Isla.copy_episodio(hospital, isla, data)
+    sync_id = Isla.copy_hcpaciente(hospital, isla, data)
 
     send_copy_data(:hcpaciente, data, sync_id, hospital, isla, triage, nhc)
 

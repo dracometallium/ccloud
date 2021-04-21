@@ -264,15 +264,7 @@ defmodule Isla do
   end
 
   def handle_call({:copy, table, registro}, _from, state) do
-    sync_id = registro.sync_id
-
-    keys =
-      Map.take(
-        registro,
-        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
-      )
-
-    keys = struct(table2module(table), keys)
+    sync_id = Enum.max([registro.sync_id, state.sync_id])
 
     # Cleans register of all incorrect keys
     proper_keys =
@@ -284,10 +276,21 @@ defmodule Isla do
       registro
       |> Map.take(proper_keys)
 
-    registro = Ecto.Changeset.change(keys, registro)
+    keys =
+      Map.take(
+        registro,
+        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
+      ) |> Map.to_list
+
+    changeset =
+      case CCloud.Repo.get_by(table2module(table), keys) do
+        nil -> struct(table2module(table), keys)
+        reg -> reg
+      end
+      |> Ecto.Changeset.change(registro)
 
     Ecto.Multi.new()
-    |> Ecto.Multi.insert_or_update(:registro, registro)
+    |> Ecto.Multi.insert_or_update(:registro, changeset)
     |> Ecto.Multi.update(
       :max_sync_id,
       Ecto.Changeset.change(
