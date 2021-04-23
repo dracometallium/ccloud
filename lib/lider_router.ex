@@ -21,7 +21,7 @@ defmodule Lider.Router do
   defp http_handle(req, state) do
     case :cowboy_req.method(req) do
       "OPTIONS" ->
-        req0 = :cowboy_req.reply(200, headers(), "", req)
+        req0 = :cowboy_req.reply(200, headers(headers_cors()), "", req)
         {:ok, req0, state}
 
       _ ->
@@ -81,13 +81,18 @@ defmodule Lider.Router do
 
   defp headers(base \\ %{}) do
     Map.merge(base, %{
-      "Access-Control-Allow-Headers" =>
-        "token, Authorization, X-API-KEY, Origin, X-Requested-with, Content-Type, Accept, Access-Control-Allow-Request-Method",
-      "Access-Control-Allow-Methods" =>
-        "GET, HEAD, POST, OPTIONS, PUT, DELETE",
-      "Access-Control-Allow-Origin" => "*",
-      "Allow" => "GET, HEAD, POST, OPTIONS, PUT, DELETE",
+      "access-control-allow-origin" => "*",
       "content-type" => "application/json"
+    })
+  end
+
+  defp headers_cors(base \\ %{}) do
+    Map.merge(base, %{
+      "access-control-allow-headers" => "content-type",
+      "access-control-allow-methods" =>
+        "GET, HEAD, POST, OPTIONS, PUT, DELETE",
+      "access-control-allow-origin" => "*",
+      "access-control-request-headers" => "content-type"
     })
   end
 

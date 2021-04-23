@@ -7,10 +7,9 @@ defmodule CCloud.Application do
 
   def start(_type, _args) do
     cowboy_options = [
-      keyfile: "priv/keys/privkey.pem",
-      certfile: "priv/keys/cert.pem",
-      cacertfile: "priv/keys/chain.pem",
-      #otp_app: :simple_server,
+      certfile: "/etc/letsencrypt/live/covindex.uncoma.edu.ar/cert.pem",
+      keyfile: "/etc/letsencrypt/live/covindex.uncoma.edu.ar/privkey.pem",
+      cacertfile: "/etc/letsencrypt/live/covindex.uncoma.edu.ar/chain.pem",
       port: 8082
     ]
 
@@ -23,7 +22,9 @@ defmodule CCloud.Application do
     dispatch = :cowboy_router.compile([{:_, routes}])
     cowboy_env = %{dispatch: dispatch}
 
-    IO.inspect :cowboy.start_tls(:http_listener, cowboy_options, %{env: cowboy_env})
+    IO.inspect(
+      :cowboy.start_tls(:http_listener, cowboy_options, %{env: cowboy_env})
+    )
 
     children = [
       # Starts a worker by calling: SimpleServer.Worker.start_link(arg)
