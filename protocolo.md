@@ -363,3 +363,49 @@ Respuestas:
     -   result: {}
     -   http_status: "401 Unauthorized"
 
+# get_provincias
+
+Parámetros:
+
+Respuestas:
+
+-   Si el servidor reconoce el token y esta en la lista de conectados:
+
+    -   status: "200 OK"
+    -   result:
+        -   data: [lista de provincias %{id_provincia, nombre}]
+    -   https_status: 200
+
+-   Si no reconoce el token o no esta en la lista de conectados:
+
+    -   status: "401 Unauthorized"
+    -   result: {}
+    -   http_status: "401 Unauthorized"
+
+-   Otros posibles casos:
+    -   Que no reconozca el usuario.
+
+# get_localidades
+
+Parámetros:
+
+-   id_provincia
+
+Respuestas:
+
+-   Si el servidor reconoce el token y esta en la lista de conectados:
+
+    -   status: "200 OK"
+    -   result:
+        -   data: [lista de localidades %{id_loc, nombre}]
+    -   https_status: 200
+
+-   Si no reconoce el token o no esta en la lista de conectados:
+
+    -   status: "401 Unauthorized"
+    -   result: {}
+    -   http_status: "401 Unauthorized"
+
+-   Otros posibles casos:
+    -   Que no reconozca el usuario.
+

@@ -175,6 +175,8 @@ CREATE TABLE `HCpaciente` (
   `calle` varchar(150),
   `numero` varchar(15),
   `piso` varchar(15),
+  `id_provincia` int(11),
+  `id_loc` int(11),
   `CP` varchar(15),
   `telefono` varchar(15),
   `telefonoFamiliar` varchar(15),

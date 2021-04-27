@@ -280,7 +280,8 @@ defmodule Isla do
       Map.take(
         registro,
         Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
-      ) |> Map.to_list
+      )
+      |> Map.to_list()
 
     changeset =
       case CCloud.Repo.get_by(table2module(table), keys) do
@@ -535,6 +536,8 @@ defmodule Isla.HCpaciente do
     field(:calle, :string)
     field(:numero, :string)
     field(:piso, :string)
+    field(:id_provincia, :integer)
+    field(:id_loc, :integer)
     field(:CP, :string)
     field(:telefono, :string)
     field(:telefonoFamiliar, :string)

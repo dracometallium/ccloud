@@ -902,6 +902,17 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{pong: params.ping}}
   end
 
+  defp run_method("0.0", "get_provincias", _req, _connection) do
+    provincias = Pais.get_provincias("ar")
+    %{status: "200 OK", result: %{provincias: provincias}}
+  end
+
+  defp run_method("0.0", "get_localidades", req, _connection) do
+    params = req.params
+    localidades = Pais.get_localidades("ar", params.id_provincia)
+    %{status: "200 OK", result: %{localidades: localidades}}
+  end
+
   defp send_badreq(add \\ %{}) do
     Map.merge(%{status: "400 Bad Request", result: %{}}, add)
   end
