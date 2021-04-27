@@ -181,6 +181,10 @@ defmodule Cloud.Router do
     {:reply, [{:text, msg}], state}
   end
 
+  def websocket_info({:EXIT, _pid, _cause}, state) do
+    {:ok, state}
+  end
+
   def websocket_info(msg, state) do
     IO.puts("Cloud websocket_info:")
     IO.inspect(msg)
