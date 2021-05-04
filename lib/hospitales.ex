@@ -157,13 +157,17 @@ defmodule Hospitales do
       |> Enum.uniq()
 
     reduce_islas = fn islas ->
-      islas_k = Map.keys(islas)
+      if islas != nil do
+        islas_k = Map.keys(islas)
 
-      Enum.reduce(islas_k, [], fn isla, acc ->
-        [
-          %{idIsla: isla, sectores: islas[isla]} | acc
-        ]
-      end)
+        Enum.reduce(islas_k, [], fn isla, acc ->
+          [
+            %{idIsla: isla, sectores: islas[isla]} | acc
+          ]
+        end)
+      else
+        []
+      end
     end
 
     hospitales =
