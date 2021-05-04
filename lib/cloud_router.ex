@@ -408,10 +408,12 @@ defmodule Cloud.Router do
     if msg[:result][:pong] == id do
       now = DateTime.utc_now() |> DateTime.to_string()
       IO.puts("ping: " <> date <> " - " <> now)
+
       if from != nil do
         {pid_from, id_from} = from
         send(pid_from, {:pong, id_from})
       end
+
       {state, nil}
     else
       msg |> IO.inspect(label: "WRONG PING!!")

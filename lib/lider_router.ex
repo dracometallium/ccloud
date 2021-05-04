@@ -933,42 +933,31 @@ defmodule Lider.Router do
       end
 
     current = self()
+    id = make_ref()
 
     Enum.each(islas, fn isla ->
-      pid = SysUsers.get_lider(hospital, isla)
-
-      if pid != nil do
-        spawn(fn -> send(pid, {:to_leader, req, current}) end)
-      end
+      spawn(fn ->
+        lider_status = SysUsers.ping_lider(hospital, isla)
+        send(current, {id, isla, lider_status})
+      end)
     end)
 
-    id = req.id
+    islas =
+      Enum.map(islas, fn isla ->
+        spawn(fn ->
+          receive do
+            {id, isla, lider_status} -> {isla, lider_status}
+          end
+        end)
+      end)
 
     data =
-      Enum.reduce(islas, [], fn isla, acc ->
-        pid = SysUsers.get_lider(hospital, isla)
-
+      Enum.reduce(islas, [], fn {isla, lider_status}, acc ->
         data =
-          if pid != nil do
-            receive do
-              {:from_leader, resp, ^id} ->
-                data = resp.result[:data]
-
-                if data != nil do
-                  data |> Enum.map(fn x -> Map.put(x, :actual, 1) end)
-                end
-            after
-              10000 ->
-                nil
-            end
-          end
-
-        data =
-          if data == nil do
-            fun_if_fail.(isla)
-            |> Enum.map(fn x -> Map.put(x, :actual, 0) end)
+          if lider_status == :ok do
+            fun_if_fail.(isla) |> Enum.map(fn x -> Map.put(x, :actual, 1) end)
           else
-            data
+            fun_if_fail.(isla) |> Enum.map(fn x -> Map.put(x, :actual, 0) end)
           end
 
         [data | acc]

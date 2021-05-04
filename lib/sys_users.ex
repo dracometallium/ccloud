@@ -74,6 +74,23 @@ defmodule SysUsers do
     GenServer.call(__MODULE__, {:get_lider, hospital, isla})
   end
 
+  def ping_lider(hospital, isla) do
+    pid = get_lider(hospital, isla)
+
+    if pid != nil do
+      id = make_ref()
+      send(pid, {:ping, id})
+
+      receive do
+        {:pong, id} -> :ok
+      after
+        1000 -> nil
+      end
+    else
+      nil
+    end
+  end
+
   def get_clients(hospital, isla) do
     GenServer.call(__MODULE__, {:get_clients, hospital, isla})
   end
@@ -191,9 +208,16 @@ defmodule SysUsers do
     pid = state.connected[token][:pid]
 
     cond do
-      pid == nil -> {:reply, nil, state}
-      Process.alive?(pid) -> {:reply, pid, state}
-      true -> {:reply, nil, state}
+      pid == nil ->
+        {:reply, nil, state}
+
+      Process.alive?(pid) ->
+        {:reply, pid, state}
+
+      true ->
+        lideres = Map.delete({state.lideres, {hospital, isla}})
+        state = Map.put(state, :lideres, lideres)
+        {:reply, nil, state}
     end
   end
 
