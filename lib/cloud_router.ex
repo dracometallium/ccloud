@@ -147,11 +147,11 @@ defmodule Cloud.Router do
     {:reply, [{:text, msg}], state}
   end
 
-  def websocket_info({:ping}, state) do
+  def websocket_info({:ping, from}, state) do
     id = UUIDgen.uuidgen()
     date = DateTime.utc_now() |> DateTime.to_string()
 
-    state = add_pending({:ping, id, date}, id, state)
+    state = add_pending({:ping, id, date, from}, id, state)
 
     msg = %{
       version: "0.0",
@@ -404,10 +404,14 @@ defmodule Cloud.Router do
     {state, nil}
   end
 
-  defp handle_pending({:ping, id, date}, msg, state) do
+  defp handle_pending({:ping, id, date, from}, msg, state) do
     if msg[:result][:pong] == id do
       now = DateTime.utc_now() |> DateTime.to_string()
-      IO.puts("ping: " <> date <> "-" <> now)
+      IO.puts("ping: " <> date <> " - " <> now)
+      if from != nil do
+        {pid_from, id_from} = from
+        send(pid_from, {:pong, id_from})
+      end
       {state, nil}
     else
       msg |> IO.inspect(label: "WRONG PING!!")
@@ -462,7 +466,7 @@ defmodule Cloud.Router do
 
   defp tick(token, pid) do
     :timer.sleep(@tick_timeout * 1000)
-    send(pid, {:ping})
+    send(pid, {:ping, nil})
     tick(token, pid)
   end
 end
