@@ -82,7 +82,7 @@ defmodule SysUsers do
       send(pid, {:ping, id})
 
       receive do
-        {:pong, id} -> :ok
+        {:pong, ^id} -> :ok
       after
         1000 -> nil
       end
@@ -215,7 +215,7 @@ defmodule SysUsers do
         {:reply, pid, state}
 
       true ->
-        lideres = Map.delete({state.lideres, {hospital, isla}})
+        lideres = Map.delete(state.lideres, {hospital, isla})
         state = Map.put(state, :lideres, lideres)
         {:reply, nil, state}
     end

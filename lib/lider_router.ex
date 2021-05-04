@@ -921,7 +921,7 @@ defmodule Lider.Router do
     Map.merge(%{status: "503 Service Unavailable", result: %{}}, add)
   end
 
-  defp send_get_data(fun_if_fail, req, connection) do
+  defp send_get_data(fun_if_fail, _req, connection) do
     hospital = connection[:hospital]
 
     islas =
@@ -946,7 +946,7 @@ defmodule Lider.Router do
       Enum.map(islas, fn isla ->
         spawn(fn ->
           receive do
-            {id, isla, lider_status} -> {isla, lider_status}
+            {^id, ^isla, lider_status} -> {isla, lider_status}
           end
         end)
       end)
