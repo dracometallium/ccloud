@@ -944,11 +944,9 @@ defmodule Lider.Router do
 
     islas =
       Enum.map(islas, fn isla ->
-        spawn(fn ->
-          receive do
-            {^id, ^isla, lider_status} -> {isla, lider_status}
-          end
-        end)
+        receive do
+          {^id, ^isla, lider_status} -> {isla, lider_status}
+        end
       end)
 
     data =
