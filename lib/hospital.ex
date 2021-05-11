@@ -366,7 +366,10 @@ defmodule Hospital do
     {_, usuarios, _} = handle_call({:get, :usuarios, sync_id}, from, state)
 
     result =
-      get_fromlist(list, sync_id, state)
+      Enum.reduce(list, %{}, fn x, acc ->
+        {_, list, _} = handle_call({:get, x, sync_id}, self(), state)
+        Map.put(acc, x, list)
+      end)
       |> Map.merge(%{hospital: hospital})
       |> Map.merge(%{usuarios: usuarios})
 
@@ -375,20 +378,6 @@ defmodule Hospital do
 
   def handle_call({:get_sync_id}, _from, state) do
     {:reply, state.sync_id, state}
-  end
-
-  defp get_fromlist(list, sync_id, state) do
-    get_fromlist(list, sync_id, %{}, state)
-  end
-
-  defp get_fromlist([], _sync_id, input, _state) do
-    input
-  end
-
-  defp get_fromlist([head | tail], sync_id, input, state) do
-    {_, list, _} = handle_call({:get, head, sync_id}, self(), state)
-    input = Map.put(input, head, list)
-    get_fromlist(tail, sync_id, input, state)
   end
 
   defp table2module(table) do

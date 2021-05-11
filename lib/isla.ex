@@ -387,26 +387,17 @@ defmodule Isla do
       :hcpacientes
     ]
 
-    result = get_fromlist(list, sync_id, state)
+    result =
+      Enum.reduce(list, %{}, fn x, acc ->
+        {_, list, _} = handle_call({:get, x, sync_id}, self(), state)
+        Map.put(acc, x, list)
+      end)
+
     {:reply, result, state}
   end
 
   def handle_call({:get_sync_id}, _from, state) do
     {:reply, state.sync_id, state}
-  end
-
-  defp get_fromlist(list, sync_id, state) do
-    get_fromlist(list, sync_id, %{}, state)
-  end
-
-  defp get_fromlist([], _sync_id, input, _state) do
-    input
-  end
-
-  defp get_fromlist([head | tail], sync_id, input, state) do
-    {_, list, _} = handle_call({:get, head, sync_id}, self(), state)
-    input = Map.put(input, head, list)
-    get_fromlist(tail, sync_id, input, state)
   end
 
   defp run_triage(state) do
