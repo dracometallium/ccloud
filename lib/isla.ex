@@ -531,7 +531,6 @@ defmodule Isla.Alerta do
     field(:fechaAlerta, :integer, primary_key: true)
     field(:gravedadAlerta, :integer)
     field(:gravedadAnterior, :integer)
-    field(:get_laboratorios, :string)
     field(:anotacionMedico, :string)
     field(:auditoriaMedico, :string)
     field(:ocultarAlerta, :integer)

@@ -46,7 +46,6 @@ CREATE TABLE `Alerta` (
   `fechaAlerta` bigint(11),
   `gravedadAlerta` int(11),
   `gravedadAnterior` int(11),
-  `get_laboratorios` varchar(15),
   `anotacionMedico` varchar(150),
   `auditoriaMedico` varchar(15),
   `ocultarAlerta` int(11)
