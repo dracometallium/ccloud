@@ -23,7 +23,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `Alerta`
+-- Tablas para guardar el máximo sync ID, solo de la nube
 --
 CREATE TABLE `SyncIDHosp` (
   `sync_id` int(11),
@@ -36,6 +36,9 @@ CREATE TABLE `SyncIDIsla` (
   `idIsla` varchar(15)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- Estructura de tabla para la tabla `Alerta`
+--
 CREATE TABLE `Alerta` (
   `sync_id` int(11),
   `idHospital` varchar(15),
@@ -44,9 +47,6 @@ CREATE TABLE `Alerta` (
   `gravedadAlerta` int(11),
   `gravedadAnterior` int(11),
   `get_laboratorios` varchar(15),
-  `anotacionEnfermero` varchar(150),
-  `auditoriaEnfermero` varchar(15),
-  `calificacionMedico` varchar(15),
   `anotacionMedico` varchar(150),
   `auditoriaMedico` varchar(15),
   `ocultarAlerta` int(11)
@@ -103,14 +103,6 @@ CREATE TABLE `Hospital` (
   `planoCamas` varchar(300)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
---
--- Volcado de datos para la tabla `Hospital`
---
-
--- INSERT INTO `Hospital` (`sync_id`, `idHosp`, `nombre`, `calle`, `numero`, `CP`, `planoCamas`) VALUES
--- (1, 0, 'Francisco López Lima', 'E. Gelonch', '721', 'R8332', ''),
--- (2, 1, 'Provincial Neuquen Dr. Castro Rendon', 'Buenos Aires', '450', 'Q8300', '');
-
 -- --------------------------------------------------------
 
 --
@@ -123,16 +115,6 @@ CREATE TABLE `Isla` (
   `idIsla` varchar(15),
   `idLider` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
---
--- Volcado de datos para la tabla `Isla`
---
-
--- INSERT INTO `Isla` (`sync_id`, `idHospital`, `idIsla`, `idLider`) VALUES
--- (3, 0, 'I0', 1),
--- (4, 0, 'I1', 1),
--- (5, 1, 'I3', 1),
--- (6, 1, 'I4', 2);
 
 -- --------------------------------------------------------
 
@@ -147,7 +129,7 @@ CREATE TABLE `Laboratorio` (
   `fecha` bigint(11),
   `cuil` varchar(15),
   `dimeroD` int(11),
-  `Linfopenia` int(11),
+  `linfopenia` int(11),
   `plaquetas` int(11),
   `ldh` int(11),
   `ferritina` int(11),
@@ -290,10 +272,6 @@ CREATE TABLE `UsuarioSector` (
   `cuil` varchar(15),
   `estado` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
---
--- Índices para tablas volcadas
---
 
 --
 -- Indices de la tabla `Alerta`
