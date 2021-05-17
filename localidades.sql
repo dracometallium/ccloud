@@ -48,6 +48,7 @@ ALTER TABLE `Localidad`
 ---
 
 INSERT INTO Provincia(pais, id_provincia, nombre) VALUES
+('ar',0, null),
 ('ar',1,'Buenos Aires'),
 ('ar',2,'Catamarca'),
 ('ar',3,'Córdoba'),
@@ -74,6 +75,7 @@ INSERT INTO Provincia(pais, id_provincia, nombre) VALUES
 ('ar',24,'Tierra del Fuego, Antártida e Islas del Atlántico Sur');
 
 INSERT INTO Localidad(pais, id_provincia, id_loc, nombre) VALUES
+('ar',0, 0, null),
 ('ar',1,1,'Alberti'),
 ('ar',1,2,'Coronel Segui'),
 ('ar',1,3,'Mechita'),
