@@ -23,4 +23,16 @@ defmodule Utils do
       :usuarios_sector -> :idHospital
     end
   end
+
+  def numeroHC(table) do
+    case table do
+      :alertas -> :numeroHC
+      :camas -> :numeroHCPac
+      :episodios -> :numeroHC
+      :hcpacientes -> :numeroHC
+      :laboratorios -> :numeroHCLab
+      :rx_toraxs -> :numeroHCRad
+      :signosVitales -> :numeroHCSignosVitales
+    end
+  end
 end

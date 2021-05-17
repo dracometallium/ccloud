@@ -228,6 +228,7 @@ defmodule Lider.Router do
               Isla.get_update(
                 params.hospital,
                 params.isla,
+                params[:sector],
                 params.sync_id_isla
               )
 
@@ -318,7 +319,12 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_signos_vitales", req, connection) do
     if_fail = fn isla ->
-      Isla.get_signos_vitales(connection[:hospital], isla, req.params.sync_id)
+      Isla.get_signos_vitales(
+        connection[:hospital],
+        isla,
+        connection[:sector],
+        req.params.sync_id
+      )
     end
 
     data = send_get_data(if_fail, req, connection)
@@ -381,7 +387,12 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_laboratorios", req, connection) do
     if_fail = fn isla ->
-      Isla.get_laboratorios(connection[:hospital], isla, req.params.sync_id)
+      Isla.get_laboratorios(
+        connection[:hospital],
+        isla,
+        connection[:sector],
+        req.params.sync_id
+      )
     end
 
     data = send_get_data(if_fail, req, connection)
@@ -444,7 +455,12 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_rx_toraxs", req, connection) do
     if_fail = fn isla ->
-      Isla.get_rx_toraxs(connection[:hospital], isla, req.params.sync_id)
+      Isla.get_rx_toraxs(
+        connection[:hospital],
+        isla,
+        connection[:sector],
+        req.params.sync_id
+      )
     end
 
     data = send_get_data(if_fail, req, connection)
@@ -507,7 +523,12 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_alertas", req, connection) do
     if_fail = fn isla ->
-      Isla.get_alertas(connection[:hospital], isla, req.params.sync_id)
+      Isla.get_alertas(
+        connection[:hospital],
+        isla,
+        connection[:sector],
+        req.params.sync_id
+      )
     end
 
     data = send_get_data(if_fail, req, connection)
@@ -570,7 +591,12 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "get_episodios", req, connection) do
     if_fail = fn isla ->
-      Isla.get_episodios(connection[:hospital], isla, req.params.sync_id)
+      Isla.get_episodios(
+        connection[:hospital],
+        isla,
+        connection[:sector],
+        req.params.sync_id
+      )
     end
 
     data = send_get_data(if_fail, req, connection)
@@ -636,6 +662,7 @@ defmodule Lider.Router do
       Isla.get_hcpacientes(
         connection[:hospital],
         isla,
+        connection[:sector],
         req.params.sync_id
       )
     end

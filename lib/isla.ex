@@ -115,38 +115,53 @@ defmodule Isla do
     )
   end
 
-  def get_signos_vitales(hospital, isla, sync_id) do
+  def get_signos_vitales(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :signosVitales, sync_id}
+      {:get, :signosVitales, sector, sync_id}
     )
   end
 
-  def get_laboratorios(hospital, isla, sync_id) do
+  def get_laboratorios(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :laboratorios, sync_id}
+      {:get, :laboratorios, sector, sync_id}
     )
   end
 
-  def get_rx_toraxs(hospital, isla, sync_id) do
-    GenServer.call(get_name_id(hospital, isla), {:get, :rx_toraxs, sync_id})
+  def get_rx_toraxs(hospital, isla, sector, sync_id) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :rx_toraxs, sector, sync_id}
+    )
   end
 
-  def get_alertas(hospital, isla, sync_id) do
-    GenServer.call(get_name_id(hospital, isla), {:get, :alertas, sync_id})
+  def get_alertas(hospital, isla, sector, sync_id) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :alertas, sector, sync_id}
+    )
   end
 
-  def get_episodios(hospital, isla, sync_id) do
-    GenServer.call(get_name_id(hospital, isla), {:get, :episodios, sync_id})
+  def get_episodios(hospital, isla, sector, sync_id) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :episodios, sector, sync_id}
+    )
   end
 
-  def get_hcpacientes(hospital, isla, sync_id) do
-    GenServer.call(get_name_id(hospital, isla), {:get, :hcpacientes, sync_id})
+  def get_hcpacientes(hospital, isla, sector, sync_id) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :hcpacientes, sector, sync_id}
+    )
   end
 
-  def get_update(hospital, isla, sync_id) do
-    GenServer.call(get_name_id(hospital, isla), {:get_update, sync_id})
+  def get_update(hospital, isla, sector, sync_id) do
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get_update, sector, sync_id}
+    )
   end
 
   def get_sync_id(hospital, isla) do
@@ -309,75 +324,108 @@ defmodule Isla do
     {:reply, sync_id, nstate}
   end
 
-  def handle_call({:get, table, sync_id}, _from, state) do
-    result =
+  def handle_call({:get, table, sector, sync_id}, _from, state) do
+    q =
       case idH(table) do
         :idHospital ->
-          CCloud.Repo.all(
-            from(r in table2module(table),
-              where:
-                r.sync_id >= ^sync_id and
-                  r.idHospital == ^state.idHosp,
-              select: r
-            )
+          from(r in table2module(table),
+            as: :registro,
+            where:
+              r.sync_id >= ^sync_id and
+                r.idHospital == ^state.idHosp,
+            select: r
           )
 
         :idHosp ->
-          CCloud.Repo.all(
-            from(r in table2module(table),
-              where:
-                r.sync_id >= ^sync_id and
-                  r.idHosp == ^state.idHosp,
-              select: r
-            )
+          from(r in table2module(table),
+            as: :registro,
+            where:
+              r.sync_id >= ^sync_id and
+                r.idHosp == ^state.idHosp,
+            select: r
           )
 
         :idHospitalCama ->
-          CCloud.Repo.all(
-            from(r in table2module(table),
-              where:
-                r.sync_id >= ^sync_id and
-                  r.idHospitalCama == ^state.idHosp,
-              select: r
-            )
+          from(r in table2module(table),
+            as: :registro,
+            where:
+              r.sync_id >= ^sync_id and
+                r.idHospitalCama == ^state.idHosp,
+            select: r
           )
 
         :idHospitalLab ->
-          CCloud.Repo.all(
-            from(r in table2module(table),
-              where:
-                r.sync_id >= ^sync_id and
-                  r.idHospitalLab == ^state.idHosp,
-              select: r
-            )
+          from(r in table2module(table),
+            as: :registro,
+            where:
+              r.sync_id >= ^sync_id and
+                r.idHospitalLab == ^state.idHosp,
+            select: r
           )
 
         :idHospitalRad ->
-          CCloud.Repo.all(
-            from(r in table2module(table),
-              where:
-                r.sync_id >= ^sync_id and
-                  r.idHospitalRad == ^state.idHosp,
-              select: r
-            )
+          from(r in table2module(table),
+            as: :registro,
+            where:
+              r.sync_id >= ^sync_id and
+                r.idHospitalRad == ^state.idHosp,
+            select: r
           )
 
         :id_hospital ->
-          CCloud.Repo.all(
-            from(r in table2module(table),
-              where:
-                r.sync_id >= ^sync_id and
-                  r.id_hospital == ^state.idHosp,
-              select: r
-            )
+          from(r in table2module(table),
+            as: :registro,
+            where:
+              r.sync_id >= ^sync_id and
+                r.id_hospital == ^state.idHosp,
+            select: r
           )
       end
+
+    q =
+      if sector == nil do
+        q
+      else
+        case numeroHC(table) do
+          :numeroHC ->
+            from([registro: r] in q,
+              join: c in Hospital.Cama,
+              as: :cama,
+              on: r.numeroHC == c.numeroHCPac and c.idSector == ^sector
+            )
+
+          :numeroHCLab ->
+            from([registro: r] in q,
+              join: c in Hospital.Cama,
+              as: :cama,
+              on: r.numeroHCLab == c.numeroHCPac and c.idSector == ^sector
+            )
+
+          :numeroHCRad ->
+            from([registro: r] in q,
+              join: c in Hospital.Cama,
+              as: :cama,
+              on: r.numeroHCRad == c.numeroHCPac and c.idSector == ^sector
+            )
+
+          :numeroHCSignosVitales ->
+            from([registro: r] in q,
+              join: c in Hospital.Cama,
+              as: :cama,
+              on:
+                r.numeroHCSignosVitales == c.numeroHCPac and
+                  c.idSector == ^sector
+            )
+        end
+      end
+
+    result = CCloud.Repo.all(q)
 
     result = Enum.map(result, fn x -> Map.delete(x, :__meta__) end)
     {:reply, result, state}
   end
 
-  def handle_call({:get_update, sync_id}, _from, state) do
+  def handle_call({:get_update, sector, sync_id}, _from, state) do
     list = [
       :signosVitales,
       :laboratorios,
@@ -389,7 +437,7 @@ defmodule Isla do
 
     result =
       Enum.reduce(list, %{}, fn x, acc ->
-        {_, list, _} = handle_call({:get, x, sync_id}, self(), state)
+        {_, list, _} = handle_call({:get, x, sector, sync_id}, self(), state)
         Map.put(acc, x, list)
       end)
 

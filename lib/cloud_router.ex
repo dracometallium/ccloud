@@ -249,6 +249,7 @@ defmodule Cloud.Router do
             Isla.get_update(
               params.hospital,
               params.isla,
+              nil,
               params.sync_id_isla
             )
           else
