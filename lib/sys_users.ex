@@ -79,7 +79,7 @@ defmodule SysUsers do
 
     if pid != nil do
       id = make_ref()
-      send(pid, {:ping, id})
+      send(pid, {:ping, {id, self()}})
 
       receive do
         {:pong, ^id} -> :ok
