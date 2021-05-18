@@ -132,7 +132,7 @@ CREATE TABLE `Laboratorio` (
   `plaquetas` int(11),
   `ldh` int(11),
   `ferritina` int(11),
-  `proteinaC` double
+  `proteinaC` float
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
