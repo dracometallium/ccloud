@@ -202,12 +202,15 @@ defmodule Lider.Router do
 
   defp run_method("0.0", "connect", req, _connection) do
     params = req.params
+    hospital = params[:hospital]
+    sector = params[:sector]
+    isla = Hospital.get_isla(hospital, sector)
 
     resp =
       SysUsers.connect(
-        params[:hospital],
-        params[:isla],
-        params[:sector],
+        hospital,
+        isla,
+        sector,
         req.token
       )
 

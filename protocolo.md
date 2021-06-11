@@ -55,52 +55,11 @@ Respuestas:
     -   result:
         -   token: <token>
         -   usuario: <datos del usuario>
-        -   hospitales:
-            -   [diccionario de <id_hospital>]:
-                -   roles: [lista de roles]
-                -   sectores:
-                    -   <id_isla>: [lista de <id_sector>]
-    -   https_status: 200
-
--   Si el login es incorrecto:
-
-    -   status: "403 Forbidden"
-    -   result: {}
-    -   http_status: "403 Forbidden"
-
--   Otros:
-
-    -   status: "400 Bad Request"
-    -   result: {}
-    -   http_status: "400 Bad Request"
-
-# hello_cloud
-
-Identificación del usuario a la nube (por parte del lider). El handshake
-completo consta de dos pasos, `hello_cloud` y `connect`. El primero sirve para
-identificar el usuario correctamente, y el segundo para seleccionar el
-hospital, isla y sector.
-
-Este método genera el token, por lo cual el enviado en la petición se ignora.
-
-Parámetros:
-
--   usuario
--   password
-
-Respuestas:
-
--   Si el cliente se identifico correctamente:
-
-    -   status: "200 OK"
-    -   result:
-        -   token: <token>
-        -   usuario: <datos del usuario>
-        -   hospitales:
-            -   [diccionario de <id_hospital>]:
-                -   roles: [lista de roles]
-                -   sectores:
-                    -   <id_isla>: [lista de <id_sector>]
+        -   hospitales: [lista de datos del hospital]
+            -   roles: [lista de roles]
+            -   sectores:
+                -   idSector
+                -   descripcion
     -   https_status: 200
 
 -   Si el login es incorrecto:

@@ -74,6 +74,18 @@ defmodule Hospital do
     )
   end
 
+  def get_isla(idHosp, idSector) do
+    query =
+      from(r in Hospital.Sector,
+        where:
+          r.idSector == ^idSector and
+            r.idHospital == ^idHosp,
+        select: r.idIsla
+      )
+
+    CCloud.Repo.one(query)
+  end
+
   def get_state(idHosp) do
     GenServer.call(get_name_id(idHosp), {:get_state})
   end
@@ -472,7 +484,7 @@ defmodule Hospital.Sector do
   schema "Sector" do
     field(:sync_id, :integer)
     field(:idHospital, :string, primary_key: true)
-    field(:idIsla, :string, primary_key: true)
+    field(:idIsla, :string)
     field(:idSector, :string, primary_key: true)
     field(:descripcion, :string)
   end
@@ -485,7 +497,6 @@ defmodule Hospital.UsuarioSector do
   schema "UsuarioSector" do
     field(:sync_id, :integer)
     field(:idHospital, :string, primary_key: true)
-    field(:idIsla, :string, primary_key: true)
     field(:idSector, :string, primary_key: true)
     field(:cuil, :string)
     field(:estado, :integer)
@@ -499,7 +510,6 @@ defmodule Hospital.Cama do
   schema "Cama" do
     field(:sync_id, :integer)
     field(:idHospitalCama, :string, primary_key: true)
-    field(:idIsla, :string, primary_key: true)
     field(:idSector, :string, primary_key: true)
     field(:idCama, :string, primary_key: true)
     field(:numeroHCPac, :string)

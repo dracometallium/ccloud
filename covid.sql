@@ -60,7 +60,6 @@ CREATE TABLE `Alerta` (
 CREATE TABLE `Cama` (
   `sync_id` int(11),
   `idHospitalCama` varchar(15),
-  `idIsla` varchar(150),
   `idSector` varchar(15),
   `idCama` varchar(150),
   `numeroHCPac` varchar(15),
@@ -266,7 +265,6 @@ CREATE TABLE `UsuarioHospital` (
 CREATE TABLE `UsuarioSector` (
   `sync_id` int(11),
   `idHospital` varchar(15),
-  `idIsla` varchar(150),
   `idSector` varchar(15),
   `cuil` varchar(15),
   `estado` int(11)
@@ -282,7 +280,7 @@ ALTER TABLE `Alerta`
 -- Indices de la tabla `Cama`
 --
 ALTER TABLE `Cama`
-  ADD PRIMARY KEY (`idHospitalCama`,`idIsla`,`idSector`,`idCama`);
+  ADD PRIMARY KEY (`idHospitalCama`,`idSector`,`idCama`);
 
 --
 -- Indices de la tabla `Episodio`
@@ -324,7 +322,7 @@ ALTER TABLE `RxTorax`
 -- Indices de la tabla `Sector`
 --
 ALTER TABLE `Sector`
-  ADD PRIMARY KEY (`idHospital`,`idIsla`,`idSector`);
+  ADD PRIMARY KEY (`idHospital`,`idSector`);
 
 --
 -- Indices de la tabla `SignosVitales`
@@ -348,7 +346,7 @@ ALTER TABLE `UsuarioHospital`
 -- Indices de la tabla `UsuarioSector`
 --
 ALTER TABLE `UsuarioSector`
-  ADD PRIMARY KEY (`idHospital`,`idIsla`,`idSector`,`cuil`);
+  ADD PRIMARY KEY (`idHospital`,`idSector`,`cuil`);
 
 ALTER TABLE `SyncIDHosp`
   ADD PRIMARY KEY (`idHosp`);
@@ -366,7 +364,7 @@ INSERT INTO Isla VALUES (3, "H0", "I0", 0);
 
 INSERT INTO Sector VALUES (4, "H0", "I0", "S0", "Sector Test!");
 
-INSERT INTO UsuarioSector VALUES (5, "H0", "I0", "S0", "20-0000-0", 1);
+INSERT INTO UsuarioSector VALUES (5, "H0", "S0", "20-0000-0", 1);
 
 INSERT INTO SyncIDHosp VALUES (5, "H0");
 

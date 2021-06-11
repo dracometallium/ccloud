@@ -112,8 +112,8 @@ defmodule Hospitales do
       from([usuario: u, hospital: h] in q,
         join: s in Hospital.Sector,
         as: :sector,
-        on: u.idIsla == s.idIsla and u.idSector == s.idSector,
-        select: [s.idHospital, h.nombre, s.idIsla, s.idSector, s.descripcion]
+        on: u.idSector == s.idSector,
+        select: [s.idHospital, h.nombre, s.idSector, s.descripcion]
       )
 
     sectores =
@@ -121,7 +121,6 @@ defmodule Hospitales do
       |> Enum.reduce(%{}, fn [
                                idHospital,
                                nombreHosp,
-                               idIsla,
                                idSector,
                                descSector
                              ],
@@ -129,24 +128,16 @@ defmodule Hospitales do
         cond do
           acc[idHospital] == nil ->
             sectores = [%{idSector: idSector, descripcion: descSector}]
-            islas = Map.put(%{}, idIsla, sectores)
-            hospital = Map.put(%{nombre: nombreHosp}, :islas, islas)
-            Map.put(acc, idHospital, hospital)
-
-          acc[idHospital][idIsla] == nil ->
-            sectores = [%{idSector: idSector, descripcion: descSector}]
-            islas = Map.put(acc[idHospital][:islas], idIsla, sectores)
-            hospital = Map.put(acc[idHospital], :islas, islas)
+            hospital = Map.put(%{nombre: nombreHosp}, :sectores, sectores)
             Map.put(acc, idHospital, hospital)
 
           true ->
             sectores = [
               %{idSector: idSector, descripcion: descSector}
-              | acc[idHospital][idIsla]
+              | acc[idHospital]
             ]
 
-            islas = Map.put(acc[idHospital][:islas], idIsla, sectores)
-            hospital = Map.put(acc[idHospital], :islas, islas)
+            hospital = Map.put(acc[idHospital], :sectores, sectores)
             Map.put(acc, idHospital, hospital)
         end
       end)
@@ -156,27 +147,13 @@ defmodule Hospitales do
       |> Enum.concat(Map.keys(roles))
       |> Enum.uniq()
 
-    reduce_islas = fn islas ->
-      if islas != nil do
-        islas_k = Map.keys(islas)
-
-        Enum.reduce(islas_k, [], fn isla, acc ->
-          [
-            %{idIsla: isla, sectores: islas[isla]} | acc
-          ]
-        end)
-      else
-        []
-      end
-    end
-
     hospitales =
       Enum.reduce(hospitales, [], fn idHospital, acc ->
         [
           %{
             idHospital: idHospital,
             nombre: sectores[idHospital][:nombre],
-            islas: reduce_islas.(sectores[idHospital][:islas]),
+            sectores: sectores[idHospital][:sectores],
             roles: roles[idHospital]
           }
           | acc

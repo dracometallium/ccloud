@@ -229,11 +229,15 @@ defmodule Cloud.Router do
   defp connect(state, req) do
     params = req.params
 
+    hospital = params[:hospital]
+    sector = params[:sector]
+    isla = Hospital.get_isla(hospital, sector)
+
     resp =
       SysUsers.connect(
-        params[:hospital],
-        params[:isla],
-        params[:sector],
+        hospital,
+        isla,
+        sector,
         req.token
       )
 
