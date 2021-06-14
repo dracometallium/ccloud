@@ -143,7 +143,6 @@ CREATE TABLE `Laboratorio` (
 CREATE TABLE `HCpaciente` (
   `sync_id` int(11),
   `idHospital` varchar(15),
-  `idIsla` varchar(15),
   `numeroHC` varchar(15),
   `tipoDocumento` varchar(15),
   `paisExp` varchar(15),
@@ -310,7 +309,7 @@ ALTER TABLE `Laboratorio`
 -- Indices de la tabla `HCpaciente`
 --
 ALTER TABLE `HCpaciente`
-  ADD PRIMARY KEY (`idHospital`,`idIsla`,`numeroHC`);
+  ADD PRIMARY KEY (`idHospital`,`numeroHC`);
 
 --
 -- Indices de la tabla `RxTorax`

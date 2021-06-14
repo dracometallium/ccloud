@@ -606,74 +606,6 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{data: data}}
   end
 
-  defp run_method("0.0", "new_hcpaciente", req, connection) do
-    isla =
-      if connection[:isla] == nil do
-        req.params.data.idIsla
-      else
-        connection[:isla]
-      end
-
-    pid = SysUsers.get_lider(connection[:hospital], isla)
-
-    if pid != nil do
-      send(pid, {:to_leader, req, self()})
-
-      id = req.id
-
-      receive do
-        {:from_leader, resp, ^id} ->
-          resp
-      after
-        10000 ->
-          send_noleader(%{})
-      end
-    else
-      send_noleader(%{result: %{error: "Leader not connected"}})
-    end
-  end
-
-  defp run_method("0.0", "modify_hcpaciente", req, connection) do
-    isla =
-      if connection[:isla] == nil do
-        req.params.data.idIsla
-      else
-        connection[:isla]
-      end
-
-    pid = SysUsers.get_lider(connection[:hospital], isla)
-
-    if pid != nil do
-      send(pid, {:to_leader, req, self()})
-
-      id = req.id
-
-      receive do
-        {:from_leader, resp, ^id} ->
-          resp
-      after
-        10000 ->
-          send_noleader(%{})
-      end
-    else
-      send_noleader(%{result: %{error: "Leader not connected"}})
-    end
-  end
-
-  defp run_method("0.0", "get_hcpacientes", req, connection) do
-    if_fail = fn isla ->
-      Isla.get_hcpacientes(
-        connection[:hospital],
-        isla,
-        connection[:sector],
-        req.params.sync_id
-      )
-    end
-
-    data = send_get_data(if_fail, req, connection)
-    %{status: "200 OK", result: %{data: data}}
-  end
-
   # Dependen del hospital
 
   defp run_method("0.0", "new_cama", req, connection) do
@@ -845,6 +777,36 @@ defmodule Lider.Router do
 
     data =
       Hospital.get_usuarios_sector(connection[:hospital], params.sync_id)
+      |> Enum.map(fn x -> Map.put(x, :actual, 1) end)
+
+    %{status: "200 OK", result: %{data: data}}
+  end
+
+  defp run_method("0.0", "new_hcpaciente", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospital, connection[:hospital])
+    sync_id = Hospital.new_hcpaciente(connection[:hospital], data)
+
+    send_copy_data(:hcpaciente, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "modify_hcpaciente", req, connection) do
+    params = req.params
+    data = Map.put(params.data, :idHospital, connection[:hospital])
+    sync_id = Hospital.modify_hcpaciente(connection[:hospital], data)
+
+    send_copy_data(:hcpaciente, data, sync_id, connection[:hospital], nil)
+
+    %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp run_method("0.0", "get_hcpacientes", req, connection) do
+    params = req.params
+
+    data =
+      Hospital.get_hcpacientes(connection[:hospital], params.sync_id)
       |> Enum.map(fn x -> Map.put(x, :actual, 1) end)
 
     %{status: "200 OK", result: %{data: data}}

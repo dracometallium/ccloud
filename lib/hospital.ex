@@ -41,6 +41,13 @@ defmodule Hospital do
     )
   end
 
+  def new_hcpaciente(hospital, hcpaciente) do
+    GenServer.call(
+      get_name_id(hospital),
+      {:new, :hcpacientes, hcpaciente}
+    )
+  end
+
   def modify_cama(hospital, cama) do
     GenServer.call(get_name_id(hospital), {:modify, :camas, cama})
   end
@@ -71,6 +78,13 @@ defmodule Hospital do
     GenServer.call(
       get_name_id(hospital),
       {:modify, :hospitales, dato_hospital}
+    )
+  end
+
+  def modify_hcpaciente(hospital, hcpaciente) do
+    GenServer.call(
+      get_name_id(hospital),
+      {:modify, :hcpacientes, hcpaciente}
     )
   end
 
@@ -120,6 +134,13 @@ defmodule Hospital do
 
   def get_sectores(hospital, sync_id) do
     GenServer.call(get_name_id(hospital), {:get, :sectores, sync_id})
+  end
+
+  def get_hcpacientes(hospital, sync_id) do
+    GenServer.call(
+      get_name_id(hospital),
+      {:get, :hcpacientes, sync_id}
+    )
   end
 
   def get_update(hospital, sync_id) do
@@ -361,7 +382,8 @@ defmodule Hospital do
       :islas,
       :sectores,
       :usuarios_hospital,
-      :usuarios_sector
+      :usuarios_sector,
+      :hcpacientes
     ]
 
     hospital =
@@ -400,6 +422,7 @@ defmodule Hospital do
       :usuarios_sector -> Hospital.UsuarioSector
       :camas -> Hospital.Cama
       :hospitales -> Hospital
+      :hcpacientes -> Hospital.HCpaciente
     end
   end
 end
@@ -517,5 +540,42 @@ defmodule Hospital.Cama do
     field(:ubicacionY, :integer)
     field(:orientacion, :string)
     field(:estado, :integer)
+  end
+end
+
+defmodule Hospital.HCpaciente do
+  use Ecto.Schema
+
+  @primary_key false
+  schema "HCpaciente" do
+    field(:sync_id, :integer)
+    field(:idHospital, :string, primary_key: true)
+    field(:numeroHC, :string, primary_key: true)
+    field(:tipoDocumento, :string)
+    field(:paisExp, :string)
+    field(:dni, :string)
+    field(:nombre, :string)
+    field(:apellido, :string)
+    field(:nacionalidad, :string)
+    field(:genero, :string)
+    field(:calle, :string)
+    field(:numero, :string)
+    field(:piso, :string)
+    field(:id_provincia, :integer)
+    field(:id_loc, :integer)
+    field(:CP, :string)
+    field(:telefono, :string)
+    field(:telefonoFamiliar, :string)
+    field(:telefonoFamiliar2, :string)
+    field(:fechaNac, :integer)
+    field(:gravedad, :integer)
+    field(:nivelConfianza, :integer)
+    field(:auditoriaComorbilidades, :string)
+    field(:iccGrado2, :integer)
+    field(:epoc, :integer)
+    field(:diabetesDanioOrgano, :integer)
+    field(:hipertension, :integer)
+    field(:obesidad, :integer)
+    field(:enfermedadRenalCronica, :integer)
   end
 end
