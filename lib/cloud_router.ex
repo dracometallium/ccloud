@@ -245,14 +245,14 @@ defmodule Cloud.Router do
       if resp == :ok do
         pid = self()
         spawn(fn -> tick(req.token, pid) end)
-        sync_id_hospital = Hospital.get_sync_id(params.hospital)
-        sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
+        sync_id_hospital = Hospital.get_sync_id(hospital)
+        sync_id_isla = Isla.get_sync_id(hospital, isla)
 
         data_isla =
           if params[:sync_id_isla] != nil do
             Isla.get_update(
-              params.hospital,
-              params.isla,
+              hospital,
+              isla,
               nil,
               params.sync_id_isla
             )
@@ -263,7 +263,7 @@ defmodule Cloud.Router do
         data_hospital =
           if params[:sync_id_hospital] != nil do
             Hospital.get_update(
-              params.hospital,
+              hospital,
               params.sync_id_hospital
             )
           else

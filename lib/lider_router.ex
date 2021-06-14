@@ -217,33 +217,33 @@ defmodule Lider.Router do
     if resp == :ok do
       {data_isla, sync_id_isla} =
         cond do
-          params[:isla] == nil ->
+          isla == nil ->
             {%{}, nil}
 
           params[:sync_id_isla] == nil ->
-            sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
+            sync_id_isla = Isla.get_sync_id(hospital, isla)
             {%{}, sync_id_isla}
 
           true ->
-            sync_id_isla = Isla.get_sync_id(params.hospital, params.isla)
+            sync_id_isla = Isla.get_sync_id(hospital, isla)
 
             data_isla =
               Isla.get_update(
-                params.hospital,
-                params.isla,
-                params[:sector],
+                hospital,
+                isla,
+                sector,
                 params.sync_id_isla
               )
 
             {data_isla, sync_id_isla}
         end
 
-      sync_id_hospital = Hospital.get_sync_id(params.hospital)
+      sync_id_hospital = Hospital.get_sync_id(hospital)
 
       data_hospital =
         if params[:sync_id_hospital] != nil do
           Hospital.get_update(
-            params.hospital,
+            hospital,
             params.sync_id_hospital
           )
         else
