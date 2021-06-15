@@ -43,7 +43,7 @@ defmodule Cloud.Router do
 
   def websocket_handle({:text, body}, state) do
     IO.puts("CLOUD WS JSON:")
-    IO.inspect(body)
+    IO.puts(body)
     IO.inspect(state)
 
     try do
@@ -98,7 +98,6 @@ defmodule Cloud.Router do
 
           state.pending[req[:id]] != nil ->
             # Esta respondiendo a una llamada
-            IO.puts("pending?")
             pending(state, req)
 
           true ->
@@ -126,7 +125,7 @@ defmodule Cloud.Router do
     rescue
       reason ->
         IO.puts("Cloud ERROR\nbody:")
-        IO.inspect(body)
+        IO.puts(body)
         IO.puts("Cloud reason:")
         IO.inspect(reason)
         IO.puts(Exception.format_stacktrace())
