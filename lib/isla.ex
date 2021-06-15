@@ -194,18 +194,13 @@ defmodule Isla do
         registro.sync_id
       end
 
-    # Cleans register of all incorrect keys
-    proper_keys =
-      Map.keys(struct(table2module(table), %{}))
-      |> List.delete(:__meta__)
-      |> List.delete(:__struct__)
+    table = table2module(table)
 
     registro =
-      registro
-      |> Map.take(proper_keys)
+      cast_all(table, registro)
       |> Map.put(:sync_id, sync_id)
 
-    registro = struct(table2module(table), registro)
+    registro = struct(table, registro)
 
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:registro, registro)
@@ -236,24 +231,19 @@ defmodule Isla do
         registro.sync_id
       end
 
-    # Cleans register of all incorrect keys
-    proper_keys =
-      Map.keys(struct(table2module(table), %{}))
-      |> List.delete(:__meta__)
-      |> List.delete(:__struct__)
+    table = table2module(table)
 
     registro =
-      registro
-      |> Map.take(proper_keys)
+      cast_all(table, registro)
       |> Map.put(:sync_id, sync_id)
 
     keys =
       Map.take(
         registro,
-        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
+        Keyword.keys(Ecto.primary_key(struct(table, registro)))
       )
 
-    keys = struct(table2module(table), keys)
+    keys = struct(table, keys)
 
     registro = Ecto.Changeset.change(keys, registro)
 
@@ -280,27 +270,20 @@ defmodule Isla do
 
   def handle_call({:copy, table, registro}, _from, state) do
     sync_id = Enum.max([registro.sync_id, state.sync_id])
+    table = table2module(table)
 
-    # Cleans register of all incorrect keys
-    proper_keys =
-      Map.keys(struct(table2module(table), %{}))
-      |> List.delete(:__meta__)
-      |> List.delete(:__struct__)
-
-    registro =
-      registro
-      |> Map.take(proper_keys)
+    registro = cast_all(table, registro)
 
     keys =
       Map.take(
         registro,
-        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
+        Keyword.keys(Ecto.primary_key(struct(table, registro)))
       )
       |> Map.to_list()
 
     changeset =
-      case CCloud.Repo.get_by(table2module(table), keys) do
-        nil -> struct(table2module(table), keys)
+      case CCloud.Repo.get_by(table, keys) do
+        nil -> struct(table, keys)
         reg -> reg
       end
       |> Ecto.Changeset.change(registro)
@@ -451,17 +434,6 @@ defmodule Isla do
   defp run_triage(state) do
     # TODO
     {0, state}
-  end
-
-  defp table2module(table) do
-    case table do
-      :signosVitales -> Isla.SignosVitales
-      :laboratorios -> Isla.Laboratorio
-      :rx_toraxs -> Isla.RxTorax
-      :alertas -> Isla.Alerta
-      :episodios -> Isla.Episodio
-      :hcpacientes -> Isla.HCpaciente
-    end
   end
 end
 

@@ -156,18 +156,13 @@ defmodule Hospital do
         {sync_id, registro}
       end
 
-    # Cleans register of all incorrect keys
-    proper_keys =
-      Map.keys(struct(table2module(table), %{}))
-      |> List.delete(:__meta__)
-      |> List.delete(:__struct__)
+    table = table2module(table)
 
     registro =
-      registro
-      |> Map.take(proper_keys)
+      cast_all(table, registro)
       |> Map.put(:sync_id, sync_id)
 
-    registro = struct(table2module(table), registro)
+    registro = struct(table, registro)
 
     if table == :islas do
       Ecto.Multi.new()
@@ -217,15 +212,10 @@ defmodule Hospital do
         registro.sync_id
       end
 
-    # Cleans register of all incorrect keys
-    proper_keys =
-      Map.keys(struct(table2module(table), %{}))
-      |> List.delete(:__meta__)
-      |> List.delete(:__struct__)
+    table = table2module(table)
 
     registro =
-      registro
-      |> Map.take(proper_keys)
+      cast_all(table, registro)
       |> Map.put(:sync_id, sync_id)
 
     keys =
@@ -390,17 +380,6 @@ defmodule Hospital do
 
   def handle_call({:get_sync_id}, _from, state) do
     {:reply, state.sync_id, state}
-  end
-
-  defp table2module(table) do
-    case table do
-      :usuarios_hospital -> Hospital.UsuarioHospital
-      :islas -> Hospital.Isla
-      :sectores -> Hospital.Sector
-      :usuarios_sector -> Hospital.UsuarioSector
-      :camas -> Hospital.Cama
-      :hospitales -> Hospital
-    end
   end
 end
 
