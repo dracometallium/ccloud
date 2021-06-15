@@ -943,6 +943,16 @@ defmodule Lider.Router do
     %{status: "200 OK", result: %{localidades: localidades}}
   end
 
+  defp run_method(version, method, _req, _connection) do
+    send_badreq(%{
+      result:
+        "unkown method: '" <>
+          method <>
+          "' on version: " <>
+          version
+    })
+  end
+
   defp send_badreq(add \\ %{}) do
     Map.merge(%{status: "400 Bad Request", result: %{}}, add)
   end

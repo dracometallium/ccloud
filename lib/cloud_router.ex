@@ -75,12 +75,6 @@ defmodule Cloud.Router do
               if connection != nil do
                 if connection.ready do
                   copy_data(req[:version], req.params.tipo, req, connection)
-
-                  %{
-                    resp: "200 OK",
-                    result: %{resp: "aca va la respuesta de copy_dat"},
-                    id: req[:id]
-                  }
                 else
                   %{
                     resp: "403 Forbidden",
@@ -385,6 +379,17 @@ defmodule Cloud.Router do
     send_copy_data(:hcpaciente, data, sync_id, hospital, isla, triage, nhc)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
+  end
+
+  defp copy_data(version, type, _req, _connection) do
+
+    send_badreq(%{
+      result:
+        "unkown type: '" <>
+          type <>
+          "' on version: " <>
+          version
+    })
   end
 
   defp pending(state, req) do
