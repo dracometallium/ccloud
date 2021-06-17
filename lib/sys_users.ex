@@ -10,21 +10,6 @@ defmodule SysUsers do
 
   defstruct connected: %{}, lideres: %{}
 
-  defp autenticate(:system, user, password) do
-    r =
-      CCloud.Repo.one(
-        from(r in Hospitales.Usuario,
-          where: r.cuil == ^user,
-          select: r
-        )
-      )
-
-    salted =
-      :crypto.hash(:sha512, password <> r.sal) |> Base.encode16(case: :lower)
-
-    r.clave == salted
-  end
-
   defp autenticate(user, password) do
     r =
       CCloud.Repo.one(
@@ -34,10 +19,15 @@ defmodule SysUsers do
         )
       )
 
-    salted =
-      :crypto.hash(:sha512, password <> r.sal) |> Base.encode16(case: :lower)
+    if r != nil do
+      salted =
+        :crypto.hash(:sha512, password <> r.sal)
+        |> Base.encode16(case: :lower)
 
-    r.clave == salted
+      r.clave == salted
+    else
+      false
+    end
   end
 
   def hello(user, password, hospital, isla, sector, token, pid) do
