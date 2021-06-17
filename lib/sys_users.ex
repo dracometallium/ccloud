@@ -30,17 +30,6 @@ defmodule SysUsers do
     end
   end
 
-  def hello(user, password, hospital, isla, sector, token, pid) do
-    if autenticate(hospital, user, password) do
-      GenServer.call(
-        __MODULE__,
-        {:hello_user, user, hospital, isla, sector, token, pid}
-      )
-    else
-      nil
-    end
-  end
-
   def hello(user, password, pid) do
     if autenticate(user, password) do
       GenServer.call(
