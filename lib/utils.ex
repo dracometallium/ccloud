@@ -77,8 +77,11 @@ defmodule Utils do
     reg =
       Enum.reduce(reg, %{}, fn {k, v}, acc ->
         type = module.__schema__(:type, k)
-        {:ok, nv} = Ecto.Type.cast(type, v)
-        Map.put(acc, k, nv)
+
+        case Ecto.Type.cast(type, v) do
+          {:ok, nv} -> Map.put(acc, k, nv)
+          _ -> Map.put(acc, k, nil)
+        end
       end)
 
     reg
