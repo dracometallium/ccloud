@@ -308,10 +308,12 @@ defmodule Isla do
   end
 
   def handle_call({:get, table, sector, sync_id}, _from, state) do
+    table = table2module(table)
+
     q =
       case idH(table) do
         :idHospital ->
-          from(r in table2module(table),
+          from(r in table,
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
@@ -320,7 +322,7 @@ defmodule Isla do
           )
 
         :idHosp ->
-          from(r in table2module(table),
+          from(r in table,
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
@@ -329,7 +331,7 @@ defmodule Isla do
           )
 
         :idHospitalCama ->
-          from(r in table2module(table),
+          from(r in table,
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
@@ -338,7 +340,7 @@ defmodule Isla do
           )
 
         :idHospitalLab ->
-          from(r in table2module(table),
+          from(r in table,
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
@@ -347,7 +349,7 @@ defmodule Isla do
           )
 
         :idHospitalRad ->
-          from(r in table2module(table),
+          from(r in table,
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
@@ -356,7 +358,7 @@ defmodule Isla do
           )
 
         :id_hospital ->
-          from(r in table2module(table),
+          from(r in table,
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
@@ -404,7 +406,7 @@ defmodule Isla do
 
     result = CCloud.Repo.all(q)
 
-    result = Enum.map(result, fn x -> Map.delete(x, :__meta__) end)
+    result = Enum.map(result, fn x -> clean(table, x) end)
     {:reply, result, state}
   end
 

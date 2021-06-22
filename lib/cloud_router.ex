@@ -382,7 +382,6 @@ defmodule Cloud.Router do
   end
 
   defp copy_data(version, type, _req, _connection) do
-
     send_badreq(%{
       result:
         "unkown type: '" <>

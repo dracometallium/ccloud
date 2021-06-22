@@ -221,11 +221,11 @@ defmodule Hospital do
     keys =
       Map.take(
         registro,
-        Keyword.keys(Ecto.primary_key(struct(table2module(table), registro)))
+        Keyword.keys(Ecto.primary_key(struct(table, registro)))
       )
 
-    keys = struct(table2module(table), keys)
-    IO.inspect(struct(table2module(table), registro))
+    keys = struct(table, keys)
+    IO.inspect(struct(table, registro))
     IO.inspect(keys)
 
     registro = Ecto.Changeset.change(keys, registro)
@@ -278,11 +278,13 @@ defmodule Hospital do
   end
 
   def handle_call({:get, table, sync_id}, _from, state) do
+    table = table2module(table)
+
     result =
       case idH(table) do
         :idHospital ->
           CCloud.Repo.all(
-            from(r in table2module(table),
+            from(r in table,
               where:
                 r.sync_id >= ^sync_id and
                   r.idHospital == ^state.idHosp,
@@ -292,7 +294,7 @@ defmodule Hospital do
 
         :idHosp ->
           CCloud.Repo.all(
-            from(r in table2module(table),
+            from(r in table,
               where:
                 r.sync_id >= ^sync_id and
                   r.idHosp == ^state.idHosp,
@@ -302,7 +304,7 @@ defmodule Hospital do
 
         :idHospitalCama ->
           CCloud.Repo.all(
-            from(r in table2module(table),
+            from(r in table,
               where:
                 r.sync_id >= ^sync_id and
                   r.idHospitalCama == ^state.idHosp,
@@ -312,7 +314,7 @@ defmodule Hospital do
 
         :idHospitalLab ->
           CCloud.Repo.all(
-            from(r in table2module(table),
+            from(r in table,
               where:
                 r.sync_id >= ^sync_id and
                   r.idHospitalLab == ^state.idHosp,
@@ -322,7 +324,7 @@ defmodule Hospital do
 
         :idHospitalRad ->
           CCloud.Repo.all(
-            from(r in table2module(table),
+            from(r in table,
               where:
                 r.sync_id >= ^sync_id and
                   r.idHospitalRad == ^state.idHosp,
@@ -332,7 +334,7 @@ defmodule Hospital do
 
         :id_hospital ->
           CCloud.Repo.all(
-            from(r in table2module(table),
+            from(r in table,
               where:
                 r.sync_id >= ^sync_id and
                   r.id_hospital == ^state.idHosp,
@@ -341,7 +343,7 @@ defmodule Hospital do
           )
       end
 
-    result = Enum.map(result, fn x -> Map.delete(x, :__meta__) end)
+    result = Enum.map(result, fn x -> clean(table, x) end)
     {:reply, result, state}
   end
 

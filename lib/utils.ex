@@ -30,37 +30,37 @@ defmodule Utils do
 
   def idH(table) do
     case table do
-      :alertas -> :idHospital
-      :camas -> :idHospitalCama
-      :episodios -> :idHospital
-      :hcpacientes -> :idHospital
-      :hospitales -> :idHosp
-      :islas -> :idHospital
-      :laboratorios -> :idHospitalLab
-      :rx_toraxs -> :idHospitalRad
-      :sectores -> :idHospital
-      :signosVitales -> :id_hospital
-      :usuarios_hospital -> :idHospital
-      :usuarios_sector -> :idHospital
+      Isla.Alerta -> :idHospital
+      Hospital.Cama -> :idHospitalCama
+      Isla.Episodio -> :idHospital
+      Isla.HCpaciente -> :idHospital
+      Hospital -> :idHosp
+      Hospital.Isla -> :idHospital
+      Isla.Laboratorio -> :idHospitalLab
+      Isla.RxTorax -> :idHospitalRad
+      Hospital.Sector -> :idHospital
+      Isla.SignosVitales -> :id_hospital
+      Hospital.UsuarioHospital -> :idHospital
+      Hospital.UsuarioSector -> :idHospital
     end
   end
 
   def numeroHC(table) do
     case table do
-      :alertas -> :numeroHC
-      :camas -> :numeroHCPac
-      :episodios -> :numeroHC
-      :hcpacientes -> :numeroHC
-      :laboratorios -> :numeroHCLab
-      :rx_toraxs -> :numeroHCRad
-      :signosVitales -> :numeroHCSignosVitales
+      Isla.Alerta -> :numeroHC
+      Hospital.Cama -> :numeroHCPac
+      Isla.Episodio -> :numeroHC
+      Isla.HCpaciente -> :numeroHC
+      Isla.Laboratorio -> :numeroHCLab
+      Isla.RxTorax -> :numeroHCRad
+      Isla.SignosVitales -> :numeroHCSignosVitales
     end
   end
 
   @doc """
-  Cleans module register of all improper keys
+  Cleans a module register of all improper keys.
   """
-  @spec clean(Module, Map) :: String.t()
+  @spec clean(Module, Map) :: Map
   def clean(module, reg) do
     proper_keys =
       Map.keys(struct(module, %{}))
@@ -71,6 +71,11 @@ defmodule Utils do
     reg
   end
 
+  @doc """
+  Cleans a module register of all improper keys and cast all keys to its
+  correct type.
+  """
+  @spec cast_all(Module, Map) :: Map
   def cast_all(module, reg) do
     reg = clean(module, reg)
 
