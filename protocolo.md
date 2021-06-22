@@ -328,7 +328,7 @@ Marca una Alerta como vista por un usuario en un hospital y isla especifica.
 
 Parámetros:
     -   fechaAlerta
-    -   cuil
+    -   numeroHC
 
 Respuestas:
 

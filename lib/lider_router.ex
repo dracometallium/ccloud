@@ -934,7 +934,7 @@ defmodule Lider.Router do
     result =
       Isla.alerta_vista(
         connection.hospital,
-        connection.isla,
+        params.data.numeroHC,
         params.data.fechaAlerta,
         connection.user
       )
