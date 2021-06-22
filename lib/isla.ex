@@ -37,6 +37,22 @@ defmodule Isla do
     )
   end
 
+  def new_alerta_vista(hospital, numerohc, fechaAlerta, cuil) do
+    try do
+      alertaVista = %Isla.AlertaVista{
+        idHospital: hospital,
+        numeroHC: numerohc,
+        fechaAlerta: fechaAlerta,
+        cuil: cuil
+      }
+
+      CCloud.Repo.insert(alertaVista)
+      :ok
+    rescue
+      reason -> {:error, reason}
+    end
+  end
+
   def modify_signo_vital(hospital, isla, signo_vital) do
     GenServer.call(
       get_name_id(hospital, isla),
@@ -118,42 +134,61 @@ defmodule Isla do
   def get_signos_vitales(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :signosVitales, sector, sync_id}
+      {:get, :signosVitales, sector, sync_id, nil}
     )
   end
 
   def get_laboratorios(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :laboratorios, sector, sync_id}
+      {:get, :laboratorios, sector, sync_id, nil}
     )
   end
 
   def get_rx_toraxs(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :rx_toraxs, sector, sync_id}
+      {:get, :rx_toraxs, sector, sync_id, nil}
     )
   end
 
   def get_alertas(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :alertas, sector, sync_id}
+      {:get, :alertas, sector, sync_id, nil}
+    )
+  end
+
+  def get_alertas(hospital, isla, sector, cuil, sync_id) do
+    filter = fn q ->
+      from(a in q,
+        left_join: v in Isla.AlertaVista,
+        as: :alertaVista,
+        on:
+          a.idHospital == v.idHospital and
+            a.numeroHC == v.numeroHC and
+            a.fechaAlerta == v.fechaAlerta,
+        where: v.cuil == ^cuil
+      )
+    end
+
+    GenServer.call(
+      get_name_id(hospital, isla),
+      {:get, :alertas, sector, cuil, sync_id, filter}
     )
   end
 
   def get_episodios(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :episodios, sector, sync_id}
+      {:get, :episodios, sector, sync_id, nil}
     )
   end
 
   def get_hcpacientes(hospital, isla, sector, sync_id) do
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :hcpacientes, sector, sync_id}
+      {:get, :hcpacientes, sector, sync_id, nil}
     )
   end
 
@@ -307,7 +342,7 @@ defmodule Isla do
     {:reply, sync_id, nstate}
   end
 
-  def handle_call({:get, table, sector, sync_id}, _from, state) do
+  def handle_call({:get, table, sector, sync_id, filter}, _from, state) do
     table = table2module(table)
 
     q =
@@ -404,6 +439,13 @@ defmodule Isla do
         end
       end
 
+    q =
+      if(filter == nil) do
+        q
+      else
+        filter.(q)
+      end
+
     result = CCloud.Repo.all(q)
 
     result = Enum.map(result, fn x -> clean(table, x) end)
@@ -422,7 +464,9 @@ defmodule Isla do
 
     result =
       Enum.reduce(list, %{}, fn x, acc ->
-        {_, list, _} = handle_call({:get, x, sector, sync_id}, self(), state)
+        {_, list, _} =
+          handle_call({:get, x, sector, sync_id, nil}, self(), state)
+
         Map.put(acc, x, list)
       end)
 
@@ -507,7 +551,6 @@ defmodule Isla.Alerta do
     field(:gravedadAnterior, :integer)
     field(:anotacionMedico, :string)
     field(:auditoriaMedico, :string)
-    field(:ocultarAlerta, :integer)
   end
 end
 
@@ -561,5 +604,17 @@ defmodule Isla.HCpaciente do
     field(:hipertension, :integer)
     field(:obesidad, :integer)
     field(:enfermedadRenalCronica, :integer)
+  end
+end
+
+defmodule Isla.AlertaVista do
+  use Ecto.Schema
+
+  @primary_key false
+  schema "AlertaVista" do
+    field(:idHospital, :string, primary_key: true)
+    field(:numeroHC, :string, primary_key: true)
+    field(:fechaAlerta, :integer, primary_key: true)
+    field(:cuil, :string, primary_key: true)
   end
 end

@@ -322,6 +322,30 @@ Respuestas:
     -   result: {}
     -   http_status: "401 Unauthorized"
 
+# alerta_vista
+
+Marca una Alerta como vista por un usuario en un hospital y isla especifica.
+
+Parámetros:
+    -   fechaAlerta
+    -   cuil
+
+Respuestas:
+
+-   Si no se producen errores:
+
+    -   status: "200 OK"
+    -   https_status: 200
+
+-   Si no reconoce el token o no esta en la lista de conectados:
+
+    -   status: "401 Unauthorized"
+    -   result: {}
+    -   http_status: "401 Unauthorized"
+
+-   Otros posibles casos:
+    -   Que no reconozca el usuario.
+
 # get_provincias
 
 Parámetros:
@@ -334,6 +358,12 @@ Respuestas:
     -   result:
         -   data: [lista de provincias %{id_provincia, nombre}]
     -   https_status: 200
+
+-   Error en los parámetros?:
+
+    -   status: "400 Bad Request"
+    -   result: {error: reason}
+    -   http_status: "400 Bad Request"
 
 -   Si no reconoce el token o no esta en la lista de conectados:
 

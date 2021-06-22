@@ -48,7 +48,6 @@ CREATE TABLE `Alerta` (
   `gravedadAnterior` int(11),
   `anotacionMedico` varchar(150),
   `auditoriaMedico` varchar(15),
-  `ocultarAlerta` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -270,6 +269,19 @@ CREATE TABLE `UsuarioSector` (
   `estado` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `AlertaVista`
+--
+
+CREATE TABLE `AlertaVista` (
+  `idHospital` varchar(15),
+  `numeroHC` varchar(15),
+  `fechaAlerta` bigint(11),
+  `cuil` varchar(15)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 --
 -- Indices de la tabla `Alerta`
 --
@@ -347,6 +359,12 @@ ALTER TABLE `UsuarioHospital`
 --
 ALTER TABLE `UsuarioSector`
   ADD PRIMARY KEY (`idHospital`,`idSector`,`cuil`);
+
+--
+-- Indices de la tabla `AlertaVista`
+--
+ALTER TABLE `AlertaVista`
+  ADD PRIMARY KEY (`idHospital`, `numeroHC`, `fechaAlerta`, `cuil`);
 
 ALTER TABLE `SyncIDHosp`
   ADD PRIMARY KEY (`idHosp`);

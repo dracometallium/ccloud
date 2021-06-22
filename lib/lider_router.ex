@@ -530,6 +530,7 @@ defmodule Lider.Router do
         connection[:hospital],
         isla,
         connection[:sector],
+        connection.user,
         req.params.sync_id
       )
     end
@@ -924,6 +925,23 @@ defmodule Lider.Router do
       end
     else
       send_noleader(%{result: %{error: "Leader not connected"}})
+    end
+  end
+
+  defp run_method("0.0", "alerta_vista", req, connection) do
+    params = req.params
+
+    result =
+      Isla.alerta_vista(
+        connection.hospital,
+        connection.isla,
+        params.data.fechaAlerta,
+        connection.user
+      )
+
+    case result do
+      :ok -> %{status: "200 OK"}
+      {:error, reason} -> send_badreq(%{result: %{error: reason}})
     end
   end
 
