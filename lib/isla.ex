@@ -39,12 +39,14 @@ defmodule Isla do
 
   def new_alerta_vista(hospital, numerohc, fechaAlerta, cuil) do
     try do
-      alertaVista = %Isla.AlertaVista{
+      alertaVista = %{
         idHospital: hospital,
         numeroHC: numerohc,
         fechaAlerta: fechaAlerta,
         cuil: cuil
       }
+
+      alertaVista = struct(Isla.AlertaVista, alertaVista)
 
       CCloud.Repo.insert(alertaVista)
       :ok

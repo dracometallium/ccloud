@@ -932,7 +932,7 @@ defmodule Lider.Router do
     params = req.params
 
     result =
-      Isla.alerta_vista(
+      Isla.new_alerta_vista(
         connection.hospital,
         params.data.numeroHC,
         params.data.fechaAlerta,
