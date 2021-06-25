@@ -95,7 +95,12 @@ defmodule Cloud.Router do
             pending(state, req)
 
           true ->
-            {state, send_badreq()}
+            # {state, send_badreq()}
+            # We route anything else to the lider.router
+            {resp, state} =
+              Lider.Router.websocket_handle({:text, body}, state)
+
+            {state, resp}
         end
 
       if resp == nil do
@@ -373,6 +378,7 @@ defmodule Cloud.Router do
     nhc = params[:nHC]
     isla = connection[:isla]
     hospital = connection[:hospital]
+    data = Map.put(data, :idIsla, isla)
 
     sync_id = Isla.copy_hcpaciente(hospital, isla, data)
 

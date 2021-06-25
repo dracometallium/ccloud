@@ -176,7 +176,7 @@ defmodule Isla do
 
     GenServer.call(
       get_name_id(hospital, isla),
-      {:get, :alertas, sector, cuil, sync_id, filter}
+      {:get, :alertas, sector, sync_id, filter}
     )
   end
 
@@ -224,6 +224,9 @@ defmodule Isla do
   end
 
   def handle_call({:new, table, registro}, _from, state) do
+    table = table2module(table)
+    registro = cast_all(table, registro)
+
     sync_id =
       if registro[:sync_id] == nil do
         state.sync_id + 1
@@ -231,11 +234,7 @@ defmodule Isla do
         registro.sync_id
       end
 
-    table = table2module(table)
-
-    registro =
-      cast_all(table, registro)
-      |> Map.put(:sync_id, sync_id)
+    registro = Map.put(registro, :sync_id, sync_id)
 
     registro = struct(table, registro)
 
@@ -261,6 +260,9 @@ defmodule Isla do
   end
 
   def handle_call({:modify, table, registro}, _from, state) do
+    table = table2module(table)
+    registro = cast_all(table, registro)
+
     sync_id =
       if registro[:sync_id] == nil do
         state.sync_id + 1
@@ -268,11 +270,7 @@ defmodule Isla do
         registro.sync_id
       end
 
-    table = table2module(table)
-
-    registro =
-      cast_all(table, registro)
-      |> Map.put(:sync_id, sync_id)
+    registro = Map.put(registro, :sync_id, sync_id)
 
     keys =
       Map.take(
@@ -306,10 +304,10 @@ defmodule Isla do
   end
 
   def handle_call({:copy, table, registro}, _from, state) do
-    sync_id = Enum.max([registro.sync_id, state.sync_id])
     table = table2module(table)
-
     registro = cast_all(table, registro)
+
+    sync_id = Enum.max([registro.sync_id, state.sync_id])
 
     keys =
       Map.take(

@@ -666,7 +666,8 @@ defmodule Lider.Router do
       Isla.get_hcpacientes(
         connection[:hospital],
         isla,
-        connection[:sector],
+        # connection[:sector],
+        nil,
         req.params.sync_id
       )
     end
@@ -963,7 +964,7 @@ defmodule Lider.Router do
 
   defp run_method(version, method, _req, _connection) do
     send_badreq(%{
-      result:
+      rfesult:
         "unkown method: '" <>
           method <>
           "' on version: " <>

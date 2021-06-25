@@ -141,6 +141,9 @@ defmodule Hospital do
   end
 
   def handle_call({:new, table, registro}, _from, state) do
+    table = table2module(table)
+    registro = cast_all(table, registro)
+
     sync_id =
       if registro[:sync_id] == nil do
         state.sync_id + 1
@@ -156,11 +159,7 @@ defmodule Hospital do
         {sync_id, registro}
       end
 
-    table = table2module(table)
-
-    registro =
-      cast_all(table, registro)
-      |> Map.put(:sync_id, sync_id)
+    registro = Map.put(registro, :sync_id, sync_id)
 
     registro = struct(table, registro)
 
@@ -205,6 +204,9 @@ defmodule Hospital do
   end
 
   def handle_call({:modify, table, registro}, _from, state) do
+    table = table2module(table)
+    registro = cast_all(table, registro)
+
     sync_id =
       if registro[:sync_id] == nil do
         state.sync_id + 1
@@ -212,11 +214,7 @@ defmodule Hospital do
         registro.sync_id
       end
 
-    table = table2module(table)
-
-    registro =
-      cast_all(table, registro)
-      |> Map.put(:sync_id, sync_id)
+    registro = Map.put(registro, :sync_id, sync_id)
 
     keys =
       Map.take(
