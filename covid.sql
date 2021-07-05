@@ -209,7 +209,7 @@ CREATE TABLE `Sector` (
 
 CREATE TABLE `SignosVitales` (
   `sync_id` int(11),
-  `id_hospital` varchar(15),
+  `idHospital` varchar(15),
   `numeroHCSignosVitales` varchar(15),
   `fechaSignosVitales` bigint(11),
   `auditoria` varchar(15),
@@ -340,7 +340,7 @@ ALTER TABLE `Sector`
 -- Indices de la tabla `SignosVitales`
 --
 ALTER TABLE `SignosVitales`
-  ADD PRIMARY KEY (`id_hospital`,`numeroHCSignosVitales`,`fechaSignosVitales`);
+  ADD PRIMARY KEY (`idHospital`,`numeroHCSignosVitales`,`fechaSignosVitales`);
 
 --
 -- Indices de la tabla `Usuario`

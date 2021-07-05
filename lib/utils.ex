@@ -39,7 +39,7 @@ defmodule Utils do
       Isla.Laboratorio -> :idHospitalLab
       Isla.RxTorax -> :idHospitalRad
       Hospital.Sector -> :idHospital
-      Isla.SignosVitales -> :id_hospital
+      Isla.SignosVitales -> :idHospital
       Hospital.UsuarioHospital -> :idHospital
       Hospital.UsuarioSector -> :idHospital
     end

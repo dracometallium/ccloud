@@ -97,8 +97,10 @@ defmodule Cloud.Router do
           true ->
             # {state, send_badreq()}
             # We route anything else to the lider.router
-            {resp, state} =
+            {[{:text, resp}], state} =
               Lider.Router.websocket_handle({:text, body}, state)
+
+            resp = Poison.decode!(resp, keys: :atoms)
 
             {state, resp}
         end
@@ -294,6 +296,10 @@ defmodule Cloud.Router do
       end
 
     {state, resp}
+  end
+
+  defp copy_data(ver, "signosVitales", req, connection) do
+    copy_data(ver, "signo_vital", req, connection)
   end
 
   defp copy_data("0.0", "signo_vital", req, connection) do

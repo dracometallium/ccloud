@@ -207,12 +207,7 @@ defmodule Hospital do
     table = table2module(table)
     registro = cast_all(table, registro)
 
-    sync_id =
-      if registro[:sync_id] == nil do
-        state.sync_id + 1
-      else
-        registro.sync_id
-      end
+    sync_id = state.sync_id + 1
 
     registro = Map.put(registro, :sync_id, sync_id)
 
@@ -221,12 +216,16 @@ defmodule Hospital do
         registro,
         Keyword.keys(Ecto.primary_key(struct(table, registro)))
       )
+      |> Map.to_list()
 
-    keys = struct(table, keys)
-    IO.inspect(struct(table, registro))
-    IO.inspect(keys)
+    registro =
+      case CCloud.Repo.get_by(table, keys) do
+        # Implementar exeption
+        nil -> nil
+        reg -> reg
+      end
+      |> Ecto.Changeset.change(registro)
 
-    registro = Ecto.Changeset.change(keys, registro)
     IO.inspect(registro)
 
     Ecto.Multi.new()

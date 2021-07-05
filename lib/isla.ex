@@ -170,7 +170,7 @@ defmodule Isla do
           a.idHospital == v.idHospital and
             a.numeroHC == v.numeroHC and
             a.fechaAlerta == v.fechaAlerta,
-        where: v.cuil == ^cuil
+        where: is_nil(v.cuil) or v.cuil != ^cuil
       )
     end
 
@@ -446,6 +446,11 @@ defmodule Isla do
         filter.(q)
       end
 
+    q =
+      from(r in q,
+        distinct: true
+      )
+
     result = CCloud.Repo.all(q)
 
     result = Enum.map(result, fn x -> clean(table, x) end)
@@ -489,7 +494,7 @@ defmodule Isla.SignosVitales do
   @primary_key false
   schema "SignosVitales" do
     field(:sync_id, :integer)
-    field(:id_hospital, :string, primary_key: true)
+    field(:idHospital, :string, primary_key: true)
     field(:numeroHCSignosVitales, :string, primary_key: true)
     field(:fechaSignosVitales, :integer, primary_key: true)
     field(:auditoria, :string)
