@@ -276,6 +276,14 @@ defmodule Lider.Router do
         connection[:isla]
       end
 
+    data =
+      Map.merge(req.params.data, %{
+        idHospital: connection[:hospital]
+      })
+
+    params = Map.put(req.params, :data, data)
+    req = Map.put(req, :params, params)
+
     pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
@@ -341,6 +349,14 @@ defmodule Lider.Router do
       else
         connection[:isla]
       end
+
+    data =
+      Map.merge(req.params.data, %{
+        idHospitalLab: connection[:hospital]
+      })
+
+    params = Map.put(req.params, :data, data)
+    req = Map.put(req, :params, params)
 
     pid = SysUsers.get_lider(connection[:hospital], isla)
 
@@ -410,6 +426,14 @@ defmodule Lider.Router do
         connection[:isla]
       end
 
+    data =
+      Map.merge(req.params.data, %{
+        idHospitalRad: connection[:hospital]
+      })
+
+    params = Map.put(req.params, :data, data)
+    req = Map.put(req, :params, params)
+
     pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
@@ -477,6 +501,14 @@ defmodule Lider.Router do
       else
         connection[:isla]
       end
+
+    data =
+      Map.merge(req.params.data, %{
+        idHospital: connection[:hospital]
+      })
+
+    params = Map.put(req.params, :data, data)
+    req = Map.put(req, :params, params)
 
     pid = SysUsers.get_lider(connection[:hospital], isla)
 
@@ -547,6 +579,14 @@ defmodule Lider.Router do
         connection[:isla]
       end
 
+    data =
+      Map.merge(req.params.data, %{
+        idHospital: connection[:hospital]
+      })
+
+    params = Map.put(req.params, :data, data)
+    req = Map.put(req, :params, params)
+
     pid = SysUsers.get_lider(connection[:hospital], isla)
 
     if pid != nil do
@@ -614,6 +654,14 @@ defmodule Lider.Router do
       else
         connection[:isla]
       end
+
+    data =
+      Map.merge(req.params.data, %{
+        idHospital: connection[:hospital]
+      })
+
+    params = Map.put(req.params, :data, data)
+    req = Map.put(req, :params, params)
 
     pid = SysUsers.get_lider(connection[:hospital], isla)
 
