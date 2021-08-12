@@ -144,106 +144,144 @@ defmodule Hospital do
     table = table2module(table)
     registro = cast_all(table, registro)
 
-    sync_id =
-      if registro[:sync_id] == nil do
-        state.sync_id + 1
-      else
-        registro.sync_id
-      end
-
-    {sync_id, registro} =
-      if table == :usuarios_hospital do
-        registro = Map.merge(registro, %{sync_id_usuario: sync_id + 1})
-        {sync_id + 1, registro}
-      else
-        {sync_id, registro}
-      end
-
-    registro = Map.put(registro, :sync_id, sync_id)
-
     registro = struct(table, registro)
 
-    if table == :islas do
+    status =
       Ecto.Multi.new()
-      |> Ecto.Multi.insert(:registro, registro)
-      |> Ecto.Multi.insert(:sync_id_isla, %CCloud.Repo.SyncIDIsla{
-        idHosp: state.idHosp,
-        idIsla: registro.idIsla,
-        sync_id: 0
-      })
+      |> Ecto.Multi.run(
+        :sync_id,
+        fn _, _ ->
+          r =
+            CCloud.Repo.get_by(
+              CCloud.Repo.SyncIDHosp,
+              idHosp: state.idHosp
+            )
+
+          case r do
+            nil ->
+              {:error, nil}
+
+            _ ->
+              {:ok, r.sync_id + 1}
+          end
+        end
+      )
+      |> Ecto.Multi.insert(:registro, fn %{sync_id: sync_id} ->
+        Map.put(registro, :sync_id, sync_id)
+      end)
+      |> (fn q ->
+            case table do
+              :islas ->
+                q
+                |> Ecto.Multi.insert(:sync_id_isla, %CCloud.Repo.SyncIDIsla{
+                  idHosp: state.idHosp,
+                  idIsla: registro.idIsla,
+                  sync_id: 0
+                })
+
+              :usuarios_hospital ->
+                q
+                |> Ecto.Multi.update(
+                  :sync_id_usuario_hospital,
+                  fn %{sync_id: sync_id} ->
+                    Ecto.Changeset.change(
+                      registro,
+                      sync_id_usuario: sync_id + 1
+                    )
+                  end
+                )
+
+              _ ->
+                q
+            end
+          end).()
       |> Ecto.Multi.update(
         :max_sync_id,
-        Ecto.Changeset.change(
-          %CCloud.Repo.SyncIDHosp{
-            idHosp: state.idHosp
-          },
-          sync_id: sync_id
-        )
+        fn %{sync_id: sync_id} ->
+          Ecto.Changeset.change(
+            %CCloud.Repo.SyncIDHosp{
+              idHosp: state.idHosp
+            },
+            sync_id: sync_id
+          )
+        end
       )
       |> CCloud.Repo.transaction()
 
-      Hospital.Supervisor.new_isla(state.idHosp, registro.idIsla, 0)
-    else
-      Ecto.Multi.new()
-      |> Ecto.Multi.insert(:registro, registro)
-      |> Ecto.Multi.update(
-        :max_sync_id,
-        Ecto.Changeset.change(
-          %CCloud.Repo.SyncIDHosp{
-            idHosp: state.idHosp
-          },
-          sync_id: sync_id
-        )
-      )
-      |> CCloud.Repo.transaction()
+    case status do
+      {:ok, result} ->
+        sync_id = result[:sync_id]
+        nstate = Map.put(state, :sync_id, sync_id)
+
+        if table == :islas do
+          Hospital.Supervisor.new_isla(state.idHosp, registro.idIsla, 0)
+        end
+
+        {:reply, sync_id, nstate}
+
+      _ ->
+        {:error, nil}
     end
-
-    nstate = Map.put(state, :sync_id, sync_id)
-
-    {:reply, sync_id, nstate}
   end
 
   def handle_call({:modify, table, registro}, _from, state) do
     table = table2module(table)
     registro = cast_all(table, registro)
 
-    sync_id = state.sync_id + 1
-
-    registro = Map.put(registro, :sync_id, sync_id)
-
     keys =
       Map.take(
         registro,
         Keyword.keys(Ecto.primary_key(struct(table, registro)))
       )
-      |> Map.to_list()
 
-    registro =
-      case CCloud.Repo.get_by(table, keys) do
-        # Implementar exeption
-        nil -> nil
-        reg -> reg
-      end
-      |> Ecto.Changeset.change(registro)
+    keys = struct(table, keys)
 
-    IO.inspect(registro)
+    status =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(
+        :sync_id,
+        fn _, _ ->
+          r =
+            CCloud.Repo.get_by(
+              CCloud.Repo.SyncIDHosp,
+              idHosp: state.idHosp
+            )
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:registro, registro)
-    |> Ecto.Multi.update(
-      :max_sync_id,
-      Ecto.Changeset.change(
-        %CCloud.Repo.SyncIDHosp{
-          idHosp: state.idHosp
-        },
-        sync_id: sync_id
+          case r do
+            nil ->
+              {:error, nil}
+
+            _ ->
+              {:ok, r.sync_id + 1}
+          end
+        end
       )
-    )
-    |> CCloud.Repo.transaction()
+      |> Ecto.Multi.update(:registro, fn %{sync_id: sync_id} ->
+        registro = Map.put(registro, :sync_id, sync_id)
+        Ecto.Changeset.change(keys, registro)
+      end)
+      |> Ecto.Multi.update(
+        :max_sync_id,
+        fn %{sync_id: sync_id} ->
+          Ecto.Changeset.change(
+            %CCloud.Repo.SyncIDHosp{
+              idHosp: state.idHosp
+            },
+            sync_id: sync_id
+          )
+        end
+      )
+      |> CCloud.Repo.transaction()
 
-    nstate = Map.put(state, :sync_id, sync_id)
+    case status do
+      {:ok, result} ->
+        sync_id = result[:sync_id]
+        nstate = Map.put(state, :sync_id, sync_id)
+        {:reply, sync_id, nstate}
 
-    {:reply, sync_id, nstate}
+      _ ->
+        {:error, nil}
+    end
   end
 
   def handle_call({:get_state}, _from, state) do
@@ -354,15 +392,13 @@ defmodule Hospital do
     ]
 
     hospital =
-      if state.sync_id > sync_id do
-        CCloud.Repo.one(
-          from(r in Hospital,
-            where: r.idHosp == ^state.idHosp
-          )
+      CCloud.Repo.one(
+        from(r in Hospital,
+          where: r.idHosp == ^state.idHosp and r.sync_id > ^sync_id
         )
-      else
-        nil
-      end
+      )
+      |> Map.delete(:__meta__)
+      |> Map.delete(:__struct__)
 
     {_, usuarios, _} = handle_call({:get, :usuarios, sync_id}, from, state)
 
@@ -378,7 +414,13 @@ defmodule Hospital do
   end
 
   def handle_call({:get_sync_id}, _from, state) do
-    {:reply, state.sync_id, state}
+    r =
+      CCloud.Repo.get_by(
+        CCloud.Repo.SyncIDHosp,
+        idHosp: state.idHosp
+      )
+
+    {:reply, r.sync_id, state}
   end
 end
 

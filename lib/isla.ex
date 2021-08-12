@@ -227,50 +227,60 @@ defmodule Isla do
     table = table2module(table)
     registro = cast_all(table, registro)
 
-    sync_id =
-      if registro[:sync_id] == nil do
-        state.sync_id + 1
-      else
-        registro.sync_id
-      end
-
-    registro = Map.put(registro, :sync_id, sync_id)
-
     registro = struct(table, registro)
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.insert(:registro, registro)
-    |> Ecto.Multi.update(
-      :max_sync_id,
-      Ecto.Changeset.change(
-        %CCloud.Repo.SyncIDIsla{
-          idHosp: state.idHosp,
-          idIsla: state.idIsla
-        },
-        sync_id: sync_id
+    status =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(
+        :sync_id,
+        fn _, _ ->
+          r =
+            CCloud.Repo.get_by(
+              CCloud.Repo.SyncIDIsla,
+              idHosp: state.idHosp,
+              idIsla: state.idIsla
+            )
+
+          case r do
+            nil ->
+              {:error, nil}
+
+            _ ->
+              {:ok, r.sync_id + 1}
+          end
+        end
       )
-    )
-    |> CCloud.Repo.transaction()
+      |> Ecto.Multi.insert(:registro, fn %{sync_id: sync_id} ->
+        Map.put(registro, :sync_id, sync_id)
+      end)
+      |> Ecto.Multi.update(
+        :max_sync_id,
+        fn %{sync_id: sync_id} ->
+          Ecto.Changeset.change(
+            %CCloud.Repo.SyncIDIsla{
+              idHosp: state.idHosp,
+              idIsla: state.idIsla
+            },
+            sync_id: sync_id
+          )
+        end
+      )
+      |> CCloud.Repo.transaction()
 
-    nstate = Map.put(state, :sync_id, sync_id)
+    case status do
+      {:ok, result} ->
+        sync_id = result[:sync_id]
+        nstate = Map.put(state, :sync_id, sync_id)
+        {:reply, {sync_id, 0}, nstate}
 
-    {triage, nstate} = run_triage(nstate)
-
-    {:reply, {sync_id, triage}, nstate}
+      _ ->
+        {:error, nil}
+    end
   end
 
   def handle_call({:modify, table, registro}, _from, state) do
     table = table2module(table)
     registro = cast_all(table, registro)
-
-    sync_id =
-      if registro[:sync_id] == nil do
-        state.sync_id + 1
-      else
-        registro.sync_id
-      end
-
-    registro = Map.put(registro, :sync_id, sync_id)
 
     keys =
       Map.take(
@@ -280,34 +290,59 @@ defmodule Isla do
 
     keys = struct(table, keys)
 
-    registro = Ecto.Changeset.change(keys, registro)
+    status =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(
+        :sync_id,
+        fn _, _ ->
+          r =
+            CCloud.Repo.get_by(
+              CCloud.Repo.SyncIDIsla,
+              idHosp: state.idHosp,
+              idIsla: state.idIsla
+            )
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:registro, registro)
-    |> Ecto.Multi.update(
-      :max_sync_id,
-      Ecto.Changeset.change(
-        %CCloud.Repo.SyncIDIsla{
-          idHosp: state.idHosp,
-          idIsla: state.idIsla
-        },
-        sync_id: sync_id
+          case r do
+            nil ->
+              {:error, nil}
+
+            _ ->
+              {:ok, r.sync_id + 1}
+          end
+        end
       )
-    )
-    |> CCloud.Repo.transaction()
+      |> Ecto.Multi.update(:registro, fn %{sync_id: sync_id} ->
+        registro = Map.put(registro, :sync_id, sync_id)
+        Ecto.Changeset.change(keys, registro)
+      end)
+      |> Ecto.Multi.update(
+        :max_sync_id,
+        fn %{sync_id: sync_id} ->
+          Ecto.Changeset.change(
+            %CCloud.Repo.SyncIDIsla{
+              idHosp: state.idHosp,
+              idIsla: state.idIsla
+            },
+            sync_id: sync_id
+          )
+        end
+      )
+      |> CCloud.Repo.transaction()
 
-    nstate = Map.put(state, :sync_id, sync_id)
+    case status do
+      {:ok, result} ->
+        sync_id = result[:sync_id]
+        nstate = Map.put(state, :sync_id, sync_id)
+        {:reply, {sync_id, 0}, nstate}
 
-    {triage, nstate} = run_triage(nstate)
-
-    {:reply, {sync_id, triage}, nstate}
+      _ ->
+        {:error, nil}
+    end
   end
 
   def handle_call({:copy, table, registro}, _from, state) do
     table = table2module(table)
     registro = cast_all(table, registro)
-
-    sync_id = Enum.max([registro.sync_id, state.sync_id])
 
     keys =
       Map.take(
@@ -316,30 +351,73 @@ defmodule Isla do
       )
       |> Map.to_list()
 
-    changeset =
-      case CCloud.Repo.get_by(table, keys) do
-        nil -> struct(table, keys)
-        reg -> reg
-      end
-      |> Ecto.Changeset.change(registro)
+    status =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(
+        :changeset,
+        fn _, _ ->
+          changeset =
+            case CCloud.Repo.get_by(table, keys) do
+              nil -> struct(table, keys)
+              reg -> reg
+            end
+            |> Ecto.Changeset.change(registro)
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.insert_or_update(:registro, changeset)
-    |> Ecto.Multi.update(
-      :max_sync_id,
-      Ecto.Changeset.change(
-        %CCloud.Repo.SyncIDIsla{
-          idHosp: state.idHosp,
-          idIsla: state.idIsla
-        },
-        sync_id: sync_id
+          {:ok, changeset}
+        end
       )
-    )
-    |> CCloud.Repo.transaction()
+      |> Ecto.Multi.run(
+        :sync_id,
+        fn _, _ ->
+          r =
+            CCloud.Repo.get_by(
+              CCloud.Repo.SyncIDIsla,
+              idHosp: state.idHosp,
+              idIsla: state.idIsla
+            )
 
-    nstate = Map.put(state, :sync_id, sync_id)
+          case r do
+            nil ->
+              {:error, nil}
 
-    {:reply, sync_id, nstate}
+            _ ->
+              {:ok, r.sync_id}
+          end
+        end
+      )
+      |> Ecto.Multi.insert_or_update(
+        :registro,
+        fn %{changeset: changeset} ->
+          changeset
+        end
+      )
+      |> Ecto.Multi.update(
+        :max_sync_id,
+        fn q ->
+          sync_id_isla = q[:sync_id]
+          sync_id_reg = q[:registro].sync_id
+          sync_id = Enum.max([sync_id_isla, sync_id_reg])
+
+          Ecto.Changeset.change(
+            %CCloud.Repo.SyncIDIsla{
+              idHosp: state.idHosp,
+              idIsla: state.idIsla
+            },
+            sync_id: sync_id
+          )
+        end
+      )
+      |> CCloud.Repo.transaction()
+
+    case status do
+      {:ok, result} ->
+        sync_id = result[:sync_id]
+        nstate = Map.put(state, :sync_id, sync_id)
+        {:reply, sync_id, nstate}
+
+      _ ->
+        {:error, nil}
+    end
   end
 
   def handle_call({:get, table, sector, sync_id, filter}, _from, state) do
@@ -479,12 +557,14 @@ defmodule Isla do
   end
 
   def handle_call({:get_sync_id}, _from, state) do
-    {:reply, state.sync_id, state}
-  end
+    r =
+      CCloud.Repo.get_by(
+        CCloud.Repo.SyncIDIsla,
+        idHosp: state.idHosp,
+        idIsla: state.idIsla
+      )
 
-  defp run_triage(state) do
-    # TODO
-    {0, state}
+    {:reply, r.sync_id, state}
   end
 end
 
