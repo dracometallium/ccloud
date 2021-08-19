@@ -307,7 +307,15 @@ defmodule Hospital do
     usuarios =
       Hospitales.get_usuarios()
       |> Enum.filter(fn x -> Map.has_key?(usuarios_id, x.cuil) end)
-      |> Enum.map(fn x -> Map.put(x, :sync_id, usuarios_id[x.cuil]) end)
+      |> Enum.map(fn x ->
+        Map.put(
+          x,
+          :sync_id,
+          usuarios_id[x.cuil]
+        )
+        |> Map.delete(:__meta__)
+        |> Map.delete(:__struct__)
+      end)
 
     {:reply, usuarios, state}
   end
