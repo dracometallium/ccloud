@@ -405,8 +405,13 @@ defmodule Hospital do
           where: r.idHosp == ^state.idHosp and r.sync_id > ^sync_id
         )
       )
-      |> Map.delete(:__meta__)
-      |> Map.delete(:__struct__)
+
+    hospital =
+      if hospital != nil do
+        hospital
+        |> Map.delete(:__meta__)
+        |> Map.delete(:__struct__)
+      end
 
     {_, usuarios, _} = handle_call({:get, :usuarios, sync_id}, from, state)
 
