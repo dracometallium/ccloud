@@ -30,8 +30,13 @@ Enviar un inser_id por tabla.
             "id":       <uuid_para_respuesta_async>
         }
 
-**Nota:** El campo "http_status" no debe ser retornado como parte del _json_
-sino que es el estatus que debe retornar la petición _HTTP_.
+**Notas:**
+
+-   Las fechas son un entero con la cantidad de microsegundos del tiempo
+    **UNIX**.
+
+-   El campo "http_status" no debe ser retornado como parte del _json_ sino
+    que es el estatus que debe retornar la petición _HTTP_.
 
 # hello
 
