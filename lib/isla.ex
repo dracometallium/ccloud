@@ -271,7 +271,7 @@ defmodule Isla do
       {:ok, result} ->
         sync_id = result[:sync_id]
         nstate = Map.put(state, :sync_id, sync_id)
-        {:reply, {sync_id, 0}, nstate}
+        {:reply, sync_id, nstate}
 
       _ ->
         {:error, nil}
@@ -333,7 +333,7 @@ defmodule Isla do
       {:ok, result} ->
         sync_id = result[:sync_id]
         nstate = Map.put(state, :sync_id, sync_id)
-        {:reply, {sync_id, 0}, nstate}
+        {:reply, sync_id, nstate}
 
       _ ->
         {:error, nil}
