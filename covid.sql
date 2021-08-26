@@ -47,7 +47,7 @@ CREATE TABLE `Alerta` (
   `gravedadAlerta` int(11),
   `gravedadAnterior` int(11),
   `anotacionMedico` varchar(150),
-  `auditoriaMedico` varchar(15),
+  `auditoriaMedico` varchar(15)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
