@@ -1,41 +1,47 @@
-Para conectarse hay que usar este comando. El parámetro token es ignorado. El
-hospital e isla tienen que ser los que se van a utilizar, por más que no estén
-creados todavía.
+Para conectarse hay que usar este comando. El parámetro token es ignorado.
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"user":"20-0000-0", "password":"admin"},"method":"hello", "token":"0"}' 170.210.81.149:8082/lider
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"user":"20-0000-0", "password":"admin"},"method":"hello", "token":"0"}' https://covindex.uncoma.edu.ar:8082/lider
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"user":"20-0000-0", "password":"admin"},"method":"hello_cloud", "token":"0"}' 170.210.81.149:8082/cloud
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"user":"20-0000-0", "password":"admin"},"method":"hello", "token":"0"}' https://covindex.uncoma.edu.ar:8082/cloud
+
+El `hello` retornara el token a utilizar y los datos del usuario: hospitales,
+sectores asignados, roles, y nombre completo.
 
 connect:
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"hospital":"H0", "isla":"I0", "sector":"S0"},"method":"connect", "token":"0"}' 170.210.81.149:8082/lider
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"hospital":"H0", "sector":"S0"},"method":"connect", "token":"'$TOKEN'"}' https://covindex.uncoma.edu.ar:8082/lider
 
- Para crear un hospital el ID tiene que ser el mismo que el que se paso en
-`hello`. Se pueden crear otros hospitales, pero no se van a poder acceder
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"hospital":"H0", "sector":"S0"},"method":"connect", "token":"'$TOKEN'"}' https://covindex.uncoma.edu.ar:8082/cloud
+
+Adicionalmente se pueden especificar los parametros `sync_id_hospital` y
+`sync_id_isla` para que el sistema envie los datos del update. Por ejemplo,
+agregar `"sync_id_hospital":"0"` va a retornar todos los datos del hospital.
+Ver `get_update` más adelante para más detalles.
+
+Para crear un hospital el ID tiene que ser el mismo que el que se paso en
+`connect`. Se pueden crear otros hospitales, pero no se van a poder acceder
 desde esa conexión (utilizando el mismo token). La estructura del hospital
 tiene más datos, pero si no se especifican se crean con `NULL`.
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"data":{"id_hospital":"H0"}},"method":"new_hospital", "token":"'$TOKEN'"}' 170.210.83.83:60169/lider
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"data":{"id_hospital":"H0"}},"method":"new_hospital", "token":"'$TOKEN'"}' https://covindex.uncoma.edu.ar:8082/lider
 
 Para crear una isla:
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"data":{"id_isla":"I0"}},"method":"new_isla", "token":"'$TOKEN'"}' 170.210.83.83:60169/lider
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"data":{"id_isla":"I0"}},"method":"new_isla", "token":"'$TOKEN'"}' https://covindex.uncoma.edu.ar:8082/lider
 
 Para obtener una lista de actualizaciones, sync_id_X son el sync_id máximo que
 tiene el cliente para los datos de la isla o el hospital. Ambos deben estar
 especificados, para obtener la lista completa se puede pasar 0. El hospital e
 isla se obtienen de la conexión.
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"sync_id_hospital":0, "sync_id_isla":0},"method":"get_update", "token":"'$TOKEN'"}' 170.210.83.83:60169/lider
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"sync_id_hospital":0, "sync_id_isla":0},"method":"get_update", "token":"'$TOKEN'"}' https://covindex.uncoma.edu.ar:8082/lider
 
 Para crear un dato nuevo, no especificar el sync_id, o si se especifica
-dejarlo en `null`, sino el sistema toma el sync_id que le pasaste y no el que
-se autoincrementa. Lo deje de esta manera por si lo llegamos a necesitar. El
-hospital e isla se obtienen de la conexión.
+dejarlo en `null`. El hospital e isla se obtienen de la conexión.
 
-    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"data":{} },"method":"new_laboratorio", "token":"'$TOKEN'"}' 170.210.83.83:60169/lider
+    curl -H "Content-Type: application/json" --data '{"version":"0.0","id":"1234","params":{"data":{} },"method":"new_laboratorio", "token":"'$TOKEN'"}' https://covindex.uncoma.edu.ar:8082/lider
 
-En lugar de utilizar CURL se puede usar `wscat 170.210.83.83:60169/lider` este
+En lugar de utilizar CURL se puede usar `wscat https://covindex.uncoma.edu.ar:8082/lider` este
 programa es como telnet para webservices, se pueden mandar los json
 directamente.
 
