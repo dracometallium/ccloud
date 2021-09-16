@@ -314,7 +314,7 @@ defmodule Cloud.Router do
 
     send_copy_data(:signo_vital, data, sync_id, hospital, isla, triage, nhc)
 
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+    %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
 
   defp copy_data("0.0", "laboratorio", req, connection) do
@@ -329,7 +329,7 @@ defmodule Cloud.Router do
 
     send_copy_data(:laboratorio, data, sync_id, hospital, isla, triage, nhc)
 
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+    %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
 
   defp copy_data("0.0", "rx_torax", req, connection) do
@@ -344,7 +344,7 @@ defmodule Cloud.Router do
 
     send_copy_data(:rx_torax, data, sync_id, hospital, isla, triage, nhc)
 
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+    %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
 
   defp copy_data("0.0", "alerta", req, connection) do
@@ -359,7 +359,7 @@ defmodule Cloud.Router do
 
     send_copy_data(:alerta, data, sync_id, hospital, isla, triage, nhc)
 
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+    %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
 
   defp copy_data("0.0", "episodio", req, connection) do
@@ -374,7 +374,7 @@ defmodule Cloud.Router do
 
     send_copy_data(:episodio, data, sync_id, hospital, isla, triage, nhc)
 
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+    %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
 
   defp copy_data("0.0", "hcpaciente", req, connection) do
@@ -390,7 +390,7 @@ defmodule Cloud.Router do
 
     send_copy_data(:hcpaciente, data, sync_id, hospital, isla, triage, nhc)
 
-    %{status: "200 OK", result: %{sync_id: sync_id}}
+    %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
 
   defp copy_data(version, type, _req, _connection) do

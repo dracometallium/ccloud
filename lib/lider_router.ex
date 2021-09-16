@@ -1012,7 +1012,7 @@ defmodule Lider.Router do
 
   defp run_method(version, method, _req, _connection) do
     send_badreq(%{
-      rfesult:
+      result:
         "unkown method: '" <>
           method <>
           "' on version: " <>
