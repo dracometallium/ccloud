@@ -1081,21 +1081,23 @@ defmodule Lider.Router do
          nhc \\ nil
        ) do
     # Sends the new hospital data to the other clients
+    from = self()
     spawn(fn ->
-      send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc)
+      send_copy_data_async(from, type, data, sync_id, hospital, isla, triage, nhc,
+      from)
     end)
 
     :ok
   end
 
-  defp send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc) do
+  defp send_copy_data_async(from, type, data, sync_id, hospital, isla, triage, nhc) do
     # Sends the new data to the other clients
     clients = SysUsers.get_clients(hospital, isla)
 
     data = Map.put(data, :sync_id, sync_id)
 
     Enum.each(clients, fn pid ->
-      if pid != nil and Process.alive?(pid) do
+      if pid != nil and pid != from and Process.alive?(pid) do
         send(pid, {:copy_data, type, data, triage, nhc})
       end
     end)
