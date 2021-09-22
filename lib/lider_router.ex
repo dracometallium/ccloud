@@ -1083,8 +1083,7 @@ defmodule Lider.Router do
     # Sends the new hospital data to the other clients
     from = self()
     spawn(fn ->
-      send_copy_data_async(from, type, data, sync_id, hospital, isla, triage, nhc,
-      from)
+      send_copy_data_async(from, type, data, sync_id, hospital, isla, triage, nhc)
     end)
 
     :ok
