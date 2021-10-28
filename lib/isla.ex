@@ -1,40 +1,30 @@
 defmodule Isla do
-  use GenServer
   use Ecto.Schema
   import Ecto.Query
   import Utils
 
   def new_signo_vital(hospital, isla, signo_vital) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:new, :signosVitales, signo_vital}
-    )
+    new(hospital, isla, :signosVitales, signo_vital)
   end
 
   def new_laboratorio(hospital, isla, laboratorio) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:new, :laboratorios, laboratorio}
-    )
+    new(hospital, isla, :laboratorios, laboratorio)
   end
 
   def new_rx_torax(hospital, isla, rx_torax) do
-    GenServer.call(get_name_id(hospital, isla), {:new, :rx_toraxs, rx_torax})
+    new(hospital, isla, :rx_toraxs, rx_torax)
   end
 
   def new_alerta(hospital, isla, alerta) do
-    GenServer.call(get_name_id(hospital, isla), {:new, :alertas, alerta})
+    new(hospital, isla, :alertas, alerta)
   end
 
   def new_episodio(hospital, isla, episodio) do
-    GenServer.call(get_name_id(hospital, isla), {:new, :episodios, episodio})
+    new(hospital, isla, :episodios, episodio)
   end
 
   def new_hcpaciente(hospital, isla, hcpaciente) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:new, :hcpacientes, hcpaciente}
-    )
+    new(hospital, isla, :hcpacientes, hcpaciente)
   end
 
   def new_alerta_vista(hospital, numerohc, fechaAlerta, cuil) do
@@ -56,109 +46,67 @@ defmodule Isla do
   end
 
   def modify_signo_vital(hospital, isla, signo_vital) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:modify, :signosVitales, signo_vital}
-    )
+    modify(hospital, isla, :signosVitales, signo_vital)
   end
 
   def modify_laboratorio(hospital, isla, laboratorio) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:modify, :laboratorios, laboratorio}
-    )
+    modify(hospital, isla, :laboratorios, laboratorio)
   end
 
   def modify_rx_torax(hospital, isla, rx_torax) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:modify, :rx_toraxs, rx_torax}
-    )
+    modify(hospital, isla, :rx_toraxs, rx_torax)
   end
 
   def modify_alerta(hospital, isla, alerta) do
-    GenServer.call(get_name_id(hospital, isla), {:modify, :alertas, alerta})
+    modify(hospital, isla, :alertas, alerta)
   end
 
   def modify_episodio(hospital, isla, episodio) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:modify, :episodios, episodio}
-    )
+    modify(hospital, isla, :episodios, episodio)
   end
 
   def modify_hcpaciente(hospital, isla, hcpaciente) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:modify, :hcpacientes, hcpaciente}
-    )
+    modify(hospital, isla, :hcpacientes, hcpaciente)
   end
 
   def copy_signo_vital(hospital, isla, signo_vital) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:copy, :signosVitales, signo_vital}
-    )
+    copy(hospital, isla, :signosVitales, signo_vital)
   end
 
   def copy_laboratorio(hospital, isla, laboratorio) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:copy, :laboratorios, laboratorio}
-    )
+    copy(hospital, isla, :laboratorios, laboratorio)
   end
 
   def copy_rx_torax(hospital, isla, rx_torax) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:copy, :rx_toraxs, rx_torax}
-    )
+    copy(hospital, isla, :rx_toraxs, rx_torax)
   end
 
   def copy_alerta(hospital, isla, alerta) do
-    GenServer.call(get_name_id(hospital, isla), {:copy, :alertas, alerta})
+    copy(hospital, isla, :alertas, alerta)
   end
 
   def copy_episodio(hospital, isla, episodio) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:copy, :episodios, episodio}
-    )
+    copy(hospital, isla, :episodios, episodio)
   end
 
   def copy_hcpaciente(hospital, isla, hcpaciente) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:copy, :hcpacientes, hcpaciente}
-    )
+    copy(hospital, isla, :hcpacientes, hcpaciente)
   end
 
   def get_signos_vitales(hospital, isla, sector, sync_id) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get, :signosVitales, sector, sync_id, nil}
-    )
+    get(hospital, isla, :signosVitales, sector, sync_id, nil)
   end
 
   def get_laboratorios(hospital, isla, sector, sync_id) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get, :laboratorios, sector, sync_id, nil}
-    )
+    get(hospital, isla, :laboratorios, sector, sync_id, nil)
   end
 
   def get_rx_toraxs(hospital, isla, sector, sync_id) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get, :rx_toraxs, sector, sync_id, nil}
-    )
+    get(hospital, isla, :rx_toraxs, sector, sync_id, nil)
   end
 
   def get_alertas(hospital, isla, sector, sync_id) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get, :alertas, sector, sync_id, nil}
-    )
+    get(hospital, isla, :alertas, sector, sync_id, nil)
   end
 
   def get_alertas(hospital, isla, sector, cuil, sync_id) do
@@ -174,56 +122,18 @@ defmodule Isla do
       )
     end
 
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get, :alertas, sector, sync_id, filter}
-    )
+    get(hospital, isla, :alertas, sector, sync_id, filter)
   end
 
   def get_episodios(hospital, isla, sector, sync_id) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get, :episodios, sector, sync_id, nil}
-    )
+    get(hospital, isla, :episodios, sector, sync_id, nil)
   end
 
   def get_hcpacientes(hospital, isla, sector, sync_id) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get, :hcpacientes, sector, sync_id, nil}
-    )
+    get(hospital, isla, :hcpacientes, sector, sync_id, nil)
   end
 
-  def get_update(hospital, isla, sector, sync_id) do
-    GenServer.call(
-      get_name_id(hospital, isla),
-      {:get_update, sector, sync_id}
-    )
-  end
-
-  def get_sync_id(hospital, isla) do
-    GenServer.call(get_name_id(hospital, isla), {:get_sync_id})
-  end
-
-  def init(opts) do
-    state = %{
-      sync_id: opts[:sync_id],
-      idIsla: opts[:idIsla],
-      idHosp: opts[:idHospital]
-    }
-
-    IO.inspect(state.idIsla)
-
-    {:ok, state}
-  end
-
-  def start_link(opts) do
-    hospital = opts[:idHospital]
-    isla = opts[:idIsla]
-    GenServer.start_link(__MODULE__, opts, name: get_name_id(hospital, isla))
-  end
-
-  def handle_call({:new, table, registro}, _from, state) do
+  def new(idHosp, idIsla, table, registro) do
     table = table2module(table)
     registro = cast_all(table, registro)
 
@@ -237,8 +147,8 @@ defmodule Isla do
           r =
             CCloud.Repo.get_by(
               CCloud.Repo.SyncIDIsla,
-              idHosp: state.idHosp,
-              idIsla: state.idIsla
+              idHosp: idHosp,
+              idIsla: idIsla
             )
 
           case r do
@@ -258,8 +168,8 @@ defmodule Isla do
         fn %{sync_id: sync_id} ->
           Ecto.Changeset.change(
             %CCloud.Repo.SyncIDIsla{
-              idHosp: state.idHosp,
-              idIsla: state.idIsla
+              idHosp: idHosp,
+              idIsla: idIsla
             },
             sync_id: sync_id
           )
@@ -270,15 +180,14 @@ defmodule Isla do
     case status do
       {:ok, result} ->
         sync_id = result[:sync_id]
-        nstate = Map.put(state, :sync_id, sync_id)
-        {:reply, sync_id, nstate}
+        sync_id
 
       _ ->
-        {:error, nil}
+        :error
     end
   end
 
-  def handle_call({:modify, table, registro}, _from, state) do
+  def modify(idHosp, idIsla, table, registro) do
     table = table2module(table)
     registro = cast_all(table, registro)
 
@@ -298,8 +207,8 @@ defmodule Isla do
           r =
             CCloud.Repo.get_by(
               CCloud.Repo.SyncIDIsla,
-              idHosp: state.idHosp,
-              idIsla: state.idIsla
+              idHosp: idHosp,
+              idIsla: idIsla
             )
 
           case r do
@@ -320,8 +229,8 @@ defmodule Isla do
         fn %{sync_id: sync_id} ->
           Ecto.Changeset.change(
             %CCloud.Repo.SyncIDIsla{
-              idHosp: state.idHosp,
-              idIsla: state.idIsla
+              idHosp: idHosp,
+              idIsla: idIsla
             },
             sync_id: sync_id
           )
@@ -332,15 +241,14 @@ defmodule Isla do
     case status do
       {:ok, result} ->
         sync_id = result[:sync_id]
-        nstate = Map.put(state, :sync_id, sync_id)
-        {:reply, sync_id, nstate}
+        sync_id
 
       _ ->
-        {:error, nil}
+        :error
     end
   end
 
-  def handle_call({:copy, table, registro}, _from, state) do
+  def copy(idHosp, idIsla, table, registro) do
     table = table2module(table)
     registro = cast_all(table, registro)
 
@@ -372,8 +280,8 @@ defmodule Isla do
           r =
             CCloud.Repo.get_by(
               CCloud.Repo.SyncIDIsla,
-              idHosp: state.idHosp,
-              idIsla: state.idIsla
+              idHosp: idHosp,
+              idIsla: idIsla
             )
 
           case r do
@@ -400,8 +308,8 @@ defmodule Isla do
 
           Ecto.Changeset.change(
             %CCloud.Repo.SyncIDIsla{
-              idHosp: state.idHosp,
-              idIsla: state.idIsla
+              idHosp: idHosp,
+              idIsla: idIsla
             },
             sync_id: sync_id
           )
@@ -412,15 +320,14 @@ defmodule Isla do
     case status do
       {:ok, result} ->
         sync_id = result[:sync_id]
-        nstate = Map.put(state, :sync_id, sync_id)
-        {:reply, sync_id, nstate}
+        sync_id
 
       _ ->
-        {:error, nil}
+        :error
     end
   end
 
-  def handle_call({:get, table, sector, sync_id, filter}, _from, state) do
+  def get(idHosp, _idIsla, table, sector, sync_id, filter) do
     table = table2module(table)
 
     q =
@@ -430,7 +337,7 @@ defmodule Isla do
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
-                r.idHospital == ^state.idHosp,
+                r.idHospital == ^idHosp,
             select: r
           )
 
@@ -439,7 +346,7 @@ defmodule Isla do
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
-                r.idHosp == ^state.idHosp,
+                r.idHosp == ^idHosp,
             select: r
           )
 
@@ -448,7 +355,7 @@ defmodule Isla do
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
-                r.idHospitalCama == ^state.idHosp,
+                r.idHospitalCama == ^idHosp,
             select: r
           )
 
@@ -457,7 +364,7 @@ defmodule Isla do
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
-                r.idHospitalLab == ^state.idHosp,
+                r.idHospitalLab == ^idHosp,
             select: r
           )
 
@@ -466,7 +373,7 @@ defmodule Isla do
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
-                r.idHospitalRad == ^state.idHosp,
+                r.idHospitalRad == ^idHosp,
             select: r
           )
 
@@ -475,7 +382,7 @@ defmodule Isla do
             as: :registro,
             where:
               r.sync_id >= ^sync_id and
-                r.id_hospital == ^state.idHosp,
+                r.id_hospital == ^idHosp,
             select: r
           )
       end
@@ -532,10 +439,10 @@ defmodule Isla do
     result = CCloud.Repo.all(q)
 
     result = Enum.map(result, fn x -> clean(table, x) end)
-    {:reply, result, state}
+    result
   end
 
-  def handle_call({:get_update, sector, sync_id}, _from, state) do
+  def get_update(idHosp, idIsla, sector, sync_id) do
     list = [
       :signosVitales,
       :laboratorios,
@@ -547,24 +454,23 @@ defmodule Isla do
 
     result =
       Enum.reduce(list, %{}, fn x, acc ->
-        {_, list, _} =
-          handle_call({:get, x, sector, sync_id, nil}, self(), state)
+        list = get(idHosp, idIsla, x, sector, sync_id, nil)
 
         Map.put(acc, x, list)
       end)
 
-    {:reply, result, state}
+    result
   end
 
-  def handle_call({:get_sync_id}, _from, state) do
+  def get_sync_id(idHosp, idIsla) do
     r =
       CCloud.Repo.get_by(
         CCloud.Repo.SyncIDIsla,
-        idHosp: state.idHosp,
-        idIsla: state.idIsla
+        idHosp: idHosp,
+        idIsla: idIsla
       )
 
-    {:reply, r.sync_id, state}
+    r.sync_id
   end
 end
 

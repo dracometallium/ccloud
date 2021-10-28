@@ -66,8 +66,8 @@ defmodule Lider.Router do
             IO.inspect(req_body)
             IO.puts("ERROR:")
             IO.inspect(reason)
+            IO.puts(Exception.format_stacktrace())
 
-            # resp = send_badreq() |> Map.put(:result, %{error: reason[:message]})
             resp = send_badreq() |> Map.put(:result, %{error: reason})
             body = Poison.encode!(resp) <> "\n"
 
@@ -1082,14 +1082,33 @@ defmodule Lider.Router do
        ) do
     # Sends the new hospital data to the other clients
     from = self()
+
     spawn(fn ->
-      send_copy_data_async(from, type, data, sync_id, hospital, isla, triage, nhc)
+      send_copy_data_async(
+        from,
+        type,
+        data,
+        sync_id,
+        hospital,
+        isla,
+        triage,
+        nhc
+      )
     end)
 
     :ok
   end
 
-  defp send_copy_data_async(from, type, data, sync_id, hospital, isla, triage, nhc) do
+  defp send_copy_data_async(
+         from,
+         type,
+         data,
+         sync_id,
+         hospital,
+         isla,
+         triage,
+         nhc
+       ) do
     # Sends the new data to the other clients
     clients = SysUsers.get_clients(hospital, isla)
 

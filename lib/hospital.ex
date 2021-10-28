@@ -1,5 +1,4 @@
 defmodule Hospital do
-  use GenServer
   use Ecto.Schema
   import Utils
   import Ecto.Query
@@ -16,62 +15,47 @@ defmodule Hospital do
   end
 
   def new_cama(hospital, cama) do
-    GenServer.call(get_name_id(hospital), {:new, :camas, cama})
+    new(hospital, :camas, cama)
   end
 
   def new_isla(hospital, isla) do
-    GenServer.call(get_name_id(hospital), {:new, :islas, isla})
+    new(hospital, :islas, isla)
   end
 
   def new_sector(hospital, sector) do
-    GenServer.call(get_name_id(hospital), {:new, :sectores, sector})
+    new(hospital, :sectores, sector)
   end
 
   def new_usuario_hospital(hospital, usuario_hospital) do
-    GenServer.call(
-      get_name_id(hospital),
-      {:new, :usuarios_hospital, usuario_hospital}
-    )
+    new(hospital, :usuarios_hospital, usuario_hospital)
   end
 
   def new_usuario_sector(hospital, usuario_sector) do
-    GenServer.call(
-      get_name_id(hospital),
-      {:new, :usuarios_sector, usuario_sector}
-    )
+    new(hospital, :usuarios_sector, usuario_sector)
   end
 
   def modify_cama(hospital, cama) do
-    GenServer.call(get_name_id(hospital), {:modify, :camas, cama})
+    modify(hospital, :camas, cama)
   end
 
   def modify_isla(hospital, isla) do
-    GenServer.call(get_name_id(hospital), {:modify, :islas, isla})
+    modify(hospital, :islas, isla)
   end
 
   def modify_sector(hospital, sector) do
-    GenServer.call(get_name_id(hospital), {:modify, :sectores, sector})
+    modify(hospital, :sectores, sector)
   end
 
   def modify_usuario_hospital(hospital, usuario_hospital) do
-    GenServer.call(
-      get_name_id(hospital),
-      {:modify, :usuarios_hospital, usuario_hospital}
-    )
+    modify(hospital, :usuarios_hospital, usuario_hospital)
   end
 
   def modify_usuario_sector(hospital, usuario_sector) do
-    GenServer.call(
-      get_name_id(hospital),
-      {:modify, :usuarios_sector, usuario_sector}
-    )
+    modify(hospital, :usuarios_sector, usuario_sector)
   end
 
   def modify_hospital(hospital, dato_hospital) do
-    GenServer.call(
-      get_name_id(hospital),
-      {:modify, :hospitales, dato_hospital}
-    )
+    modify(hospital, :hospitales, dato_hospital)
   end
 
   def get_isla(idHosp, idSector) do
@@ -86,61 +70,39 @@ defmodule Hospital do
     CCloud.Repo.one(query)
   end
 
-  def get_state(idHosp) do
-    GenServer.call(get_name_id(idHosp), {:get_state})
-  end
-
   def get_hospital(idHosp) do
-    GenServer.call(get_name_id(idHosp), {:get, :hospitales})
+    get(idHosp, :hospitales, 0)
   end
 
   def get_usuarios(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get, :usuarios, sync_id})
+    get(hospital, :usuarios, sync_id)
   end
 
   def get_usuarios_hospital(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get, :usuarios_hospital, sync_id})
+    get(hospital, :usuarios_hospital, sync_id)
   end
 
   def get_datos_usuario(hospital, cuil) do
-    GenServer.call(get_name_id(hospital), {:get_datos_usuario, cuil})
+    get_datos_usuario(hospital, cuil)
   end
 
   def get_usuarios_sector(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get, :usuarios_sector, sync_id})
+    get(hospital, :usuarios_sector, sync_id)
   end
 
   def get_camas(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get, :camas, sync_id})
+    get(hospital, :camas, sync_id)
   end
 
   def get_islas(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get, :islas, sync_id})
+    get(hospital, :islas, sync_id)
   end
 
   def get_sectores(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get, :sectores, sync_id})
+    get(hospital, :sectores, sync_id)
   end
 
-  def get_update(hospital, sync_id) do
-    GenServer.call(get_name_id(hospital), {:get_update, sync_id})
-  end
-
-  def get_sync_id(hospital) do
-    GenServer.call(get_name_id(hospital), {:get_sync_id})
-  end
-
-  def init(opts) do
-    state = %{sync_id: opts[:sync_id], idHosp: opts[:idHospital]}
-    {:ok, state}
-  end
-
-  def start_link(opts) do
-    hospital = opts[:idHospital]
-    GenServer.start_link(__MODULE__, opts, name: get_name_id(hospital))
-  end
-
-  def handle_call({:new, table, registro}, _from, state) do
+  def new(idHosp, table, registro) do
     table = table2module(table)
     registro = cast_all(table, registro)
 
@@ -154,7 +116,7 @@ defmodule Hospital do
           r =
             CCloud.Repo.get_by(
               CCloud.Repo.SyncIDHosp,
-              idHosp: state.idHosp
+              idHosp: idHosp
             )
 
           case r do
@@ -174,7 +136,7 @@ defmodule Hospital do
               :islas ->
                 q
                 |> Ecto.Multi.insert(:sync_id_isla, %CCloud.Repo.SyncIDIsla{
-                  idHosp: state.idHosp,
+                  idHosp: idHosp,
                   idIsla: registro.idIsla,
                   sync_id: 0
                 })
@@ -200,7 +162,7 @@ defmodule Hospital do
         fn %{sync_id: sync_id} ->
           Ecto.Changeset.change(
             %CCloud.Repo.SyncIDHosp{
-              idHosp: state.idHosp
+              idHosp: idHosp
             },
             sync_id: sync_id
           )
@@ -211,20 +173,14 @@ defmodule Hospital do
     case status do
       {:ok, result} ->
         sync_id = result[:sync_id]
-        nstate = Map.put(state, :sync_id, sync_id)
-
-        if table == :islas do
-          Hospital.Supervisor.new_isla(state.idHosp, registro.idIsla, 0)
-        end
-
-        {:reply, sync_id, nstate}
+        sync_id
 
       _ ->
-        {:error, nil}
+        :error
     end
   end
 
-  def handle_call({:modify, table, registro}, _from, state) do
+  def modify(idHosp, table, registro) do
     table = table2module(table)
     registro = cast_all(table, registro)
 
@@ -244,7 +200,7 @@ defmodule Hospital do
           r =
             CCloud.Repo.get_by(
               CCloud.Repo.SyncIDHosp,
-              idHosp: state.idHosp
+              idHosp: idHosp
             )
 
           case r do
@@ -265,7 +221,7 @@ defmodule Hospital do
         fn %{sync_id: sync_id} ->
           Ecto.Changeset.change(
             %CCloud.Repo.SyncIDHosp{
-              idHosp: state.idHosp
+              idHosp: idHosp
             },
             sync_id: sync_id
           )
@@ -276,21 +232,15 @@ defmodule Hospital do
     case status do
       {:ok, result} ->
         sync_id = result[:sync_id]
-        nstate = Map.put(state, :sync_id, sync_id)
-        {:reply, sync_id, nstate}
+        sync_id
 
       _ ->
-        {:error, nil}
+        :error
     end
   end
 
-  def handle_call({:get_state}, _from, state) do
-    {:reply, state, state}
-  end
-
-  def handle_call({:get, :usuarios, sync_id}, from, state) do
-    {_, usuarios_hospital, _} =
-      handle_call({:get, :usuarios_hospital, sync_id}, from, state)
+  def get(idHosp, :usuarios, sync_id) do
+    usuarios_hospital = get(idHosp, :usuarios_hospital, sync_id)
 
     usuarios_id =
       Enum.filter(
@@ -317,10 +267,10 @@ defmodule Hospital do
         |> Map.delete(:__struct__)
       end)
 
-    {:reply, usuarios, state}
+    usuarios
   end
 
-  def handle_call({:get, table, sync_id}, _from, state) do
+  def get(idHosp, table, sync_id) do
     table = table2module(table)
 
     result =
@@ -330,7 +280,7 @@ defmodule Hospital do
             from(r in table,
               where:
                 r.sync_id >= ^sync_id and
-                  r.idHospital == ^state.idHosp,
+                  r.idHospital == ^idHosp,
               select: r
             )
           )
@@ -340,7 +290,7 @@ defmodule Hospital do
             from(r in table,
               where:
                 r.sync_id >= ^sync_id and
-                  r.idHosp == ^state.idHosp,
+                  r.idHosp == ^idHosp,
               select: r
             )
           )
@@ -350,7 +300,7 @@ defmodule Hospital do
             from(r in table,
               where:
                 r.sync_id >= ^sync_id and
-                  r.idHospitalCama == ^state.idHosp,
+                  r.idHospitalCama == ^idHosp,
               select: r
             )
           )
@@ -360,7 +310,7 @@ defmodule Hospital do
             from(r in table,
               where:
                 r.sync_id >= ^sync_id and
-                  r.idHospitalLab == ^state.idHosp,
+                  r.idHospitalLab == ^idHosp,
               select: r
             )
           )
@@ -370,7 +320,7 @@ defmodule Hospital do
             from(r in table,
               where:
                 r.sync_id >= ^sync_id and
-                  r.idHospitalRad == ^state.idHosp,
+                  r.idHospitalRad == ^idHosp,
               select: r
             )
           )
@@ -380,17 +330,17 @@ defmodule Hospital do
             from(r in table,
               where:
                 r.sync_id >= ^sync_id and
-                  r.id_hospital == ^state.idHosp,
+                  r.id_hospital == ^idHosp,
               select: r
             )
           )
       end
 
     result = Enum.map(result, fn x -> clean(table, x) end)
-    {:reply, result, state}
+    result
   end
 
-  def handle_call({:get_update, sync_id}, from, state) do
+  def get_update(idHosp, sync_id) do
     list = [
       :camas,
       :islas,
@@ -402,7 +352,7 @@ defmodule Hospital do
     hospital =
       CCloud.Repo.one(
         from(r in Hospital,
-          where: r.idHosp == ^state.idHosp and r.sync_id > ^sync_id
+          where: r.idHosp == ^idHosp and r.sync_id > ^sync_id
         )
       )
 
@@ -413,74 +363,27 @@ defmodule Hospital do
         |> Map.delete(:__struct__)
       end
 
-    {_, usuarios, _} = handle_call({:get, :usuarios, sync_id}, from, state)
+    usuarios = get(idHosp, :usuarios, sync_id)
 
     result =
       Enum.reduce(list, %{}, fn x, acc ->
-        {_, list, _} = handle_call({:get, x, sync_id}, self(), state)
+        list = get(idHosp, x, sync_id)
         Map.put(acc, x, list)
       end)
       |> Map.merge(%{hospital: hospital})
       |> Map.merge(%{usuarios: usuarios})
 
-    {:reply, result, state}
+    result
   end
 
-  def handle_call({:get_sync_id}, _from, state) do
+  def get_sync_id(idHosp) do
     r =
       CCloud.Repo.get_by(
         CCloud.Repo.SyncIDHosp,
-        idHosp: state.idHosp
+        idHosp: idHosp
       )
 
-    {:reply, r.sync_id, state}
-  end
-end
-
-defmodule Hospital.Supervisor do
-  use DynamicSupervisor
-
-  def init(_opts) do
-    DynamicSupervisor.init(strategy: :one_for_one)
-  end
-
-  def load(idHosp) do
-    import Ecto.Query
-
-    islas =
-      CCloud.Repo.all(
-        from(r in CCloud.Repo.SyncIDIsla,
-          select: r,
-          where: r.idHosp == ^idHosp
-        )
-      )
-
-    Enum.all?(
-      islas,
-      fn i ->
-        Hospital.Supervisor.new_isla(i.idHosp, i.idIsla, i.sync_id)
-        IO.puts("new isla")
-        IO.puts(i.idHosp)
-        IO.puts(i.idIsla)
-        true
-      end
-    )
-  end
-
-  def start_link(opts) do
-    DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
-  end
-
-  def new_isla(hospital, isla, sync_id) do
-    children =
-      Supervisor.child_spec(
-        {Isla, [idIsla: isla, idHospital: hospital, sync_id: sync_id]},
-        id: {Isla, Utils.get_name_id(hospital, isla)}
-      )
-
-    IO.inspect({Isla, Utils.get_name_id(hospital, isla)})
-
-    DynamicSupervisor.start_child(__MODULE__, children)
+    r.sync_id
   end
 end
 

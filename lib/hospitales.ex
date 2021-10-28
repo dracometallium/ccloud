@@ -1,47 +1,20 @@
 defmodule Hospitales do
-  use GenServer
   import Ecto.Query
   import UUIDgen
 
-  def new_hospital(hospital) do
-    GenServer.call(__MODULE__, {:new_hospital, hospital})
-  end
-
-  def new_usuario(usuario) do
-    GenServer.call(__MODULE__, {:new_usuario, usuario})
-  end
-
-  def get_state() do
-    GenServer.call(__MODULE__, {:get_state})
-  end
-
   def get_usuarios() do
-    GenServer.call(__MODULE__, {:get_usuarios})
+    usuarios =
+      CCloud.Repo.all(from(r in Hospitales.Usuario, select: r))
+      |> Enum.map(fn x ->
+        x
+        |> Map.delete(:__meta__)
+        |> Map.delete(:__struct__)
+      end)
+
+    usuarios
   end
 
-  def get_datos_usuario(cuil) do
-    GenServer.call(__MODULE__, {:get_datos_usuario, cuil})
-  end
-
-  def init(_opts) do
-    {:ok, %{}}
-  end
-
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
-  end
-
-  def handle_call({:get_state}, _from, state) do
-    {:reply, state, state}
-  end
-
-  def handle_call({:get_usuarios}, _from, state) do
-    usuarios = CCloud.Repo.all(from(r in Hospitales.Usuario, select: r))
-
-    {:reply, usuarios, state}
-  end
-
-  def handle_call({:new_hospital, hospital}, _from, state) do
+  def new_hospital(hospital) do
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:registro, struct(Hospital, hospital))
     |> Ecto.Multi.insert(:sync_id_isla, %CCloud.Repo.SyncIDHosp{
@@ -50,12 +23,10 @@ defmodule Hospitales do
     })
     |> CCloud.Repo.transaction()
 
-    Hospitales.Supervisor.new_hospital(hospital.idHosp, 0)
-
-    {:reply, 0, state}
+    0
   end
 
-  def handle_call({:new_usuario, usuario}, _from, state) do
+  def new_usuario(usuario) do
     sal = uuidgen()
 
     salted =
@@ -65,10 +36,10 @@ defmodule Hospitales do
     usuario = Map.put(usuario, :sal, sal)
     usuario = Map.put(usuario, :clave, salted)
     CCloud.Repo.insert(struct(Hospitales.Usuario, usuario))
-    {:reply, usuario, state}
+    usuario
   end
 
-  def handle_call({:get_datos_usuario, cuil}, _from, state) do
+  def get_datos_usuario(cuil) do
     usuario =
       CCloud.Repo.one(
         from(r in Hospitales.Usuario,
@@ -162,51 +133,7 @@ defmodule Hospitales do
 
     respuesta = %{usuario: usuario, hospitales: hospitales}
 
-    {:reply, respuesta, state}
-  end
-end
-
-defmodule Hospitales.Supervisor do
-  use DynamicSupervisor
-
-  def init(_opts) do
-    DynamicSupervisor.init(strategy: :one_for_one)
-  end
-
-  def start_link(opts) do
-    DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
-  end
-
-  def load() do
-    import Ecto.Query
-
-    hospitales =
-      CCloud.Repo.all(
-        from(r in CCloud.Repo.SyncIDHosp,
-          select: r
-        )
-      )
-
-    Enum.all?(
-      hospitales,
-      fn h ->
-        new_hospital(h.idHosp, h.sync_id)
-        Hospital.Supervisor.load(h.idHosp)
-        IO.puts("new hospital")
-        IO.puts(h.idHosp)
-        true
-      end
-    )
-  end
-
-  def new_hospital(idHospital, sync_id) do
-    children =
-      Supervisor.child_spec(
-        {Hospital, [idHospital: idHospital, sync_id: sync_id]},
-        id: {Hospital, Utils.get_name_id(idHospital)}
-      )
-
-    DynamicSupervisor.start_child(__MODULE__, children)
+    respuesta
   end
 end
 

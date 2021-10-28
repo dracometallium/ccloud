@@ -33,18 +33,6 @@ defmodule CCloud.Application do
         id: {CCloud.Repo, CCloud.Repo}
       ),
       Supervisor.child_spec(
-        {Hospitales, []},
-        id: {Hospitales, Hosplitales}
-      ),
-      Supervisor.child_spec(
-        {Hospitales.Supervisor, []},
-        id: {Hospitales.Supervisor, Hosplitales.Supervisor}
-      ),
-      Supervisor.child_spec(
-        {Hospital.Supervisor, []},
-        id: {Hospital.Supervisor, Hosplital.Supervisor}
-      ),
-      Supervisor.child_spec(
         {SysUsers, []},
         id: {SysUsers, SysUsers}
       )
@@ -53,7 +41,6 @@ defmodule CCloud.Application do
     opts = [strategy: :one_for_one, name: Application.Supervisor]
 
     result = Supervisor.start_link(children, opts)
-    Hospitales.Supervisor.load()
     result
   end
 end

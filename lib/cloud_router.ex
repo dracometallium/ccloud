@@ -178,6 +178,7 @@ defmodule Cloud.Router do
 
     msg = Poison.encode!(msg)
     self() |> IO.inspect(label: "Cloud copy_data")
+    msg |> IO.puts()
     {:reply, [{:text, msg}], state}
   end
 
