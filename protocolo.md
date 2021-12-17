@@ -43,7 +43,7 @@ Enviar un inser_id por tabla.
 Identificación del usuario al líder (o la nube simulando ser un lider). El
 handshake completo consta de dos pasos, `hello` y `connect`. El primero sirve
 para identificar el usuario correctamente, y el segundo para seleccionar el
-hospital, isla y sector.
+hospital y sector.
 
 Este método genera el token, por lo cual el enviado en la petición se ignora.
 
@@ -81,8 +81,8 @@ Respuestas:
 
 # Connect
 
-Segunda parte del handshake, selecciona el hospital, isla y sector.  Si se
-quiere mantener la conexión con un líder, deben estar especificados todos los
+Segunda parte del handshake, selecciona el hospital y sector. Si se quiere
+mantener la conexión con un líder, deben estar especificados todos los
 parámetros. Si solo se desea acceder a los datos compartidos de un hospital,
 solo se necesitara especificar el id de este. Este último modo de operación no
 estará habilitado por el momento.
@@ -92,7 +92,6 @@ Si no se realiza este paso, cualquier otro método debería falla.
 Parámetros:
 
 -   Hospital
--   Isla
 -   Sector
 -   sync_id_isla: opcional. Si es distinto de nil, envía la actualización de la isla.
 -   sync_id_hospital: opcional. Si es distinto de nil, envía la actualización
