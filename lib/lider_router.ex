@@ -2,7 +2,7 @@ defmodule Lider.Router do
   require Logger
 
   def init(req, state) do
-    Logger.debug(["New connection to ", __MODULE__])
+    Logger.debug(["New connection to ", Atom.to_string(__MODULE__)])
 
     case :cowboy_req.headers(req)["upgrade"] do
       "websocket" ->
@@ -32,7 +32,7 @@ defmodule Lider.Router do
         try do
           # Conviene usar ":atoms!" para que no se creen átomos nuevos
           req_json = Poison.decode!(req_body, keys: :atoms)
-          Logger.debug([__MODULE__, " HTTP JSON:\n", inspect(req_json)])
+          Logger.debug([Atom.to_string(__MODULE__), " HTTP JSON:\n", inspect(req_json)])
 
           %{
             :version => version,
@@ -55,7 +55,7 @@ defmodule Lider.Router do
           headers = headers()
 
           body = Poison.encode!(resp) <> "\n"
-          Logger.debug([__MODULE__, " to client:", body])
+          Logger.debug([Atom.to_string(__MODULE__), " to client:", body])
 
           req1 = :cowboy_req.reply(200, headers, body, req0)
 
@@ -63,7 +63,7 @@ defmodule Lider.Router do
         rescue
           reason ->
             Logger.warn([
-              __MODULE__,
+              Atom.to_string(__MODULE__),
               " HTTP\n",
               req_body,
               "reason:\n",
@@ -112,20 +112,20 @@ defmodule Lider.Router do
         :token => token
       } = req_json
 
-      Logger.debug([__MODULE__, " WS JSON:\n", inspect(req_json)])
+      Logger.debug([Atom.to_string(__MODULE__), " WS JSON:\n", inspect(req_json)])
 
       {state, resp} =
         connect_and_run_method(version, method, req_json, id, token, state)
 
       body = Poison.encode!(resp) <> "\n"
 
-      Logger.debug([__MODULE__, " to client:", body])
+      Logger.debug([Atom.to_string(__MODULE__), " to client:", body])
 
       {[{:text, body}], state}
     rescue
       reason ->
         Logger.warn([
-          __MODULE__,
+          Atom.to_string(__MODULE__),
           " WS\n",
           body,
           "reason:\n",
@@ -1145,7 +1145,7 @@ defmodule Lider.Router do
   end
 
   def websocket_info(msg, state) do
-    Logger.debug([__MODULE__, " websocket_info:", inspect(msg)])
+    Logger.debug([Atom.to_string(__MODULE__), " websocket_info:", inspect(msg)])
     {:ok, state}
   end
 

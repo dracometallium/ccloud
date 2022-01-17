@@ -3,7 +3,7 @@ defmodule Cloud.Router do
   require Logger
 
   def init(req, state) do
-    Logger.debug(["New connection to ", __MODULE__])
+    Logger.debug(["New connection to ", Atom.to_string(__MODULE__)])
 
     case :cowboy_req.headers(req)["upgrade"] do
       "websocket" ->
@@ -43,7 +43,7 @@ defmodule Cloud.Router do
   end
 
   def websocket_handle({:text, body}, state) do
-    Logger.debug([__MODULE__, " WS body:\n", body])
+    Logger.debug([Atom.to_string(__MODULE__), " WS body:\n", body])
 
     try do
       req = Poison.decode!(body, keys: :atoms)
@@ -117,14 +117,14 @@ defmodule Cloud.Router do
             [{:text, Poison.encode!(resp)}]
           end
 
-        Logger.debug([__MODULE__, " to leader:", inspect(send)])
+        Logger.debug([Atom.to_string(__MODULE__), " to leader:", inspect(send)])
 
         {:reply, send, state}
       end
     rescue
       reason ->
         Logger.warn([
-          __MODULE__,
+          Atom.to_string(__MODULE__),
           " WS\n",
           body,
           "reason:\n",
@@ -180,7 +180,7 @@ defmodule Cloud.Router do
     }
 
     msg = Poison.encode!(msg)
-    Logger.debug([__MODULE__, " copy_data msg: ", msg])
+    Logger.debug([Atom.to_string(__MODULE__), " copy_data msg: ", msg])
     {:reply, [{:text, msg}], state}
   end
 
@@ -189,7 +189,7 @@ defmodule Cloud.Router do
   end
 
   def websocket_info(msg, state) do
-    Logger.debug([__MODULE__, " websocket_info:", inspect(msg)])
+    Logger.debug([Atom.to_string(__MODULE__), " websocket_info:", inspect(msg)])
     {:ok, state}
   end
 
@@ -429,7 +429,7 @@ defmodule Cloud.Router do
   defp handle_pending({:ping, id, date, from}, msg, state) do
     if msg[:result][:pong] == id do
       now = DateTime.utc_now() |> DateTime.to_unix()
-      Logger.debug([__MODULE__, " ping: ", Integer.to_string(now - date)])
+      Logger.debug([Atom.to_string(__MODULE__), " ping: ", Integer.to_string(now - date)])
 
       if from != nil do
         {id_from, pid_from} = from
@@ -438,7 +438,7 @@ defmodule Cloud.Router do
 
       {state, nil}
     else
-      Logger.warn([__MODULE__, " WRONG PING: ", inspect(msg)])
+      Logger.warn([Atom.to_string(__MODULE__), " WRONG PING: ", inspect(msg)])
       {state, nil}
     end
   end
@@ -483,7 +483,7 @@ defmodule Cloud.Router do
 
   def terminate(reason, _req, state) do
     Logger.debug([
-      __MODULE__,
+      Atom.to_string(__MODULE__),
       " connection termintated: ",
       inspect(reason),
       "\nstate: ",
