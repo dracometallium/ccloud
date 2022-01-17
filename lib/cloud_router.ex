@@ -1,8 +1,9 @@
 defmodule Cloud.Router do
   @tick_timeout 30
+  require Logger
+
   def init(req, state) do
-    IO.puts("\nCloud connection")
-    IO.inspect(state)
+    Logger.debug(["New connection to ", __MODULE__])
 
     case :cowboy_req.headers(req)["upgrade"] do
       "websocket" ->
@@ -33,7 +34,7 @@ defmodule Cloud.Router do
       "content-type" => "application/json"
     }
 
-    IO.puts("HTTP connection: We don't want your kind here.")
+    Logger.info("HTTP connection: We don't want your kind here.")
     resp = send_badreq(%{result: %{error: "Only websockets are supported"}})
     body = Poison.encode!(resp)
 
@@ -42,9 +43,7 @@ defmodule Cloud.Router do
   end
 
   def websocket_handle({:text, body}, state) do
-    IO.puts("CLOUD WS JSON:")
-    IO.puts(body)
-    IO.inspect(state)
+    Logger.debug([__MODULE__, " WS body:\n", body])
 
     try do
       req = Poison.decode!(body, keys: :atoms)
@@ -106,7 +105,7 @@ defmodule Cloud.Router do
         end
 
       if resp == nil do
-        IO.puts("no resp, but OK")
+        Logger.debug("no resp, but OK")
         {:ok, state}
       else
         send =
@@ -118,18 +117,22 @@ defmodule Cloud.Router do
             [{:text, Poison.encode!(resp)}]
           end
 
-        IO.puts("to leader:")
-        IO.inspect(send)
+        Logger.debug([__MODULE__, " to leader:", inspect(send)])
 
         {:reply, send, state}
       end
     rescue
       reason ->
-        IO.puts("Cloud ERROR\nbody:")
-        IO.puts(body)
-        IO.puts("Cloud reason:")
-        IO.inspect(reason)
-        IO.puts(Exception.format_stacktrace())
+        Logger.warn([
+          __MODULE__,
+          " WS\n",
+          body,
+          "reason:\n",
+          inspect(reason),
+          "stack:\n",
+          Exception.format_stacktrace()
+        ])
+
         resp = send_badreq(%{result: %{error: reason}, id: nil})
         body = Poison.encode!(resp)
         {:reply, [{:text, body}], state}
@@ -177,8 +180,7 @@ defmodule Cloud.Router do
     }
 
     msg = Poison.encode!(msg)
-    self() |> IO.inspect(label: "Cloud copy_data")
-    msg |> IO.puts()
+    Logger.debug([__MODULE__, " copy_data msg: ", msg])
     {:reply, [{:text, msg}], state}
   end
 
@@ -187,8 +189,7 @@ defmodule Cloud.Router do
   end
 
   def websocket_info(msg, state) do
-    IO.puts("Cloud websocket_info:")
-    IO.inspect(msg)
+    Logger.debug([__MODULE__, " websocket_info:", inspect(msg)])
     {:ok, state}
   end
 
@@ -428,7 +429,7 @@ defmodule Cloud.Router do
   defp handle_pending({:ping, id, date, from}, msg, state) do
     if msg[:result][:pong] == id do
       now = DateTime.utc_now() |> DateTime.to_unix()
-      IO.puts("ping: " <> Integer.to_string(now - date))
+      Logger.debug([__MODULE__, " ping: ", Integer.to_string(now - date)])
 
       if from != nil do
         {id_from, pid_from} = from
@@ -437,7 +438,7 @@ defmodule Cloud.Router do
 
       {state, nil}
     else
-      msg |> IO.inspect(label: "WRONG PING!!")
+      Logger.warn([__MODULE__, " WRONG PING: ", inspect(msg)])
       {state, nil}
     end
   end
@@ -481,9 +482,14 @@ defmodule Cloud.Router do
   end
 
   def terminate(reason, _req, state) do
-    IO.puts("Cloud connection termintated")
-    IO.inspect(reason)
-    IO.inspect(state)
+    Logger.debug([
+      __MODULE__,
+      " connection termintated: ",
+      inspect(reason),
+      "\nstate: ",
+      inspect(state)
+    ])
+
     :ok
   end
 

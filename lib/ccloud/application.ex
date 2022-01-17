@@ -1,5 +1,6 @@
 defmodule CCloud.Application do
   use Application
+  require Logger
 
   @moduledoc """
   Documentation for `CCloud`.
@@ -22,9 +23,10 @@ defmodule CCloud.Application do
     dispatch = :cowboy_router.compile([{:_, routes}])
     cowboy_env = %{dispatch: dispatch}
 
-    IO.inspect(
-      :cowboy.start_tls(:http_listener, cowboy_options, %{env: cowboy_env})
-    )
+    Logger.info(
+      ["Cowboy start: ",
+      inspect :cowboy.start_tls(:http_listener,
+    cowboy_options, %{env: cowboy_env})])
 
     children = [
       # Starts a worker by calling: SimpleServer.Worker.start_link(arg)

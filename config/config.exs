@@ -8,3 +8,11 @@ config :ccloud, CCloud.Repo,
   username: "admin",
   password: "XXX",
   hostname: "localhost"
+
+config :logger,
+  level: :debug,
+  backends: [:console, {LoggerFileBackend, :file_log}]
+
+config :logger, :file_log,
+  path: "myLog.log",
+  level: :debug

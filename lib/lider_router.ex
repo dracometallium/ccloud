@@ -1,6 +1,8 @@
 defmodule Lider.Router do
+  require Logger
+
   def init(req, state) do
-    IO.puts("\nconnection")
+    Logger.debug(["New connection to ", __MODULE__])
 
     case :cowboy_req.headers(req)["upgrade"] do
       "websocket" ->
@@ -30,8 +32,7 @@ defmodule Lider.Router do
         try do
           # Conviene usar ":atoms!" para que no se creen átomos nuevos
           req_json = Poison.decode!(req_body, keys: :atoms)
-          IO.puts("\nJSON:")
-          IO.inspect(req_json)
+          Logger.debug([__MODULE__, " HTTP JSON:\n", inspect(req_json)])
 
           %{
             :version => version,
@@ -54,19 +55,22 @@ defmodule Lider.Router do
           headers = headers()
 
           body = Poison.encode!(resp) <> "\n"
-          IO.puts("to client:")
-          IO.puts(body)
+          Logger.debug([__MODULE__, " to client:", body])
 
           req1 = :cowboy_req.reply(200, headers, body, req0)
 
           {:ok, req1, state}
         rescue
           reason ->
-            IO.puts("ERROR\nreq:")
-            IO.inspect(req_body)
-            IO.puts("ERROR:")
-            IO.inspect(reason)
-            IO.puts(Exception.format_stacktrace())
+            Logger.warn([
+              __MODULE__,
+              " HTTP\n",
+              req_body,
+              "reason:\n",
+              inspect(reason),
+              "stack:\n",
+              Exception.format_stacktrace()
+            ])
 
             resp = send_badreq() |> Map.put(:result, %{error: reason})
             body = Poison.encode!(resp) <> "\n"
@@ -108,24 +112,28 @@ defmodule Lider.Router do
         :token => token
       } = req_json
 
-      IO.puts("\nWS JSON:")
-      IO.inspect(req_json)
+      Logger.debug([__MODULE__, " WS JSON:\n", inspect(req_json)])
 
       {state, resp} =
         connect_and_run_method(version, method, req_json, id, token, state)
 
       body = Poison.encode!(resp) <> "\n"
 
-      IO.puts("to client (ws):")
-      IO.puts(body)
+      Logger.debug([__MODULE__, " to client:", body])
 
       {[{:text, body}], state}
     rescue
       reason ->
-        IO.puts("ERROR\nbody (ws):")
-        IO.inspect(body)
-        IO.puts("reason (ws):")
-        IO.inspect(reason)
+        Logger.warn([
+          __MODULE__,
+          " WS\n",
+          body,
+          "reason:\n",
+          inspect(reason),
+          "stack:\n",
+          Exception.format_stacktrace()
+        ])
+
         body = send_badreq()
         body = Poison.encode!(body) <> "\n"
         {[{:text, body}], state}
@@ -1133,13 +1141,11 @@ defmodule Lider.Router do
     }
 
     msg = Poison.encode!(msg)
-    self() |> IO.inspect(label: "copy_data")
     {:reply, [{:text, msg}], state}
   end
 
   def websocket_info(msg, state) do
-    IO.puts("websocket_info:")
-    IO.inspect(msg)
+    Logger.debug([__MODULE__, " websocket_info:", inspect(msg)])
     {:ok, state}
   end
 

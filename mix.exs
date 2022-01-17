@@ -26,7 +26,8 @@ defmodule Ccloud.MixProject do
       {:ecto_sql, "~> 3.5.3"},
       {:poison, "~> 3.0"},
       {:mariaex, "~> 0.9.1"},
-      {:myxql, ">= 0.0.0"}
+      {:myxql, ">= 0.0.0"},
+      {:logger_file_backend, ">= 0.0.0"}
     ]
   end
 end
