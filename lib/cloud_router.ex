@@ -117,7 +117,11 @@ defmodule Cloud.Router do
             [{:text, Poison.encode!(resp)}]
           end
 
-        Logger.debug([Atom.to_string(__MODULE__), " to leader:", inspect(send)])
+        Logger.debug([
+          Atom.to_string(__MODULE__),
+          " to leader:",
+          inspect(send)
+        ])
 
         {:reply, send, state}
       end
@@ -189,7 +193,12 @@ defmodule Cloud.Router do
   end
 
   def websocket_info(msg, state) do
-    Logger.debug([Atom.to_string(__MODULE__), " websocket_info:", inspect(msg)])
+    Logger.debug([
+      Atom.to_string(__MODULE__),
+      " websocket_info:",
+      inspect(msg)
+    ])
+
     {:ok, state}
   end
 
@@ -429,7 +438,12 @@ defmodule Cloud.Router do
   defp handle_pending({:ping, id, date, from}, msg, state) do
     if msg[:result][:pong] == id do
       now = DateTime.utc_now() |> DateTime.to_unix()
-      Logger.debug([Atom.to_string(__MODULE__), " ping: ", Integer.to_string(now - date)])
+
+      Logger.debug([
+        Atom.to_string(__MODULE__),
+        " ping: ",
+        Integer.to_string(now - date)
+      ])
 
       if from != nil do
         {id_from, pid_from} = from

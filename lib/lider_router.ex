@@ -32,7 +32,12 @@ defmodule Lider.Router do
         try do
           # Conviene usar ":atoms!" para que no se creen átomos nuevos
           req_json = Poison.decode!(req_body, keys: :atoms)
-          Logger.debug([Atom.to_string(__MODULE__), " HTTP JSON:\n", inspect(req_json)])
+
+          Logger.debug([
+            Atom.to_string(__MODULE__),
+            " HTTP JSON:\n",
+            inspect(req_json)
+          ])
 
           %{
             :version => version,
@@ -112,7 +117,11 @@ defmodule Lider.Router do
         :token => token
       } = req_json
 
-      Logger.debug([Atom.to_string(__MODULE__), " WS JSON:\n", inspect(req_json)])
+      Logger.debug([
+        Atom.to_string(__MODULE__),
+        " WS JSON:\n",
+        inspect(req_json)
+      ])
 
       {state, resp} =
         connect_and_run_method(version, method, req_json, id, token, state)
@@ -1145,7 +1154,12 @@ defmodule Lider.Router do
   end
 
   def websocket_info(msg, state) do
-    Logger.debug([Atom.to_string(__MODULE__), " websocket_info:", inspect(msg)])
+    Logger.debug([
+      Atom.to_string(__MODULE__),
+      " websocket_info:",
+      inspect(msg)
+    ])
+
     {:ok, state}
   end
 
