@@ -152,6 +152,12 @@ defmodule Hospital do
                     )
                   end
                 )
+                |> Ecto.Multi.run(
+                  :sync_id_2,
+                  fn _, %{sync_id: sync_id} ->
+                    {:ok, sync_id + 1}
+                  end
+                )
 
               _ ->
                 q
@@ -159,7 +165,14 @@ defmodule Hospital do
           end).()
       |> Ecto.Multi.update(
         :max_sync_id,
-        fn %{sync_id: sync_id} ->
+        fn %{sync_id: sync_id, sync_id_2: sync_id_2} ->
+          sync_id =
+            if sync_id_2 != nil do
+              sync_id_2
+            else
+              sync_id
+            end
+
           Ecto.Changeset.change(
             %CCloud.Repo.SyncIDHosp{
               idHosp: idHosp
