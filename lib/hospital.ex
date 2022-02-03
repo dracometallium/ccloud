@@ -133,7 +133,7 @@ defmodule Hospital do
       end)
       |> (fn q ->
             case table do
-              :islas ->
+              Hospital.Isla ->
                 q
                 |> Ecto.Multi.insert(:sync_id_isla, %CCloud.Repo.SyncIDIsla{
                   idHosp: idHosp,
@@ -141,7 +141,7 @@ defmodule Hospital do
                   sync_id: 0
                 })
 
-              :usuarios_hospital ->
+              Hospital.UsuarioHospital ->
                 q
                 |> Ecto.Multi.update(
                   :sync_id_usuario_hospital,
