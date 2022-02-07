@@ -373,7 +373,7 @@ defmodule Hospital do
         |> Map.delete(:__struct__)
       end
 
-    usuarios = get(idHosp, :usuarios, sync_id)
+    usuarios = get(idHosp, Hospitales.Usuario, sync_id)
 
     result =
       Enum.reduce(list, %{}, fn x, acc ->
