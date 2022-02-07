@@ -15,47 +15,47 @@ defmodule Hospital do
   end
 
   def new_cama(hospital, cama) do
-    new(hospital, :camas, cama)
+    new(hospital, Hospital.Cama, cama)
   end
 
   def new_isla(hospital, isla) do
-    new(hospital, :islas, isla)
+    new(hospital, Hospital.Isla, isla)
   end
 
   def new_sector(hospital, sector) do
-    new(hospital, :sectores, sector)
+    new(hospital, Hospital.Sector, sector)
   end
 
   def new_usuario_hospital(hospital, usuario_hospital) do
-    new(hospital, :usuarios_hospital, usuario_hospital)
+    new(hospital, Hospital.UsuarioHospital, usuario_hospital)
   end
 
   def new_usuario_sector(hospital, usuario_sector) do
-    new(hospital, :usuarios_sector, usuario_sector)
+    new(hospital, Hospital.UsuarioSector, usuario_sector)
   end
 
   def modify_cama(hospital, cama) do
-    modify(hospital, :camas, cama)
+    modify(hospital, Hospital.Cama, cama)
   end
 
   def modify_isla(hospital, isla) do
-    modify(hospital, :islas, isla)
+    modify(hospital, Hospital.Isla, isla)
   end
 
   def modify_sector(hospital, sector) do
-    modify(hospital, :sectores, sector)
+    modify(hospital, Hospital.Sector, sector)
   end
 
   def modify_usuario_hospital(hospital, usuario_hospital) do
-    modify(hospital, :usuarios_hospital, usuario_hospital)
+    modify(hospital, Hospital.UsuarioHospital, usuario_hospital)
   end
 
   def modify_usuario_sector(hospital, usuario_sector) do
-    modify(hospital, :usuarios_sector, usuario_sector)
+    modify(hospital, Hospital.UsuarioSector, usuario_sector)
   end
 
   def modify_hospital(hospital, dato_hospital) do
-    modify(hospital, :hospitales, dato_hospital)
+    modify(hospital, Hospital, dato_hospital)
   end
 
   def get_isla(idHosp, idSector) do
@@ -71,15 +71,15 @@ defmodule Hospital do
   end
 
   def get_hospital(idHosp) do
-    get(idHosp, :hospitales, 0)
+    get(idHosp, Hospital, 0)
   end
 
   def get_usuarios(hospital, sync_id) do
-    get(hospital, :usuarios, sync_id)
+    get(hospital, Hospitales.Usuario, sync_id)
   end
 
   def get_usuarios_hospital(hospital, sync_id) do
-    get(hospital, :usuarios_hospital, sync_id)
+    get(hospital, Hospital.UsuarioHospital, sync_id)
   end
 
   def get_datos_usuario(hospital, cuil) do
@@ -87,23 +87,22 @@ defmodule Hospital do
   end
 
   def get_usuarios_sector(hospital, sync_id) do
-    get(hospital, :usuarios_sector, sync_id)
+    get(hospital, Hospital.UsuarioSector, sync_id)
   end
 
   def get_camas(hospital, sync_id) do
-    get(hospital, :camas, sync_id)
+    get(hospital, Hospital.Cama, sync_id)
   end
 
   def get_islas(hospital, sync_id) do
-    get(hospital, :islas, sync_id)
+    get(hospital, Hospital.Isla, sync_id)
   end
 
   def get_sectores(hospital, sync_id) do
-    get(hospital, :sectores, sync_id)
+    get(hospital, Hospital.Sector, sync_id)
   end
 
   def new(idHosp, table, registro) do
-    table = table2module(table)
     registro = cast_all(table, registro)
 
     registro = struct(table, registro)
@@ -195,7 +194,6 @@ defmodule Hospital do
   end
 
   def modify(idHosp, table, registro) do
-    table = table2module(table)
     registro = cast_all(table, registro)
 
     keys =
@@ -253,8 +251,8 @@ defmodule Hospital do
     end
   end
 
-  def get(idHosp, :usuarios, sync_id) do
-    usuarios_hospital = get(idHosp, :usuarios_hospital, sync_id)
+  def get(idHosp, Hospitales.Usuario, sync_id) do
+    usuarios_hospital = get(idHosp, Hospital.UsuarioHospital, sync_id)
 
     usuarios_id =
       Enum.filter(
@@ -285,8 +283,6 @@ defmodule Hospital do
   end
 
   def get(idHosp, table, sync_id) do
-    table = table2module(table)
-
     result =
       case idH(table) do
         :idHospital ->
@@ -356,11 +352,11 @@ defmodule Hospital do
 
   def get_update(idHosp, sync_id) do
     list = [
-      :camas,
-      :islas,
-      :sectores,
-      :usuarios_hospital,
-      :usuarios_sector
+      Hospital.Cama,
+      Hospital.Isla,
+      Hospital.Sector,
+      Hospital.UsuarioHospital,
+      Hospital.UsuarioSector
     ]
 
     hospital =
