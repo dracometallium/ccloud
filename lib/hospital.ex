@@ -3,6 +3,8 @@ defmodule Hospital do
   import Utils
   import Ecto.Query
 
+  def plural, do: :hospitales
+
   @primary_key false
   schema "Hospital" do
     field(:sync_id, :integer)
@@ -378,7 +380,7 @@ defmodule Hospital do
     result =
       Enum.reduce(list, %{}, fn x, acc ->
         list = get(idHosp, x, sync_id)
-        Map.put(acc, x, list)
+        Map.put(acc, x.plural, list)
       end)
       |> Map.merge(%{hospital: hospital})
       |> Map.merge(%{usuarios: usuarios})
@@ -400,6 +402,8 @@ end
 defmodule Hospital.UsuarioHospital do
   use Ecto.Schema
 
+  def plural, do: :usuarios_hospital
+
   @primary_key false
   schema "UsuarioHospital" do
     field(:sync_id, :integer)
@@ -414,6 +418,8 @@ end
 defmodule Hospital.Isla do
   use Ecto.Schema
 
+  def plural, do: :islas
+
   @primary_key false
   schema "Isla" do
     field(:sync_id, :integer)
@@ -425,6 +431,8 @@ end
 
 defmodule Hospital.Sector do
   use Ecto.Schema
+
+  def plural, do: :sectores
 
   @primary_key false
   schema "Sector" do
@@ -439,6 +447,8 @@ end
 defmodule Hospital.UsuarioSector do
   use Ecto.Schema
 
+  def plural, do: :usuarios_sector
+
   @primary_key false
   schema "UsuarioSector" do
     field(:sync_id, :integer)
@@ -451,6 +461,8 @@ end
 
 defmodule Hospital.Cama do
   use Ecto.Schema
+
+  def plural, do: :camas
 
   @primary_key false
   schema "Cama" do

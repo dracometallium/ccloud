@@ -140,6 +140,8 @@ end
 defmodule Hospitales.Usuario do
   use Ecto.Schema
 
+  def plural, do: :usuarios
+
   @primary_key false
   schema "Usuario" do
     field(:cuil, :string, primary_key: true)

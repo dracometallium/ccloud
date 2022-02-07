@@ -3,6 +3,8 @@ defmodule Isla do
   import Ecto.Query
   import Utils
 
+  def plural, do: :islas
+
   def new_signo_vital(hospital, isla, signo_vital) do
     new(hospital, isla, Isla.SignosVitales, signo_vital)
   end
@@ -451,7 +453,7 @@ defmodule Isla do
       Enum.reduce(list, %{}, fn x, acc ->
         list = get(idHosp, idIsla, x, sector, sync_id, nil)
 
-        Map.put(acc, x, list)
+        Map.put(acc, x.plural, list)
       end)
 
     result
@@ -471,6 +473,8 @@ end
 
 defmodule Isla.SignosVitales do
   use Ecto.Schema
+
+  def plural, do: :signosVitales
 
   @primary_key false
   schema "SignosVitales" do
@@ -494,6 +498,8 @@ end
 defmodule Isla.Laboratorio do
   use Ecto.Schema
 
+  def plural, do: :laboratorios
+
   @primary_key false
   schema "Laboratorio" do
     field(:sync_id, :integer)
@@ -513,6 +519,8 @@ end
 defmodule Isla.RxTorax do
   use Ecto.Schema
 
+  def plural, do: :rx_toraxs
+
   @primary_key false
   schema "RxTorax" do
     field(:sync_id, :integer)
@@ -526,6 +534,8 @@ end
 
 defmodule Isla.Alerta do
   use Ecto.Schema
+
+  def plural, do: :alertas
 
   @primary_key false
   schema "Alerta" do
@@ -543,6 +553,8 @@ end
 defmodule Isla.Episodio do
   use Ecto.Schema
 
+  def plural, do: :episodios
+
   @primary_key false
   schema "Episodio" do
     field(:sync_id, :integer)
@@ -557,6 +569,8 @@ end
 
 defmodule Isla.HCpaciente do
   use Ecto.Schema
+
+  def plural, do: :hcpacientes
 
   @primary_key false
   schema "HCpaciente" do
@@ -595,6 +609,8 @@ end
 
 defmodule Isla.AlertaVista do
   use Ecto.Schema
+
+  def plural, do: :alertas_vistas
 
   @primary_key false
   schema "AlertaVista" do
