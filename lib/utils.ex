@@ -11,23 +11,6 @@ defmodule Utils do
     {:global, {:id, hospital}}
   end
 
-  def table2module(table) do
-    case table do
-      :usuarios_hospital -> Hospital.UsuarioHospital
-      :islas -> Hospital.Isla
-      :sectores -> Hospital.Sector
-      :usuarios_sector -> Hospital.UsuarioSector
-      :camas -> Hospital.Cama
-      :hospitales -> Hospital
-      :signosVitales -> Isla.SignosVitales
-      :laboratorios -> Isla.Laboratorio
-      :rx_toraxs -> Isla.RxTorax
-      :alertas -> Isla.Alerta
-      :episodios -> Isla.Episodio
-      :hcpacientes -> Isla.HCpaciente
-    end
-  end
-
   def idH(table) do
     case table do
       Isla.Alerta -> :idHospital

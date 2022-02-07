@@ -4,27 +4,27 @@ defmodule Isla do
   import Utils
 
   def new_signo_vital(hospital, isla, signo_vital) do
-    new(hospital, isla, :signosVitales, signo_vital)
+    new(hospital, isla, Isla.SignosVitales, signo_vital)
   end
 
   def new_laboratorio(hospital, isla, laboratorio) do
-    new(hospital, isla, :laboratorios, laboratorio)
+    new(hospital, isla, Isla.Laboratorio, laboratorio)
   end
 
   def new_rx_torax(hospital, isla, rx_torax) do
-    new(hospital, isla, :rx_toraxs, rx_torax)
+    new(hospital, isla, Isla.RxTorax, rx_torax)
   end
 
   def new_alerta(hospital, isla, alerta) do
-    new(hospital, isla, :alertas, alerta)
+    new(hospital, isla, Isla.Alerta, alerta)
   end
 
   def new_episodio(hospital, isla, episodio) do
-    new(hospital, isla, :episodios, episodio)
+    new(hospital, isla, Isla.Episodio, episodio)
   end
 
   def new_hcpaciente(hospital, isla, hcpaciente) do
-    new(hospital, isla, :hcpacientes, hcpaciente)
+    new(hospital, isla, Isla.HCpaciente, hcpaciente)
   end
 
   def new_alerta_vista(hospital, numerohc, fechaAlerta, cuil) do
@@ -46,67 +46,67 @@ defmodule Isla do
   end
 
   def modify_signo_vital(hospital, isla, signo_vital) do
-    modify(hospital, isla, :signosVitales, signo_vital)
+    modify(hospital, isla, Isla.SignosVitales, signo_vital)
   end
 
   def modify_laboratorio(hospital, isla, laboratorio) do
-    modify(hospital, isla, :laboratorios, laboratorio)
+    modify(hospital, isla, Isla.Laboratorio, laboratorio)
   end
 
   def modify_rx_torax(hospital, isla, rx_torax) do
-    modify(hospital, isla, :rx_toraxs, rx_torax)
+    modify(hospital, isla, Isla.RxTorax, rx_torax)
   end
 
   def modify_alerta(hospital, isla, alerta) do
-    modify(hospital, isla, :alertas, alerta)
+    modify(hospital, isla, Isla.Alerta, alerta)
   end
 
   def modify_episodio(hospital, isla, episodio) do
-    modify(hospital, isla, :episodios, episodio)
+    modify(hospital, isla, Isla.Episodio, episodio)
   end
 
   def modify_hcpaciente(hospital, isla, hcpaciente) do
-    modify(hospital, isla, :hcpacientes, hcpaciente)
+    modify(hospital, isla, Isla.HCpaciente, hcpaciente)
   end
 
   def copy_signo_vital(hospital, isla, signo_vital) do
-    copy(hospital, isla, :signosVitales, signo_vital)
+    copy(hospital, isla, Isla.SignosVitales, signo_vital)
   end
 
   def copy_laboratorio(hospital, isla, laboratorio) do
-    copy(hospital, isla, :laboratorios, laboratorio)
+    copy(hospital, isla, Isla.Laboratorio, laboratorio)
   end
 
   def copy_rx_torax(hospital, isla, rx_torax) do
-    copy(hospital, isla, :rx_toraxs, rx_torax)
+    copy(hospital, isla, Isla.RxTorax, rx_torax)
   end
 
   def copy_alerta(hospital, isla, alerta) do
-    copy(hospital, isla, :alertas, alerta)
+    copy(hospital, isla, Isla.Alerta, alerta)
   end
 
   def copy_episodio(hospital, isla, episodio) do
-    copy(hospital, isla, :episodios, episodio)
+    copy(hospital, isla, Isla.Episodio, episodio)
   end
 
   def copy_hcpaciente(hospital, isla, hcpaciente) do
-    copy(hospital, isla, :hcpacientes, hcpaciente)
+    copy(hospital, isla, Isla.HCpaciente, hcpaciente)
   end
 
   def get_signos_vitales(hospital, isla, sector, sync_id) do
-    get(hospital, isla, :signosVitales, sector, sync_id, nil)
+    get(hospital, isla, Isla.SignosVitales, sector, sync_id, nil)
   end
 
   def get_laboratorios(hospital, isla, sector, sync_id) do
-    get(hospital, isla, :laboratorios, sector, sync_id, nil)
+    get(hospital, isla, Isla.Laboratorio, sector, sync_id, nil)
   end
 
   def get_rx_toraxs(hospital, isla, sector, sync_id) do
-    get(hospital, isla, :rx_toraxs, sector, sync_id, nil)
+    get(hospital, isla, Isla.RxTorax, sector, sync_id, nil)
   end
 
   def get_alertas(hospital, isla, sector, sync_id) do
-    get(hospital, isla, :alertas, sector, sync_id, nil)
+    get(hospital, isla, Isla.Alerta, sector, sync_id, nil)
   end
 
   def get_alertas(hospital, isla, sector, cuil, sync_id) do
@@ -122,19 +122,18 @@ defmodule Isla do
       )
     end
 
-    get(hospital, isla, :alertas, sector, sync_id, filter)
+    get(hospital, isla, Isla.Alerta, sector, sync_id, filter)
   end
 
   def get_episodios(hospital, isla, sector, sync_id) do
-    get(hospital, isla, :episodios, sector, sync_id, nil)
+    get(hospital, isla, Isla.Episodio, sector, sync_id, nil)
   end
 
   def get_hcpacientes(hospital, isla, sector, sync_id) do
-    get(hospital, isla, :hcpacientes, sector, sync_id, nil)
+    get(hospital, isla, Isla.HCpaciente, sector, sync_id, nil)
   end
 
   def new(idHosp, idIsla, table, registro) do
-    table = table2module(table)
     registro = cast_all(table, registro)
 
     registro = struct(table, registro)
@@ -188,7 +187,6 @@ defmodule Isla do
   end
 
   def modify(idHosp, idIsla, table, registro) do
-    table = table2module(table)
     registro = cast_all(table, registro)
 
     keys =
@@ -249,7 +247,6 @@ defmodule Isla do
   end
 
   def copy(idHosp, idIsla, table, registro) do
-    table = table2module(table)
     registro = cast_all(table, registro)
 
     keys =
@@ -328,8 +325,6 @@ defmodule Isla do
   end
 
   def get(idHosp, _idIsla, table, sector, sync_id, filter) do
-    table = table2module(table)
-
     q =
       case idH(table) do
         :idHospital ->
@@ -444,12 +439,12 @@ defmodule Isla do
 
   def get_update(idHosp, idIsla, sector, sync_id) do
     list = [
-      :signosVitales,
-      :laboratorios,
-      :rx_toraxs,
-      :alertas,
-      :episodios,
-      :hcpacientes
+      Isla.SignosVitales,
+      Isla.Laboratorio,
+      Isla.RxTorax,
+      Isla.Alerta,
+      Isla.Episodio,
+      Isla.HCpaciente
     ]
 
     result =
