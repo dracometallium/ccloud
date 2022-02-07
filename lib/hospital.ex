@@ -251,7 +251,7 @@ defmodule Hospital do
   end
 
   def get(idHosp, Hospitales.Usuario, sync_id) do
-    usuarios_hospital = get(idHosp, Hospital.UsuarioHospital, sync_id)
+    usuarios_hospital = get(idHosp, Hospital.UsuarioHospital, 0)
 
     usuarios_id =
       Enum.filter(
