@@ -164,12 +164,13 @@ defmodule Hospital do
           end).()
       |> Ecto.Multi.update(
         :max_sync_id,
-        fn %{sync_id: sync_id, sync_id_2: sync_id_2} ->
+        #fn %{sync_id: sync_id, sync_id_2: sync_id_2} ->
+        fn x ->
           sync_id =
-            if sync_id_2 != nil do
-              sync_id_2
+            if x[:sync_id_2] != nil do
+              x[:sync_id_2]
             else
-              sync_id
+              x[:sync_id]
             end
 
           Ecto.Changeset.change(
