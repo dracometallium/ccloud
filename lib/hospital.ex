@@ -166,7 +166,6 @@ defmodule Hospital do
           end).()
       |> Ecto.Multi.update(
         :max_sync_id,
-        #fn %{sync_id: sync_id, sync_id_2: sync_id_2} ->
         fn x ->
           sync_id =
             if x[:sync_id_2] != nil do
@@ -198,14 +197,6 @@ defmodule Hospital do
   def modify(idHosp, table, registro) do
     registro = cast_all(table, registro)
 
-    keys =
-      Map.take(
-        registro,
-        Keyword.keys(Ecto.primary_key(struct(table, registro)))
-      )
-
-    keys = struct(table, keys)
-
     status =
       Ecto.Multi.new()
       |> Ecto.Multi.run(
@@ -228,7 +219,7 @@ defmodule Hospital do
       )
       |> Ecto.Multi.update(:registro, fn %{sync_id: sync_id} ->
         registro = Map.put(registro, :sync_id, sync_id)
-        Ecto.Changeset.change(keys, registro)
+        Ecto.Changeset.change(keys(table, registro), registro)
       end)
       |> Ecto.Multi.update(
         :max_sync_id,

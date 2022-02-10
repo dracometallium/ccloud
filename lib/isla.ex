@@ -191,14 +191,6 @@ defmodule Isla do
   def modify(idHosp, idIsla, table, registro) do
     registro = cast_all(table, registro)
 
-    keys =
-      Map.take(
-        registro,
-        Keyword.keys(Ecto.primary_key(struct(table, registro)))
-      )
-
-    keys = struct(table, keys)
-
     status =
       Ecto.Multi.new()
       |> Ecto.Multi.run(
@@ -222,7 +214,7 @@ defmodule Isla do
       )
       |> Ecto.Multi.update(:registro, fn %{sync_id: sync_id} ->
         registro = Map.put(registro, :sync_id, sync_id)
-        Ecto.Changeset.change(keys, registro)
+        Ecto.Changeset.change(keys(table, registro), registro)
       end)
       |> Ecto.Multi.update(
         :max_sync_id,
