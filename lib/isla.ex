@@ -326,6 +326,7 @@ defmodule Isla do
             },
             sync_id: sync_id
           )
+          sync_id
         end
       )
       |> CCloud.Repo.transaction()
