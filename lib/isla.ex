@@ -248,27 +248,42 @@ defmodule Isla do
     end
   end
 
-  def copy(idHosp, idIsla, table, registro) do
-    registro = cast_all(table, registro)
+  def copy(idHosp, idIsla, table, registros) do
+    registros = List.wrap(registros)
 
-    keys =
-      Map.take(
-        registro,
-        Keyword.keys(Ecto.primary_key(struct(table, registro)))
+    sync_id_reg =
+      Enum.reduce(
+        registros,
+        0,
+        fn r, acc ->
+          max(acc, r.sync_id)
+        end
       )
-      |> Map.to_list()
+
+    registros =
+      Enum.map(
+        registros,
+        fn r ->
+          {cast_all(table, r), keys(table, r)}
+        end
+      )
 
     status =
       Ecto.Multi.new()
       |> Ecto.Multi.run(
-        :changeset,
+        :changesets,
         fn _, _ ->
           changeset =
-            case CCloud.Repo.get_by(table, keys) do
-              nil -> struct(table, keys)
-              reg -> reg
-            end
-            |> Ecto.Changeset.change(registro)
+            Enum.map(
+              registros,
+              fn {r, k} ->
+                case CCloud.Repo.get_by(table, k) do
+                  nil -> struct(table, k)
+                  reg -> reg
+                end
+                |> Ecto.Changeset.change(r)
+              end
+            )
 
           {:ok, changeset}
         end
@@ -292,18 +307,24 @@ defmodule Isla do
           end
         end
       )
-      |> Ecto.Multi.insert_or_update(
-        :registro,
-        fn %{changeset: changeset} ->
-          changeset
+      |> Ecto.Multi.run(
+        :insert_or_update,
+        fn _, %{changesets: changesets} ->
+          Enum.each(
+            changesets,
+            fn c ->
+              CCloud.Repo.insert_or_update(c)
+            end
+          )
+
+          {:ok, nil}
         end
       )
       |> Ecto.Multi.update(
         :max_sync_id,
         fn q ->
           sync_id_isla = q[:sync_id]
-          sync_id_reg = q[:registro].sync_id
-          sync_id = Enum.max([sync_id_isla, sync_id_reg])
+          sync_id = max(sync_id_isla, sync_id_reg)
 
           Ecto.Changeset.change(
             %CCloud.Repo.SyncIDIsla{
@@ -318,7 +339,7 @@ defmodule Isla do
 
     case status do
       {:ok, result} ->
-        sync_id = result[:sync_id]
+        sync_id = result[:max_sync_id]
         sync_id
 
       _ ->

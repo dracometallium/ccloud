@@ -302,11 +302,11 @@ Respuestas:
 **Nota:** <tipo> puede ser cada una de las tablas: `control_enfermeria`,
 `laboratorio`, `rx_torax`, `alerta`, `hcpaciente` o `episodio` en cuyo caso
 retornan un triage, o `cama`, `isla`, `sector`, `usuario_hospital`,
-`usuario_sector` u `hospital`.
+`usuario_sector` u `hospital`. Se puede enviar un dato o una lista de datos.
 
 Parámetros:
 
--   dato: <dict_datos>
+-   dato: <dict_datos|[lista de dic_datos]>
 -   tipo: <string>
 -   triage: <int | nil>
 -   nHC: <strign | nil>

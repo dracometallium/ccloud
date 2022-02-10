@@ -41,6 +41,18 @@ defmodule Utils do
   end
 
   @doc """
+  Returns a keyword list of the primary keys of the module.
+  """
+  @spec keys(Module, Map) :: List
+  def keys(module, reg) do
+    Map.take(
+      reg,
+      Keyword.keys(Ecto.primary_key(struct(module, reg)))
+    )
+    |> Map.to_list()
+  end
+
+  @doc """
   Cleans a module register of all improper keys.
   """
   @spec clean(Module, Map) :: Map
