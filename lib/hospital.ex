@@ -219,7 +219,8 @@ defmodule Hospital do
       )
       |> Ecto.Multi.update(:registro, fn %{sync_id: sync_id} ->
         registro = Map.put(registro, :sync_id, sync_id)
-        Ecto.Changeset.change(keys(table, registro), registro)
+        k = struct(table, keys(table, registro))
+        Ecto.Changeset.change(k, registro)
       end)
       |> Ecto.Multi.update(
         :max_sync_id,
