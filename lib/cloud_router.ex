@@ -323,7 +323,7 @@ defmodule Cloud.Router do
 
     sync_id = Isla.copy_signo_vital(hospital, isla, data)
 
-    send_copy_data(:signo_vital, data, sync_id, hospital, isla, triage, nhc)
+    send_copy_data(:signo_vital, data, hospital, isla, triage, nhc)
 
     %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
@@ -338,7 +338,7 @@ defmodule Cloud.Router do
 
     sync_id = Isla.copy_laboratorio(hospital, isla, data)
 
-    send_copy_data(:laboratorio, data, sync_id, hospital, isla, triage, nhc)
+    send_copy_data(:laboratorio, data, hospital, isla, triage, nhc)
 
     %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
@@ -353,7 +353,7 @@ defmodule Cloud.Router do
 
     sync_id = Isla.copy_rx_torax(hospital, isla, data)
 
-    send_copy_data(:rx_torax, data, sync_id, hospital, isla, triage, nhc)
+    send_copy_data(:rx_torax, data, hospital, isla, triage, nhc)
 
     %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
@@ -368,7 +368,7 @@ defmodule Cloud.Router do
 
     sync_id = Isla.copy_alerta(hospital, isla, data)
 
-    send_copy_data(:alerta, data, sync_id, hospital, isla, triage, nhc)
+    send_copy_data(:alerta, data, hospital, isla, triage, nhc)
 
     %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
@@ -383,7 +383,7 @@ defmodule Cloud.Router do
 
     sync_id = Isla.copy_episodio(hospital, isla, data)
 
-    send_copy_data(:episodio, data, sync_id, hospital, isla, triage, nhc)
+    send_copy_data(:episodio, data, hospital, isla, triage, nhc)
 
     %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
@@ -399,7 +399,7 @@ defmodule Cloud.Router do
 
     sync_id = Isla.copy_hcpaciente(hospital, isla, data)
 
-    send_copy_data(:hcpaciente, data, sync_id, hospital, isla, triage, nhc)
+    send_copy_data(:hcpaciente, data, hospital, isla, triage, nhc)
 
     %{status: "200 OK", result: %{sync_id: sync_id}, id: req.id}
   end
@@ -464,7 +464,6 @@ defmodule Cloud.Router do
   defp send_copy_data(
          type,
          data,
-         sync_id,
          hospital,
          isla,
          triage \\ nil,
@@ -472,17 +471,15 @@ defmodule Cloud.Router do
        ) do
     # Sends the new hospital data to the other clients
     spawn(fn ->
-      send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc)
+      send_copy_data_async(type, data, hospital, isla, triage, nhc)
     end)
 
     :ok
   end
 
-  defp send_copy_data_async(type, data, sync_id, hospital, isla, triage, nhc) do
+  defp send_copy_data_async(type, data, hospital, isla, triage, nhc) do
     # Sends the new data to the other clients
     clients = SysUsers.get_clients(hospital, isla)
-
-    data = Map.put(data, :sync_id, sync_id)
 
     Enum.each(clients, fn pid ->
       if pid != nil and Process.alive?(pid) do

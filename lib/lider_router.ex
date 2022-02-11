@@ -748,7 +748,7 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospitalCama, connection[:hospital])
     sync_id = Hospital.new_cama(connection[:hospital], data)
 
-    send_copy_data(:cama, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:cama, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -758,7 +758,7 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospitalCama, connection[:hospital])
     sync_id = Hospital.modify_cama(connection[:hospital], data)
 
-    send_copy_data(:cama, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:cama, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -779,7 +779,7 @@ defmodule Lider.Router do
     IO.inspect(data)
     sync_id = Hospital.new_isla(connection[:hospital], data)
 
-    send_copy_data(:isla, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:isla, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -790,7 +790,7 @@ defmodule Lider.Router do
     IO.inspect(data)
     sync_id = Hospital.modify_isla(connection[:hospital], data)
 
-    send_copy_data(:isla, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:isla, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -810,7 +810,7 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.new_sector(connection[:hospital], data)
 
-    send_copy_data(:sector, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:sector, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -820,7 +820,7 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.modify_sector(connection[:hospital], data)
 
-    send_copy_data(:sector, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:sector, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -853,7 +853,6 @@ defmodule Lider.Router do
     send_copy_data(
       :usuario_hospital,
       data,
-      sync_id,
       connection[:hospital],
       nil
     )
@@ -869,7 +868,6 @@ defmodule Lider.Router do
     send_copy_data(
       :usuario_hospital,
       data,
-      sync_id,
       connection[:hospital],
       nil
     )
@@ -892,7 +890,7 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.new_usuario_sector(connection[:hospital], data)
 
-    send_copy_data(:usuario_sector, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:usuario_sector, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -902,7 +900,7 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHospital, connection[:hospital])
     sync_id = Hospital.modify_usuario_sector(connection[:hospital], data)
 
-    send_copy_data(:usuario_sector, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:usuario_sector, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -928,7 +926,7 @@ defmodule Lider.Router do
     data = Map.put(params.data, :idHosp, connection[:hospital])
     sync_id = Hospital.modify_usuario_sector(connection[:hospital], data)
 
-    send_copy_data(:usuario_sector, data, sync_id, connection[:hospital], nil)
+    send_copy_data(:usuario_sector, data, connection[:hospital], nil)
 
     %{status: "200 OK", result: %{sync_id: sync_id}}
   end
@@ -1091,7 +1089,6 @@ defmodule Lider.Router do
   defp send_copy_data(
          type,
          data,
-         sync_id,
          hospital,
          isla,
          triage \\ nil,
@@ -1105,7 +1102,6 @@ defmodule Lider.Router do
         from,
         type,
         data,
-        sync_id,
         hospital,
         isla,
         triage,
@@ -1120,7 +1116,6 @@ defmodule Lider.Router do
          from,
          type,
          data,
-         sync_id,
          hospital,
          isla,
          triage,
@@ -1128,8 +1123,6 @@ defmodule Lider.Router do
        ) do
     # Sends the new data to the other clients
     clients = SysUsers.get_clients(hospital, isla)
-
-    data = Map.put(data, :sync_id, sync_id)
 
     Enum.each(clients, fn pid ->
       if pid != nil and pid != from and Process.alive?(pid) do
