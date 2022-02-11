@@ -326,14 +326,13 @@ defmodule Isla do
             },
             sync_id: sync_id
           )
-          sync_id
         end
       )
       |> CCloud.Repo.transaction()
 
     case status do
       {:ok, result} ->
-        sync_id = result[:max_sync_id]
+        sync_id = result[:max_sync_id].sync_id
         sync_id
 
       _ ->
