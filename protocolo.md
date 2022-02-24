@@ -32,7 +32,7 @@ Enviar un inser_id por tabla.
 
 **Notas:**
 
--   Las fechas son un entero con la cantidad de microsegundos del tiempo
+-   Las fechas son un entero con la cantidad de milisegundo del tiempo
     **UNIX**.
 
 -   El campo "http_status" no debe ser retornado como parte del _json_ sino
