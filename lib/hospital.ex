@@ -403,7 +403,7 @@ defmodule Hospital.UsuarioHospital do
     field(:idHospital, :string, primary_key: true)
     field(:cuil, :string, primary_key: true)
     field(:idRol, :integer, primary_key: true)
-    field(:estadoLaboral, :integer, default: 0)
+    field(:estadoLaboral, :integer, default: 1)
   end
 end
 
@@ -447,7 +447,7 @@ defmodule Hospital.UsuarioSector do
     field(:idHospital, :string, primary_key: true)
     field(:idSector, :string, primary_key: true)
     field(:cuil, :string)
-    field(:estado, :integer, default: 0)
+    field(:estado, :integer, default: 1)
   end
 end
 
@@ -466,6 +466,6 @@ defmodule Hospital.Cama do
     field(:ubicacionX, :integer)
     field(:ubicacionY, :integer)
     field(:orientacion, :string)
-    field(:estado, :integer, default: 0)
+    field(:estado, :integer, default: 1)
   end
 end
