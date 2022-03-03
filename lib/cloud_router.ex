@@ -395,7 +395,11 @@ defmodule Cloud.Router do
     nhc = params[:nHC]
     isla = connection[:isla]
     hospital = connection[:hospital]
-    data = Map.put(data, :idIsla, isla)
+    data = List.wrap(data)
+    data = Enum.map(data,
+          fn x ->
+            Map.put(x, :idIsla, isla)
+          end)
 
     sync_id = Isla.copy_hcpaciente(hospital, isla, data)
 
