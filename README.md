@@ -1,16 +1,16 @@
 ```
     --------------------------------------------------
-    WARNING!! - WARNING!! - WARNING!! - WARNING!! - WA
+    NING!! - WARNING!! - WARNING!! - WARNING!! - WARNI
     --------------------------------------------------
-    RNING!! - WARNING!! - WARNING!! - WARNING!! - WAR
+    NG!! - WARNING!! - WARNING!! - WARNING!! - WARNING
     --------------------------------------------------
-    NING!! - WARNING!! - WARNING!! - WARNING!! - WARN
+    G!! - WARNING!! - WARNING!! - WARNING!! - WARNING!
     --------------------------------------------------
     
     This code is bad! I started writing it as the same
-    time I started learning about elixir, and my first
-    functional program bigger than a few lines of
-    code. There might be some useful snips of code,
+    time I started learning about elixir, and is my
+    first functional program bigger than a few lines
+    of code. There might be some useful snips of code,
     but the structure is garbage. I will make
     something better soon.
 
